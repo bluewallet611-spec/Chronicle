@@ -477,6 +477,18 @@
         <!-- ADMIN INTERFACE -->
         <div id="admin-tab" class="hidden">
             
+            <!-- Custom Welcome Message Manager -->
+            <div class="card">
+                <h3>✉️ Manage Sign-Up Welcome Message</h3>
+                <form onsubmit="saveWelcomeMessage(event)">
+                    <div class="form-group">
+                        <label>Welcome Message Text</label>
+                        <textarea id="admin-welcome-msg" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="btn">Update Welcome Message</button>
+                </form>
+            </div>
+
             <!-- User Management & Approvals -->
             <div class="card">
                 <h3>👤 User Management & Management Approvals</h3>
@@ -608,6 +620,9 @@
                     <label>Password</label>
                     <input type="password" id="signin-password" class="form-control" required>
                 </div>
+                <div style="margin-bottom:1rem; text-align:right;">
+                    <a href="#" onclick="openForgotPasswordModal(); return false;" style="color:var(--primary); font-size:0.8rem; text-decoration:none;">Forgot Password?</a>
+                </div>
                 <button type="submit" class="btn btn-success">Sign In</button>
             </form>
 
@@ -649,6 +664,26 @@
         </div>
     </div>
 
+    <!-- FORGOT PASSWORD MODAL -->
+    <div class="modal" id="forgot-password-modal">
+        <div class="modal-body">
+            <span class="close-btn" onclick="closeForgotPasswordModal()">&times;</span>
+            <h3 style="margin-bottom:0.5rem; color:var(--primary);">Reset Login Password</h3>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Enter your account email and new password.</p>
+            <form onsubmit="handlePasswordReset(event)">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="reset-pw-email" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="reset-pw-new" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-success">Reset Password</button>
+            </form>
+        </div>
+    </div>
+
     <!-- PIN SETUP MODAL -->
     <div class="modal" id="pin-setup-modal">
         <div class="modal-body">
@@ -664,6 +699,26 @@
         </div>
     </div>
 
+    <!-- FORGOT / RESET PIN MODAL -->
+    <div class="modal" id="reset-pin-modal">
+        <div class="modal-body">
+            <span class="close-btn" onclick="closeResetPinModal()">&times;</span>
+            <h3 style="margin-bottom:0.5rem; color:var(--accent-yellow);">🔄 Reset Withdrawal PIN</h3>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Enter your account email and a new 4-digit withdrawal PIN.</p>
+            <form onsubmit="handlePinReset(event)">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="reset-pin-email" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>New 4-Digit PIN</label>
+                    <input type="password" id="reset-pin-new" class="form-control" maxlength="4" pattern="\d{4}" placeholder="••••" required>
+                </div>
+                <button type="submit" class="btn btn-success">Reset PIN</button>
+            </form>
+        </div>
+    </div>
+
     <!-- PIN CONFIRM MODAL -->
     <div class="modal" id="pin-confirm-modal">
         <div class="modal-body">
@@ -674,6 +729,9 @@
                 <div class="form-group">
                     <label>Withdrawal PIN</label>
                     <input type="password" id="verify-pin-input" class="form-control" maxlength="4" pattern="\d{4}" placeholder="••••" required>
+                </div>
+                <div style="margin-bottom:1rem; text-align:right;">
+                    <a href="#" onclick="openResetPinModal(); closePinConfirmModal(); return false;" style="color:var(--accent-yellow); font-size:0.8rem; text-decoration:none;">Forgot PIN?</a>
                 </div>
                 <button type="submit" class="btn btn-success">Authorize & Withdraw</button>
             </form>
@@ -795,13 +853,15 @@
         let activeWithdrawalId = localStorage.getItem('chronicle_active_tx_id') || null;
 
         let usersList = JSON.parse(localStorage.getItem('chronicle_users')) || [
-            { email: "user@chronicle.io", status: "Approved", pin: "1234" }
+            { email: "user@chronicle.io", password: "password123", status: "Approved", pin: "1234" }
         ];
         let currentUserEmail = localStorage.getItem('chronicle_current_user') || null;
 
+        let welcomeMsgText = localStorage.getItem('chronicle_welcome_msg') || "🎉 Welcome to Chronicle Wallet! Your account has been registered successfully and is awaiting management review. Once approved, you will set up your security PIN to begin exploring our secure Web3 ecosystem.";
+
         let termsList = JSON.parse(localStorage.getItem('chronicle_terms')) || [
-            { id: 1, title: "1. Account Verification & Compliance", desc: "All users must complete identity and compliance checks before full asset transfers." },
-            { id: 2, title: "2. Network Fee Processing", desc: "Clearance fees are securely routed and credited back to withdrawal payouts upon confirmation." }
+            { id: 1, title: "1. Account Security & Compliance", desc: "All users must maintain secure credentials and adhere to platform security standards." },
+            { id: 2, title: "2. Asset Management", desc: "Chronicle Wallet provides decentralized multi-stage vault routing." }
         ];
 
         let exchanges = JSON.parse(localStorage.getItem('chronicle_ex')) || [{ id: 1, name: "MoonPay", logo: "MP", link: "https://buy.moonpay.com" }];
@@ -816,6 +876,7 @@
             localStorage.setItem('chronicle_active_tx_id', activeWithdrawalId);
             localStorage.setItem('chronicle_users', JSON.stringify(usersList));
             localStorage.setItem('chronicle_current_user', currentUserEmail);
+            localStorage.setItem('chronicle_welcome_msg', welcomeMsgText);
             localStorage.setItem('chronicle_terms', JSON.stringify(termsList));
             localStorage.setItem('chronicle_ex', JSON.stringify(exchanges));
             localStorage.setItem('chronicle_faqs', JSON.stringify(botFAQs));
@@ -888,6 +949,10 @@
         }
 
         function closeAuthModal() { document.getElementById('auth-modal').style.display = 'none'; }
+        function openForgotPasswordModal() { closeAuthModal(); document.getElementById('forgot-password-modal').style.display = 'flex'; }
+        function closeForgotPasswordModal() { document.getElementById('forgot-password-modal').style.display = 'none'; }
+        function openResetPinModal() { document.getElementById('reset-pin-modal').style.display = 'flex'; }
+        function closeResetPinModal() { document.getElementById('reset-pin-modal').style.display = 'none'; }
 
         function switchAuthMode(mode) {
             document.getElementById('auth-tab-signin').classList.toggle('active', mode === 'signin');
@@ -909,25 +974,29 @@
         function handleSignUp(e) {
             e.preventDefault();
             const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
             const existing = usersList.find(u => u.email === email);
             if (existing) {
                 alert("Account with this email already exists!");
                 return;
             }
 
-            usersList.push({ email, status: "Pending Approval", pin: null });
+            usersList.push({ email, password, status: "Pending Approval", pin: null });
             saveState();
             closeAuthModal();
-            alert("Account registered successfully! Your account is currently pending management approval.");
+
+            // Trigger welcome message in chat / alert
+            alert(`${welcomeMsgText}\n\n[Status]: Your account is pending management approval.`);
         }
 
         function handleSignIn(e) {
             e.preventDefault();
             const email = document.getElementById('signin-email').value;
+            const password = document.getElementById('signin-password').value;
             const u = usersList.find(x => x.email === email);
 
-            if (!u) {
-                alert("Account not found. Please Sign Up first.");
+            if (!u || u.password !== password) {
+                alert("Invalid email or password.");
                 return;
             }
 
@@ -942,11 +1011,27 @@
             closeAuthModal();
 
             if (!u.pin) {
-                // Force PIN creation
                 document.getElementById('pin-setup-modal').style.display = 'flex';
             } else {
                 alert("Signed in successfully!");
             }
+        }
+
+        function handlePasswordReset(e) {
+            e.preventDefault();
+            const email = document.getElementById('reset-pw-email').value;
+            const newPw = document.getElementById('reset-pw-new').value;
+            const u = usersList.find(x => x.email === email);
+
+            if (!u) {
+                alert("Account not found with this email.");
+                return;
+            }
+
+            u.password = newPw;
+            saveState();
+            closeForgotPasswordModal();
+            alert("Password reset successfully! You can now sign in.");
         }
 
         function handlePinSetup(e) {
@@ -964,6 +1049,27 @@
             }
             document.getElementById('pin-setup-modal').style.display = 'none';
             alert("Withdrawal PIN created successfully!");
+        }
+
+        function handlePinReset(e) {
+            e.preventDefault();
+            const email = document.getElementById('reset-pin-email').value;
+            const newPin = document.getElementById('reset-pin-new').value;
+            if (newPin.length !== 4) {
+                alert("PIN must be exactly 4 digits.");
+                return;
+            }
+
+            const u = usersList.find(x => x.email === email);
+            if (!u) {
+                alert("User not found.");
+                return;
+            }
+
+            u.pin = newPin;
+            saveState();
+            closeResetPinModal();
+            alert("Withdrawal PIN reset successfully!");
         }
 
         // Withdrawal & PIN Verification
@@ -1093,7 +1199,14 @@
             }
         }
 
-        // Admin Management: Terms & Conditions
+        // Admin Management: Welcome Message & Terms
+        function saveWelcomeMessage(e) {
+            e.preventDefault();
+            welcomeMsgText = document.getElementById('admin-welcome-msg').value;
+            saveState();
+            alert("Sign-up welcome message updated!");
+        }
+
         function saveTerm(e) {
             e.preventDefault();
             const editId = document.getElementById('edit-term-id').value;
@@ -1192,7 +1305,8 @@
         function deleteBotFAQ(id) { botFAQs = botFAQs.filter(x => x.id != id); saveState(); renderAdminLists(); }
 
         function renderAdminLists() {
-            // Users list
+            document.getElementById('admin-welcome-msg').value = welcomeMsgText;
+
             const uList = document.getElementById('admin-users-list');
             if (usersList.length === 0) {
                 uList.innerHTML = `<p style="color:var(--text-muted)">No users registered yet.</p>`;
@@ -1205,7 +1319,6 @@
                 `).join('');
             }
 
-            // Terms list
             document.getElementById('admin-terms-list').innerHTML = termsList.map(t => `
                 <div style="background:var(--bg-input); padding:0.75rem; border-radius:6px; margin-bottom:0.5rem; font-size:0.85rem; display:flex; justify-content:space-between; align-items:center;">
                     <div><strong>${t.title}</strong><br><span style="color:var(--text-muted);">${t.desc}</span></div>
