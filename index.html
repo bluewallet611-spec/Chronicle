@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chronicle Wallet - Web3 Vault</title>
+    <title>Chronicle Wallet - Decentralized Crypto Hub</title>
     <style>
         :root {
             --bg-dark: #0a0d14;
@@ -103,6 +103,12 @@
             margin-bottom: 1.5rem;
         }
 
+        .action-row {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
         .form-group {
             margin-bottom: 1rem;
         }
@@ -138,11 +144,13 @@
             font-weight: 600;
             cursor: pointer;
             width: 100%;
+            text-align: center;
         }
 
         .btn:hover { background-color: var(--primary-hover); }
-
         .btn-success { background-color: var(--accent-green); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: #fff; }
+        .btn-outline:hover { background: var(--bg-input); }
 
         .table {
             width: 100%;
@@ -276,12 +284,19 @@
         <!-- USER INTERFACE -->
         <div id="user-tab">
             <div class="grid">
+                <!-- Balance & Quick Send/Receive -->
                 <div class="card">
                     <h3 style="margin-bottom:0.5rem">Available Balance</h3>
                     <h1 style="font-size:2.2rem; color:#fff;">$48,250.00</h1>
                     <p style="color:var(--text-muted); font-size:0.875rem; margin-top:0.25rem;">1.2485 BTC • 14.2 ETH</p>
+
+                    <div class="action-row">
+                        <button class="btn btn-outline" onclick="openSendModal()">↗ Send Crypto</button>
+                        <button class="btn btn-outline" onclick="openReceiveModal()">↘ Receive</button>
+                    </div>
                 </div>
 
+                <!-- Withdrawal Card -->
                 <div class="card">
                     <h3 style="margin-bottom:1rem">Withdraw Funds</h3>
                     <form onsubmit="initiateWithdrawal(event)">
@@ -298,6 +313,7 @@
                 </div>
             </div>
 
+            <!-- Transaction History -->
             <div class="card">
                 <h3>Transaction History</h3>
                 <table class="table">
@@ -322,20 +338,20 @@
             <!-- Payment Methods Manager -->
             <div class="card">
                 <h3>1. Manage Payment Methods & Payment Links</h3>
-                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Add dynamic payment options (Wallet addresses, bank details, or direct click-to-pay URLs).</p>
+                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Add payment options (Wallet addresses, bank details, or direct payment URLs).</p>
                 
                 <form onsubmit="addPaymentMethod(event)" style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
                     <div class="form-group">
                         <label>Method Name</label>
-                        <input type="text" id="pm-name" class="form-control" placeholder="e.g. USDT ERC-20 / Direct Checkout" required>
+                        <input type="text" id="pm-name" class="form-control" placeholder="e.g. USDT ERC-20" required>
                     </div>
                     <div class="form-group">
                         <label>Payment Address / Details</label>
-                        <input type="text" id="pm-details" class="form-control" placeholder="e.g. Wallet Address or Bank Info" required>
+                        <input type="text" id="pm-details" class="form-control" placeholder="e.g. Wallet Address" required>
                     </div>
                     <div class="form-group" style="grid-column: span 2;">
                         <label>Direct Payment Link URL (Optional)</label>
-                        <input type="url" id="pm-link" class="form-control" placeholder="https://checkout.stripe.com/pay/... or PayPal link">
+                        <input type="url" id="pm-link" class="form-control" placeholder="https://checkout.stripe.com/pay/...">
                     </div>
                     <button type="submit" class="btn" style="grid-column: span 2;">Add Payment Method</button>
                 </form>
@@ -379,11 +395,57 @@
 
     </div>
 
-    <!-- ROLLING SPINNER -->
+    <!-- ROLLING SPINNER OVERLAY -->
     <div class="overlay" id="loader-overlay">
         <div class="spinner"></div>
         <h3 style="color:#fff;">Processing Withdrawal...</h3>
         <p style="color:var(--text-muted); font-size:0.875rem; margin-top:0.5rem;" id="loader-status">Connecting to Liquidity Gateway...</p>
+    </div>
+
+    <!-- SEND MODAL -->
+    <div class="modal" id="send-modal">
+        <div class="modal-body">
+            <span class="close-btn" onclick="closeSendModal()">&times;</span>
+            <h3 style="margin-bottom:1rem;">Send Crypto</h3>
+            <form onsubmit="handleSend(event)">
+                <div class="form-group">
+                    <label>Select Asset</label>
+                    <select class="form-control">
+                        <option>Bitcoin (BTC)</option>
+                        <option>Ethereum (ETH)</option>
+                        <option>Tether (USDT)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Recipient Wallet Address</label>
+                    <input type="text" class="form-control" placeholder="0x... or bc1..." required>
+                </div>
+                <div class="form-group">
+                    <label>Amount</label>
+                    <input type="number" class="form-control" placeholder="0.00" step="any" required>
+                </div>
+                <button type="submit" class="btn btn-success">Send Funds</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- RECEIVE MODAL -->
+    <div class="modal" id="receive-modal">
+        <div class="modal-body" style="text-align:center;">
+            <span class="close-btn" onclick="closeReceiveModal()">&times;</span>
+            <h3 style="margin-bottom:0.5rem;">Receive Funds</h3>
+            <p style="color:var(--text-muted); font-size:0.85rem;">Scan QR or copy address to deposit</p>
+            
+            <div style="background:#fff; padding:1rem; display:inline-block; margin:1rem 0; border-radius:8px;">
+                <div style="width:140px; height:140px; background:#000; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.75rem;">[QR CODE]</div>
+            </div>
+
+            <div class="form-group" style="text-align:left;">
+                <label>Deposit Address (BTC)</label>
+                <input type="text" class="form-control" value="bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" readonly>
+            </div>
+            <button class="btn" onclick="alert('Address copied to clipboard!')">Copy Address</button>
+        </div>
     </div>
 
     <!-- ACTION POPUP MODAL -->
@@ -424,7 +486,6 @@
         ];
 
         let currentActiveStepIndex = 0;
-        let submittedProofs = [];
 
         // Tab Switching
         function showTab(tab) {
@@ -433,6 +494,18 @@
             document.getElementById('btn-user').classList.toggle('active', tab === 'user');
             document.getElementById('btn-admin').classList.toggle('active', tab === 'admin');
             renderAdminLists();
+        }
+
+        // Send & Receive Modals
+        function openSendModal() { document.getElementById('send-modal').style.display = 'flex'; }
+        function closeSendModal() { document.getElementById('send-modal').style.display = 'none'; }
+        function openReceiveModal() { document.getElementById('receive-modal').style.display = 'flex'; }
+        function closeReceiveModal() { document.getElementById('receive-modal').style.display = 'none'; }
+
+        function handleSend(e) {
+            e.preventDefault();
+            closeSendModal();
+            alert("Transfer request submitted to network!");
         }
 
         // Handle Withdrawal Flow
