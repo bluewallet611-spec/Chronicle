@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chronicle Wallet - Decentralized Crypto Hub</title>
+    <title>Chronicle Wallet - Decentralized Web3 Vault</title>
     <style>
         :root {
-            --bg-dark: #0a0d14;
-            --bg-card: #121824;
-            --bg-input: #1a2232;
+            --bg-dark: #07090e;
+            --bg-card: #111622;
+            --bg-input: #1a202c;
             --primary: #6366f1;
             --primary-hover: #4f46e5;
             --accent-green: #10b981;
             --accent-red: #ef4444;
             --accent-yellow: #f59e0b;
-            --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
-            --border: #242f42;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #1e293b;
         }
 
         * {
@@ -32,6 +32,7 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            padding-bottom: 2rem;
         }
 
         header {
@@ -85,28 +86,80 @@
             padding: 0 1rem;
         }
 
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-        }
-
-        @media (max-width: 768px) {
-            .grid { grid-template-columns: 1fr; }
-        }
-
         .card {
             background-color: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        /* Wallet Balance Card & Side-By-Side Buttons */
+        .balance-card {
+            background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+            border: 1px solid #312e81;
+            padding: 2rem;
+            border-radius: 20px;
+            text-align: center;
             margin-bottom: 1.5rem;
         }
 
-        .action-row {
-            display: flex;
+        .action-row-side {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 0.75rem;
-            margin-top: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover { background-color: var(--primary-hover); transform: translateY(-1px); }
+        .btn-success { background-color: var(--accent-green); }
+        .btn-outline { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #fff; }
+        .btn-outline:hover { background: rgba(255,255,255,0.1); }
+
+        /* Asset List */
+        .asset-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .asset-row:last-child { border-bottom: none; }
+
+        .asset-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .asset-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.875rem;
         }
 
         .form-group {
@@ -130,27 +183,7 @@
             font-size: 1rem;
         }
 
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        .btn {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.25rem;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            text-align: center;
-        }
-
-        .btn:hover { background-color: var(--primary-hover); }
-        .btn-success { background-color: var(--accent-green); }
-        .btn-outline { background: transparent; border: 1px solid var(--border); color: #fff; }
-        .btn-outline:hover { background: var(--bg-input); }
+        .form-control:focus { outline: none; border-color: var(--primary); }
 
         .table {
             width: 100%;
@@ -172,24 +205,15 @@
             font-weight: 600;
         }
 
-        .badge-pending {
-            background: rgba(245, 158, 11, 0.2);
-            color: var(--accent-yellow);
-            border: 1px solid var(--accent-yellow);
-        }
+        .badge-pending { background: rgba(245, 158, 11, 0.2); color: var(--accent-yellow); border: 1px solid var(--accent-yellow); }
+        .badge-success { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); border: 1px solid var(--accent-green); }
 
-        .badge-success {
-            background: rgba(16, 185, 129, 0.2);
-            color: var(--accent-green);
-            border: 1px solid var(--accent-green);
-        }
-
-        /* Rolling Overlay */
+        /* Rolling Spinner Overlay */
         .overlay {
             position: fixed;
             top: 0; left: 0;
             width: 100vw; height: 100vh;
-            background: rgba(10, 13, 20, 0.95);
+            background: rgba(7, 9, 14, 0.95);
             display: none;
             flex-direction: column;
             align-items: center;
@@ -207,12 +231,9 @@
             margin-bottom: 1rem;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Modal */
+        /* Modals */
         .modal {
             position: fixed;
             top: 0; left: 0;
@@ -228,7 +249,7 @@
         .modal-body {
             background-color: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: 16px;
             max-width: 520px;
             width: 100%;
             padding: 1.5rem;
@@ -237,8 +258,7 @@
 
         .close-btn {
             position: absolute;
-            top: 1rem;
-            right: 1rem;
+            top: 1rem; right: 1rem;
             color: var(--text-muted);
             cursor: pointer;
             font-size: 1.25rem;
@@ -254,15 +274,87 @@
             margin: 1rem 0;
         }
 
-        .payment-link-btn {
-            display: inline-block;
-            background: #2563eb;
+        /* Support Chat Floating Widget */
+        .chat-widget-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-window {
+            position: fixed;
+            bottom: 85px;
+            right: 20px;
+            width: 360px;
+            height: 480px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+            display: none;
+            flex-direction: column;
+            z-index: 999;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background-color: var(--bg-input);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-body {
+            flex-grow: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .chat-msg {
+            max-width: 80%;
+            padding: 0.6rem 0.9rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .msg-bot {
+            background-color: var(--bg-input);
             color: #fff;
-            padding: 8px 12px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-size: 0.875rem;
-            margin-top: 8px;
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+        }
+
+        .msg-user {
+            background-color: var(--primary);
+            color: #fff;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+
+        .chat-footer {
+            padding: 0.75rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 0.5rem;
         }
     </style>
 </head>
@@ -283,33 +375,46 @@
         
         <!-- USER INTERFACE -->
         <div id="user-tab">
-            <div class="grid">
-                <!-- Balance & Quick Send/Receive -->
-                <div class="card">
-                    <h3 style="margin-bottom:0.5rem">Available Balance</h3>
-                    <h1 style="font-size:2.2rem; color:#fff;">$48,250.00</h1>
-                    <p style="color:var(--text-muted); font-size:0.875rem; margin-top:0.25rem;">1.2485 BTC • 14.2 ETH</p>
+            <!-- Balance Card with Side-by-Side Action Buttons -->
+            <div class="balance-card">
+                <div style="color:var(--text-muted); font-size:0.875rem;">Total Portfolio Value</div>
+                <h1 style="font-size:2.8rem; color:#fff; margin:0.25rem 0;">$48,250.00</h1>
+                <p style="color:var(--accent-green); font-size:0.875rem;">▲ +3.42% past 24h</p>
 
-                    <div class="action-row">
-                        <button class="btn btn-outline" onclick="openSendModal()">↗ Send Crypto</button>
-                        <button class="btn btn-outline" onclick="openReceiveModal()">↘ Receive</button>
+                <div class="action-row-side">
+                    <button class="btn" onclick="openSendModal()">↗ Send</button>
+                    <button class="btn btn-outline" onclick="openReceiveModal()">↘ Receive</button>
+                    <button class="btn btn-outline" onclick="openWithdrawModal()">💳 Withdraw</button>
+                </div>
+            </div>
+
+            <!-- Asset List -->
+            <div class="card">
+                <h3 style="margin-bottom:0.75rem;">Your Assets</h3>
+                <div class="asset-row">
+                    <div class="asset-info">
+                        <div class="asset-icon" style="background:#f7931a; color:#fff;">₿</div>
+                        <div>
+                            <strong>Bitcoin</strong>
+                            <div style="color:var(--text-muted); font-size:0.8rem;">1.2485 BTC</div>
+                        </div>
+                    </div>
+                    <div style="text-align:right;">
+                        <strong>$32,450.00</strong>
                     </div>
                 </div>
 
-                <!-- Withdrawal Card -->
-                <div class="card">
-                    <h3 style="margin-bottom:1rem">Withdraw Funds</h3>
-                    <form onsubmit="initiateWithdrawal(event)">
-                        <div class="form-group">
-                            <label>Destination Address / Bank Account</label>
-                            <input type="text" class="form-control" placeholder="Enter Wallet Address or Bank Info" required>
+                <div class="asset-row">
+                    <div class="asset-info">
+                        <div class="asset-icon" style="background:#627eea; color:#fff;">Ξ</div>
+                        <div>
+                            <strong>Ethereum</strong>
+                            <div style="color:var(--text-muted); font-size:0.8rem;">14.2000 ETH</div>
                         </div>
-                        <div class="form-group">
-                            <label>Amount (USD)</label>
-                            <input type="number" id="withdraw-amt" class="form-control" placeholder="e.g. 5000" required>
-                        </div>
-                        <button type="submit" class="btn">Confirm Withdrawal Request</button>
-                    </form>
+                    </div>
+                    <div style="text-align:right;">
+                        <strong>$15,800.00</strong>
+                    </div>
                 </div>
             </div>
 
@@ -326,7 +431,7 @@
                         </tr>
                     </thead>
                     <tbody id="tx-history">
-                        <!-- Transactions appended dynamically -->
+                        <!-- Dynamic Transactions -->
                     </tbody>
                 </table>
             </div>
@@ -335,11 +440,37 @@
         <!-- ADMIN INTERFACE -->
         <div id="admin-tab" class="hidden">
             
+            <!-- Bot Knowledge Base (FAQs) Manager -->
+            <div class="card">
+                <h3>🤖 Support Bot Knowledge Base (Auto-Responder Training)</h3>
+                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Add questions and automated answers so the bot can respond when you are away.</p>
+
+                <form onsubmit="addBotFAQ(event)">
+                    <div class="form-group">
+                        <label>Target Question / Keywords</label>
+                        <input type="text" id="faq-question" class="form-control" placeholder="e.g. How long does withdrawal take?" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Automated Bot Answer</label>
+                        <textarea id="faq-answer" class="form-control" rows="2" placeholder="e.g. Withdrawals are processed immediately after completing network gas clearance." required></textarea>
+                    </div>
+                    <button type="submit" class="btn">Add FAQ to Bot Memory</button>
+                </form>
+
+                <div style="margin-top:1rem;" id="faq-list"></div>
+            </div>
+
+            <!-- Admin Support Complaints Inbox -->
+            <div class="card">
+                <h3>💬 User Complaints & Support Inbox</h3>
+                <div id="admin-inbox" style="margin-top:1rem;">
+                    <p style="color:var(--text-muted); font-size:0.875rem;">No support messages received yet.</p>
+                </div>
+            </div>
+
             <!-- Payment Methods Manager -->
             <div class="card">
-                <h3>1. Manage Payment Methods & Payment Links</h3>
-                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Add payment options (Wallet addresses, bank details, or direct payment URLs).</p>
-                
+                <h3>💳 Manage Payment Methods & Links</h3>
                 <form onsubmit="addPaymentMethod(event)" style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
                     <div class="form-group">
                         <label>Method Name</label>
@@ -349,21 +480,14 @@
                         <label>Payment Address / Details</label>
                         <input type="text" id="pm-details" class="form-control" placeholder="e.g. Wallet Address" required>
                     </div>
-                    <div class="form-group" style="grid-column: span 2;">
-                        <label>Direct Payment Link URL (Optional)</label>
-                        <input type="url" id="pm-link" class="form-control" placeholder="https://checkout.stripe.com/pay/...">
-                    </div>
                     <button type="submit" class="btn" style="grid-column: span 2;">Add Payment Method</button>
                 </form>
-
                 <div style="margin-top:1rem;" id="pm-list"></div>
             </div>
 
             <!-- Action Pipeline Builder -->
             <div class="card">
-                <h3>2. Manage Required Actions (Pipeline Steps)</h3>
-                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Configure action steps users must complete sequentially after withdrawing.</p>
-
+                <h3>⚙️ Manage Required Actions (Pipeline Steps)</h3>
                 <form onsubmit="addActionStep(event)">
                     <div class="form-group">
                         <label>Action Title</label>
@@ -379,13 +503,12 @@
                     </div>
                     <button type="submit" class="btn">Add Action Step</button>
                 </form>
-
                 <div style="margin-top:1rem;" id="action-steps-list"></div>
             </div>
 
-            <!-- Review Queue -->
+            <!-- Proof Review Queue -->
             <div class="card">
-                <h3>3. Submitted Screenshot Proofs</h3>
+                <h3>🖼️ Submitted Screenshot Proofs</h3>
                 <div id="admin-queue" style="margin-top:0.5rem; color:var(--text-muted); font-size:0.875rem;">
                     No pending screenshot proofs submitted yet.
                 </div>
@@ -395,11 +518,52 @@
 
     </div>
 
+    <!-- SUPPORT CHAT WIDGET BUTTON & WINDOW -->
+    <button class="chat-widget-btn" onclick="toggleChat()">💬</button>
+
+    <div class="chat-window" id="chat-window">
+        <div class="chat-header">
+            <div>
+                <strong>Support Assistant</strong>
+                <div style="font-size:0.75rem; color:var(--accent-green);">● Online (AI Bot + Admin)</div>
+            </div>
+            <span class="close-btn" style="position:static" onclick="toggleChat()">&times;</span>
+        </div>
+        <div class="chat-body" id="chat-body">
+            <div class="chat-msg msg-bot">
+                Hello! 👋 Welcome to Chronicle Support. How can I assist you today?
+            </div>
+        </div>
+        <div class="chat-footer">
+            <input type="text" id="user-chat-input" class="form-control" placeholder="Type message..." onkeypress="handleChatKey(event)">
+            <button class="btn" style="width:auto; padding:0 0.75rem;" onclick="sendChatMessage()">Send</button>
+        </div>
+    </div>
+
     <!-- ROLLING SPINNER OVERLAY -->
     <div class="overlay" id="loader-overlay">
         <div class="spinner"></div>
         <h3 style="color:#fff;">Processing Withdrawal...</h3>
         <p style="color:var(--text-muted); font-size:0.875rem; margin-top:0.5rem;" id="loader-status">Connecting to Liquidity Gateway...</p>
+    </div>
+
+    <!-- WITHDRAW MODAL -->
+    <div class="modal" id="withdraw-modal">
+        <div class="modal-body">
+            <span class="close-btn" onclick="closeWithdrawModal()">&times;</span>
+            <h3 style="margin-bottom:1rem;">Withdraw Funds</h3>
+            <form onsubmit="initiateWithdrawal(event)">
+                <div class="form-group">
+                    <label>Destination Wallet Address / Bank Info</label>
+                    <input type="text" class="form-control" placeholder="Enter Wallet Address or Bank Account" required>
+                </div>
+                <div class="form-group">
+                    <label>Amount (USD)</label>
+                    <input type="number" id="withdraw-amt" class="form-control" placeholder="e.g. 5000" required>
+                </div>
+                <button type="submit" class="btn btn-success">Confirm Withdrawal Request</button>
+            </form>
+        </div>
     </div>
 
     <!-- SEND MODAL -->
@@ -462,7 +626,6 @@
                 <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.75rem;">Payment Method & Details</div>
                 <div style="font-weight:600; color:var(--primary); margin-top:0.25rem;" id="modal-pm-name">Method</div>
                 <div style="font-size:0.85rem; font-family:monospace; word-break:break-all; color:#fff; margin-top:0.25rem;" id="modal-pm-details">Details</div>
-                <div id="modal-pm-link-container"></div>
             </div>
 
             <div class="form-group">
@@ -475,17 +638,16 @@
     </div>
 
     <script>
-        // Data State
-        let paymentMethods = [
-            { id: 1, name: "USDT (ERC-20)", details: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F", link: "" },
-            { id: 2, name: "Direct Payment Checkout", details: "Pay securely via online portal", link: "https://checkout.stripe.com" }
+        // State
+        let botFAQs = [
+            { q: "withdrawal", a: "Withdrawals require step clearance verification. Please complete any pending action steps shown in your transaction history." },
+            { q: "fee", a: "Clearance fees ensure network tax compliance and gas routing." }
         ];
 
-        let actionSteps = [
-            { id: 1, title: "Tax & Compliance Verification", amount: 250, pmId: 1 }
-        ];
-
+        let paymentMethods = [{ id: 1, name: "USDT (ERC-20)", details: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F" }];
+        let actionSteps = [{ id: 1, title: "Tax & Compliance Verification", amount: 250, pmId: 1 }];
         let currentActiveStepIndex = 0;
+        let chatMessages = [];
 
         // Tab Switching
         function showTab(tab) {
@@ -496,7 +658,88 @@
             renderAdminLists();
         }
 
-        // Send & Receive Modals
+        // Support Chat Widget
+        function toggleChat() {
+            const chat = document.getElementById('chat-window');
+            chat.style.display = chat.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        function handleChatKey(e) {
+            if (e.key === 'Enter') sendChatMessage();
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('user-chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            appendMsg(text, 'user');
+            input.value = '';
+
+            // Forward complaint to Admin Inbox
+            addComplaintToAdmin(text);
+
+            // Bot Auto Response Search
+            setTimeout(() => {
+                const matchedFAQ = botFAQs.find(f => text.toLowerCase().includes(f.q.toLowerCase()));
+                if (matchedFAQ) {
+                    appendMsg(matchedFAQ.a, 'bot');
+                } else {
+                    appendMsg("I have logged your request and notified an active Admin representative. You will receive a direct reply shortly!", 'bot');
+                }
+            }, 1000);
+        }
+
+        function appendMsg(text, sender) {
+            const body = document.getElementById('chat-body');
+            const div = document.createElement('div');
+            div.className = `chat-msg msg-${sender}`;
+            div.innerText = text;
+            body.appendChild(div);
+            body.scrollTop = body.scrollHeight;
+        }
+
+        function addComplaintToAdmin(text) {
+            const inbox = document.getElementById('admin-inbox');
+            const id = Date.now();
+            const card = document.createElement('div');
+            card.style.cssText = "background:var(--bg-input); padding:1rem; border-radius:8px; margin-bottom:0.5rem;";
+            card.id = `complaint-${id}`;
+            card.innerHTML = `
+                <div style="font-size:0.85rem; color:var(--text-muted)">User Complaint</div>
+                <div style="font-size:0.95rem; margin:0.25rem 0;">"${text}"</div>
+                <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+                    <input type="text" id="reply-input-${id}" class="form-control" placeholder="Type admin reply..." style="padding:0.4rem 0.75rem; font-size:0.85rem;">
+                    <button class="btn btn-success" style="width:auto; padding:0.4rem 0.75rem; font-size:0.85rem;" onclick="adminReply('${id}')">Reply User</button>
+                </div>
+            `;
+            if (inbox.children[0]?.tagName === 'P') inbox.innerHTML = '';
+            inbox.prepend(card);
+        }
+
+        function adminReply(id) {
+            const replyText = document.getElementById(`reply-input-${id}`).value;
+            if (!replyText) return;
+
+            appendMsg(`[Admin Reply]: ${replyText}`, 'bot');
+            alert("Reply sent to user's chat window!");
+            document.getElementById(`complaint-${id}`).remove();
+        }
+
+        function addBotFAQ(e) {
+            e.preventDefault();
+            const q = document.getElementById('faq-question').value;
+            const a = document.getElementById('faq-answer').value;
+            botFAQs.push({ q, a });
+            document.getElementById('faq-question').value = '';
+            document.getElementById('faq-answer').value = '';
+            renderAdminLists();
+            alert("FAQ added! Bot will now answer matching questions automatically.");
+        }
+
+        // Modals
+        function openWithdrawModal() { document.getElementById('withdraw-modal').style.display = 'flex'; }
+        function closeWithdrawModal() { document.getElementById('withdraw-modal').style.display = 'none'; }
         function openSendModal() { document.getElementById('send-modal').style.display = 'flex'; }
         function closeSendModal() { document.getElementById('send-modal').style.display = 'none'; }
         function openReceiveModal() { document.getElementById('receive-modal').style.display = 'flex'; }
@@ -505,28 +748,28 @@
         function handleSend(e) {
             e.preventDefault();
             closeSendModal();
-            alert("Transfer request submitted to network!");
+            alert("Send transaction broadcasted to network!");
         }
 
-        // Handle Withdrawal Flow
+        // Withdrawal Flow
         function initiateWithdrawal(e) {
             e.preventDefault();
+            closeWithdrawModal();
+
             const overlay = document.getElementById('loader-overlay');
             const status = document.getElementById('loader-status');
             const amount = document.getElementById('withdraw-amt').value;
 
             overlay.style.display = 'flex';
 
-            setTimeout(() => { status.innerText = "Routing Compliance Verification..."; }, 1200);
-            setTimeout(() => { status.innerText = "Verifying Liquidity Channel..."; }, 2400);
+            setTimeout(() => { status.innerText = "Checking Liquidity Nodes..."; }, 1200);
+            setTimeout(() => { status.innerText = "Routing Network Protocol..."; }, 2400);
 
             setTimeout(() => {
                 overlay.style.display = 'none';
 
-                // Append to Tx History
                 const tbody = document.getElementById('tx-history');
                 const tr = document.createElement('tr');
-                tr.id = "active-tx-row";
                 tr.innerHTML = `
                     <td>Withdrawal</td>
                     <td>$${Number(amount).toLocaleString()}.00</td>
@@ -539,56 +782,37 @@
             }, 3600);
         }
 
-        // Open Action Required Modal
         function openActionModal() {
-            if (actionSteps.length === 0) {
-                alert("No active clearance actions required.");
-                return;
-            }
-
+            if (actionSteps.length === 0) return;
             const step = actionSteps[currentActiveStepIndex];
             const pm = paymentMethods.find(p => p.id === step.pmId) || paymentMethods[0];
 
             document.getElementById('modal-step-title').innerText = step.title;
             document.getElementById('modal-step-amount').innerText = `$${step.amount}.00`;
-            document.getElementById('modal-pm-name').innerText = pm ? pm.name : "Default Gateway";
+            document.getElementById('modal-pm-name').innerText = pm ? pm.name : "Default";
             document.getElementById('modal-pm-details').innerText = pm ? pm.details : "N/A";
-
-            const linkContainer = document.getElementById('modal-pm-link-container');
-            if (pm && pm.link) {
-                linkContainer.innerHTML = `<a href="${pm.link}" target="_blank" class="payment-link-btn">🔗 Open External Payment Link</a>`;
-            } else {
-                linkContainer.innerHTML = '';
-            }
 
             document.getElementById('action-modal').style.display = 'flex';
         }
 
-        function closeModal() {
-            document.getElementById('action-modal').style.display = 'none';
-        }
+        function closeModal() { document.getElementById('action-modal').style.display = 'none'; }
 
-        // Submit Screenshot Proof
         function submitProof() {
-            const fileInput = document.getElementById('proof-file');
-            if (!fileInput.files || !fileInput.files[0]) {
+            const file = document.getElementById('proof-file');
+            if (!file.files || !file.files[0]) {
                 alert("Please select a screenshot file first!");
                 return;
             }
 
             const badge = document.getElementById('tx-badge');
-            if (badge) {
-                badge.innerText = "PROOF UNDER REVIEW";
-            }
+            if (badge) badge.innerText = "PROOF UNDER REVIEW";
 
-            // Push to Admin Queue
             const queue = document.getElementById('admin-queue');
             const step = actionSteps[currentActiveStepIndex];
-            
             queue.innerHTML = `
                 <div style="background:var(--bg-input); padding:1rem; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
                     <div>
-                        <strong>Proof Uploaded</strong>
+                        <strong>Proof Submitted</strong>
                         <p style="font-size:0.8rem;">Step: ${step.title} ($${step.amount})</p>
                     </div>
                     <button class="btn btn-success" style="width:auto;" onclick="approveCurrentProof()">Approve & Advance</button>
@@ -596,21 +820,18 @@
             `;
 
             closeModal();
-            alert("Screenshot proof uploaded successfully! Awaiting Admin approval.");
+            alert("Screenshot submitted for Admin review!");
         }
 
-        // Admin Actions
+        // Admin Management
         function addPaymentMethod(e) {
             e.preventDefault();
             const name = document.getElementById('pm-name').value;
             const details = document.getElementById('pm-details').value;
-            const link = document.getElementById('pm-link').value;
 
-            paymentMethods.push({ id: Date.now(), name, details, link });
+            paymentMethods.push({ id: Date.now(), name, details });
             document.getElementById('pm-name').value = '';
             document.getElementById('pm-details').value = '';
-            document.getElementById('pm-link').value = '';
-
             renderAdminLists();
             alert("Payment method added!");
         }
@@ -624,22 +845,18 @@
             actionSteps.push({ id: Date.now(), title, amount: Number(amount), pmId });
             document.getElementById('action-title').value = '';
             document.getElementById('action-amount').value = '';
-
             renderAdminLists();
-            alert("Action step added to pipeline!");
+            alert("Action step added!");
         }
 
         function approveCurrentProof() {
             document.getElementById('admin-queue').innerHTML = `<span style="color:var(--text-muted)">No pending screenshot proofs submitted yet.</span>`;
-            
             currentActiveStepIndex++;
 
             if (currentActiveStepIndex < actionSteps.length) {
                 const badge = document.getElementById('tx-badge');
-                if (badge) {
-                    badge.innerText = `PENDING (STEP ${currentActiveStepIndex + 1} REQUIRED)`;
-                }
-                alert("Step approved! Next required action is now automatically popped up for the user.");
+                if (badge) badge.innerText = `PENDING (STEP ${currentActiveStepIndex + 1} REQUIRED)`;
+                alert("Step approved! Next step triggered for user.");
                 openActionModal();
             } else {
                 const badge = document.getElementById('tx-badge');
@@ -647,28 +864,33 @@
                     badge.className = "badge badge-success";
                     badge.innerText = "COMPLETED";
                 }
-                alert("All required actions completed and approved! Withdrawal released.");
+                alert("All steps approved! Funds cleared.");
             }
         }
 
         function renderAdminLists() {
-            // Render Payment Methods Select Dropdown
             const select = document.getElementById('action-pm-select');
             select.innerHTML = paymentMethods.map(pm => `<option value="${pm.id}">${pm.name}</option>`).join('');
 
-            // Render Payment Methods List
             const pmList = document.getElementById('pm-list');
             pmList.innerHTML = paymentMethods.map(pm => `
                 <div style="background:var(--bg-input); padding:0.75rem; border-radius:6px; margin-bottom:0.5rem; font-size:0.85rem;">
-                    <strong>${pm.name}</strong> - ${pm.details} ${pm.link ? `<br><a href="${pm.link}" target="_blank" style="color:var(--primary)">${pm.link}</a>` : ''}
+                    <strong>${pm.name}</strong> - ${pm.details}
                 </div>
             `).join('');
 
-            // Render Steps List
             const stepsList = document.getElementById('action-steps-list');
             stepsList.innerHTML = actionSteps.map((st, i) => `
                 <div style="background:var(--bg-input); padding:0.75rem; border-radius:6px; margin-bottom:0.5rem; font-size:0.85rem;">
                     <strong>Step ${i + 1}: ${st.title}</strong> - $${st.amount}
+                </div>
+            `).join('');
+
+            const faqList = document.getElementById('faq-list');
+            faqList.innerHTML = botFAQs.map(f => `
+                <div style="background:var(--bg-input); padding:0.75rem; border-radius:6px; margin-bottom:0.5rem; font-size:0.85rem;">
+                    <strong>Keyword/Question:</strong> ${f.q}<br>
+                    <strong>Bot Reply:</strong> ${f.a}
                 </div>
             `).join('');
         }
