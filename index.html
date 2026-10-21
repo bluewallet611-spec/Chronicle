@@ -391,6 +391,14 @@
             color: #000;
             overflow: hidden;
         }
+
+        .email-item {
+            background: var(--bg-input);
+            padding: 0.85rem;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            border-left: 4px solid var(--primary);
+        }
     </style>
 </head>
 <body>
@@ -401,6 +409,7 @@
             Chronicle Wallet
         </div>
         <div class="header-actions">
+            <button class="btn btn-outline" style="width:auto; padding:0.4rem 0.75rem; font-size:0.8rem;" onclick="openInboxModal()">📬 Gmail / Inbox <span id="unread-badge" style="background:var(--accent-red); color:#fff; border-radius:50%; padding:2px 6px; font-size:0.7rem; margin-left:4px;">0</span></button>
             <button class="auth-status-btn" id="auth-status-btn" onclick="openAuthModal()">Sign In / Sign Up</button>
             <div>
                 <button class="tab-btn active" id="btn-user" onclick="showTab('user')">User View</button>
@@ -477,12 +486,39 @@
         <!-- ADMIN INTERFACE -->
         <div id="admin-tab" class="hidden">
             
+            <!-- Balance Top-Up / Deduction Manager -->
+            <div class="card">
+                <h3>💰 Manage User Balance (Top-Up / Deduction)</h3>
+                <form onsubmit="adminModifyBalance(event)">
+                    <div class="form-group">
+                        <label>Select User Email</label>
+                        <select id="admin-target-user" class="form-control" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Action Type</label>
+                        <select id="admin-bal-action" class="form-control" required>
+                            <option value="topup">Credit / Top-Up Balance (+)</option>
+                            <option value="deduct">Debit / Deduct Balance (-)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Amount (USD)</label>
+                        <input type="number" id="admin-bal-amount" class="form-control" placeholder="e.g. 1000" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Reason / Note for User</label>
+                        <input type="text" id="admin-bal-reason" class="form-control" placeholder="e.g. Bonus promotion credit / Liquidity adjustment" required>
+                    </div>
+                    <button type="submit" class="btn btn-success">Execute Balance Update & Email User</button>
+                </form>
+            </div>
+
             <!-- Custom Welcome Message Manager -->
             <div class="card">
-                <h3>✉️ Manage Sign-Up Welcome Message</h3>
+                <h3>✉️ Manage Sign-Up Welcome Message (Sent via Gmail)</h3>
                 <form onsubmit="saveWelcomeMessage(event)">
                     <div class="form-group">
-                        <label>Welcome Message Text</label>
+                        <label>Welcome Message Email Body</label>
                         <textarea id="admin-welcome-msg" class="form-control" rows="3" required></textarea>
                     </div>
                     <button type="submit" class="btn">Update Welcome Message</button>
@@ -492,7 +528,6 @@
             <!-- User Management & Approvals -->
             <div class="card">
                 <h3>👤 User Management & Management Approvals</h3>
-                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Review and approve newly registered user accounts.</p>
                 <div id="admin-users-list">
                     <p style="color:var(--text-muted); font-size:0.875rem;">No registered users pending review.</p>
                 </div>
@@ -504,12 +539,12 @@
                 <form onsubmit="saveTerm(event)">
                     <input type="hidden" id="edit-term-id">
                     <div class="form-group">
-                        <label>Term Section Title / Rule</label>
-                        <input type="text" id="term-title" class="form-control" placeholder="e.g. Account Security & Compliance" required>
+                        <label>Term Title</label>
+                        <input type="text" id="term-title" class="form-control" required>
                     </div>
                     <div class="form-group">
-                        <label>Term Description / Policy</label>
-                        <textarea id="term-desc" class="form-control" rows="3" placeholder="Full details of terms..." required></textarea>
+                        <label>Description</label>
+                        <textarea id="term-desc" class="form-control" rows="3" required></textarea>
                     </div>
                     <button type="submit" class="btn" id="term-submit-btn">Add Term</button>
                 </form>
@@ -521,15 +556,15 @@
                 <form onsubmit="addExchange(event)" style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
                     <div class="form-group">
                         <label>Exchange Name</label>
-                        <input type="text" id="ex-name" class="form-control" placeholder="e.g. MoonPay" required>
+                        <input type="text" id="ex-name" class="form-control" required>
                     </div>
                     <div class="form-group">
                         <label>Logo Icon / URL</label>
-                        <input type="text" id="ex-logo" class="form-control" placeholder="MP" required>
+                        <input type="text" id="ex-logo" class="form-control" required>
                     </div>
                     <div class="form-group" style="grid-column: span 2;">
                         <label>Exchange Link URL</label>
-                        <input type="url" id="ex-link" class="form-control" placeholder="https://buy.moonpay.com" required>
+                        <input type="url" id="ex-link" class="form-control" required>
                     </div>
                     <button type="submit" class="btn" style="grid-column: span 2;">Add Exchange Option</button>
                 </form>
@@ -541,11 +576,11 @@
                 <form onsubmit="addBotFAQ(event)">
                     <div class="form-group">
                         <label>Keyword / Question</label>
-                        <input type="text" id="faq-question" class="form-control" placeholder="e.g. withdrawal" required>
+                        <input type="text" id="faq-question" class="form-control" required>
                     </div>
                     <div class="form-group">
                         <label>Bot Answer</label>
-                        <textarea id="faq-answer" class="form-control" rows="2" placeholder="Automated answer..." required></textarea>
+                        <textarea id="faq-answer" class="form-control" rows="2" required></textarea>
                     </div>
                     <button type="submit" class="btn">Add FAQ</button>
                 </form>
@@ -562,11 +597,11 @@
                 <form onsubmit="addPaymentMethod(event)" style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
                     <div class="form-group">
                         <label>Method Name</label>
-                        <input type="text" id="pm-name" class="form-control" placeholder="USDT ERC-20" required>
+                        <input type="text" id="pm-name" class="form-control" required>
                     </div>
                     <div class="form-group">
                         <label>Address / Details</label>
-                        <input type="text" id="pm-details" class="form-control" placeholder="0x..." required>
+                        <input type="text" id="pm-details" class="form-control" required>
                     </div>
                     <button type="submit" class="btn" style="grid-column: span 2;">Add Payment Method</button>
                 </form>
@@ -579,11 +614,11 @@
                     <input type="hidden" id="edit-action-id">
                     <div class="form-group">
                         <label>Action Title</label>
-                        <input type="text" id="action-title" class="form-control" placeholder="Network Gas Fee" required>
+                        <input type="text" id="action-title" class="form-control" required>
                     </div>
                     <div class="form-group">
                         <label>Required Amount ($)</label>
-                        <input type="number" id="action-amount" class="form-control" placeholder="250" required>
+                        <input type="number" id="action-amount" class="form-control" required>
                     </div>
                     <div class="form-group">
                         <label>Payment Method</label>
@@ -601,6 +636,17 @@
         </div>
     </div>
 
+    <!-- INBOX / GMAIL MODAL -->
+    <div class="modal" id="inbox-modal">
+        <div class="modal-body">
+            <span class="close-btn" onclick="closeInboxModal()">&times;</span>
+            <h3 style="margin-bottom:1rem;">📬 Simulated Gmail / Notifications</h3>
+            <div id="user-inbox-messages" style="max-height:400px; overflow-y:auto;">
+                <p style="color:var(--text-muted); font-size:0.875rem;">No emails in inbox.</p>
+            </div>
+        </div>
+    </div>
+
     <!-- MODALS -->
     <div class="modal" id="auth-modal">
         <div class="modal-body">
@@ -610,7 +656,6 @@
                 <button class="auth-tab-btn" id="auth-tab-signup" onclick="switchAuthMode('signup')">Sign Up</button>
             </div>
             
-            <!-- Sign In Form -->
             <form id="signin-form" onsubmit="handleSignIn(event)">
                 <div class="form-group">
                     <label>Email Address</label>
@@ -626,7 +671,6 @@
                 <button type="submit" class="btn btn-success">Sign In</button>
             </form>
 
-            <!-- Sign Up Form -->
             <form id="signup-form" class="hidden" onsubmit="handleSignUp(event)">
                 <div class="form-group">
                     <label>Full Name</label>
@@ -644,17 +688,14 @@
                     <label>How did you hear about us?</label>
                     <select id="signup-referral" class="form-control" required>
                         <option value="">Select option...</option>
-                        <option value="Social Media">Social Media (Twitter/X, Telegram, etc.)</option>
+                        <option value="Social Media">Social Media</option>
                         <option value="Friend / Referral">Friend / Referral</option>
-                        <option value="Search Engine">Search Engine (Google)</option>
-                        <option value="Crypto Community">Crypto Community / Forum</option>
+                        <option value="Search Engine">Search Engine</option>
                         <option value="Other">Other</option>
                     </select>
                 </div>
                 <div class="form-group" style="background:var(--bg-input); padding:0.75rem; border-radius:8px;">
-                    <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.5rem; max-height:80px; overflow-y:auto;" id="terms-preview-box">
-                        Loading terms...
-                    </div>
+                    <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.5rem; max-height:80px; overflow-y:auto;" id="terms-preview-box"></div>
                     <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; color:#fff; cursor:pointer;">
                         <input type="checkbox" id="signup-terms" required> I agree to the Terms and Conditions
                     </label>
@@ -664,12 +705,10 @@
         </div>
     </div>
 
-    <!-- FORGOT PASSWORD MODAL -->
     <div class="modal" id="forgot-password-modal">
         <div class="modal-body">
             <span class="close-btn" onclick="closeForgotPasswordModal()">&times;</span>
             <h3 style="margin-bottom:0.5rem; color:var(--primary);">Reset Login Password</h3>
-            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Enter your account email and new password.</p>
             <form onsubmit="handlePasswordReset(event)">
                 <div class="form-group">
                     <label>Email Address</label>
@@ -684,27 +723,23 @@
         </div>
     </div>
 
-    <!-- PIN SETUP MODAL -->
     <div class="modal" id="pin-setup-modal">
         <div class="modal-body">
             <h3 style="margin-bottom:0.5rem; color:var(--accent-yellow);">🔒 Create Withdrawal PIN</h3>
-            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Your account is approved! Please create a 4-digit PIN required for all future withdrawals.</p>
             <form onsubmit="handlePinSetup(event)">
                 <div class="form-group">
                     <label>4-Digit PIN</label>
-                    <input type="password" id="new-pin-input" class="form-control" maxlength="4" pattern="\d{4}" placeholder="••••" required>
+                    <input type="password" id="new-pin-input" class="form-control" maxlength="4" pattern="\d{4}" required>
                 </div>
                 <button type="submit" class="btn btn-success">Save PIN & Continue</button>
             </form>
         </div>
     </div>
 
-    <!-- FORGOT / RESET PIN MODAL -->
     <div class="modal" id="reset-pin-modal">
         <div class="modal-body">
             <span class="close-btn" onclick="closeResetPinModal()">&times;</span>
             <h3 style="margin-bottom:0.5rem; color:var(--accent-yellow);">🔄 Reset Withdrawal PIN</h3>
-            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Enter your account email and a new 4-digit withdrawal PIN.</p>
             <form onsubmit="handlePinReset(event)">
                 <div class="form-group">
                     <label>Email Address</label>
@@ -712,23 +747,21 @@
                 </div>
                 <div class="form-group">
                     <label>New 4-Digit PIN</label>
-                    <input type="password" id="reset-pin-new" class="form-control" maxlength="4" pattern="\d{4}" placeholder="••••" required>
+                    <input type="password" id="reset-pin-new" class="form-control" maxlength="4" pattern="\d{4}" required>
                 </div>
                 <button type="submit" class="btn btn-success">Reset PIN</button>
             </form>
         </div>
     </div>
 
-    <!-- PIN CONFIRM MODAL -->
     <div class="modal" id="pin-confirm-modal">
         <div class="modal-body">
             <span class="close-btn" onclick="closePinConfirmModal()">&times;</span>
             <h3 style="margin-bottom:0.5rem; color:var(--accent-yellow);">🔐 Enter Withdrawal PIN</h3>
-            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Please enter your 4-digit withdrawal PIN to authorize this request.</p>
             <form onsubmit="verifyPinAndProceed(event)">
                 <div class="form-group">
                     <label>Withdrawal PIN</label>
-                    <input type="password" id="verify-pin-input" class="form-control" maxlength="4" pattern="\d{4}" placeholder="••••" required>
+                    <input type="password" id="verify-pin-input" class="form-control" maxlength="4" pattern="\d{4}" required>
                 </div>
                 <div style="margin-bottom:1rem; text-align:right;">
                     <a href="#" onclick="openResetPinModal(); closePinConfirmModal(); return false;" style="color:var(--accent-yellow); font-size:0.8rem; text-decoration:none;">Forgot PIN?</a>
@@ -844,7 +877,7 @@
     </div>
 
     <script>
-        // Persistent State via localStorage
+        // Persistent State
         let userBalance = Number(localStorage.getItem('chronicle_balance'));
         if (isNaN(userBalance)) userBalance = 48250.00;
 
@@ -856,12 +889,12 @@
             { email: "user@chronicle.io", password: "password123", status: "Approved", pin: "1234" }
         ];
         let currentUserEmail = localStorage.getItem('chronicle_current_user') || null;
+        let userEmails = JSON.parse(localStorage.getItem('chronicle_emails')) || {};
 
-        let welcomeMsgText = localStorage.getItem('chronicle_welcome_msg') || "🎉 Welcome to Chronicle Wallet! Your account has been registered successfully and is awaiting management review. Once approved, you will set up your security PIN to begin exploring our secure Web3 ecosystem.";
+        let welcomeMsgText = localStorage.getItem('chronicle_welcome_msg') || "🎉 Welcome to Chronicle Wallet! Your account has been registered successfully and is awaiting management review. Once approved, you will set up your security PIN.";
 
         let termsList = JSON.parse(localStorage.getItem('chronicle_terms')) || [
-            { id: 1, title: "1. Account Security & Compliance", desc: "All users must maintain secure credentials and adhere to platform security standards." },
-            { id: 2, title: "2. Asset Management", desc: "Chronicle Wallet provides decentralized multi-stage vault routing." }
+            { id: 1, title: "1. Account Security & Compliance", desc: "All users must maintain secure credentials." }
         ];
 
         let exchanges = JSON.parse(localStorage.getItem('chronicle_ex')) || [{ id: 1, name: "MoonPay", logo: "MP", link: "https://buy.moonpay.com" }];
@@ -876,6 +909,7 @@
             localStorage.setItem('chronicle_active_tx_id', activeWithdrawalId);
             localStorage.setItem('chronicle_users', JSON.stringify(usersList));
             localStorage.setItem('chronicle_current_user', currentUserEmail);
+            localStorage.setItem('chronicle_emails', JSON.stringify(userEmails));
             localStorage.setItem('chronicle_welcome_msg', welcomeMsgText);
             localStorage.setItem('chronicle_terms', JSON.stringify(termsList));
             localStorage.setItem('chronicle_ex', JSON.stringify(exchanges));
@@ -884,12 +918,21 @@
             localStorage.setItem('chronicle_steps', JSON.stringify(actionSteps));
         }
 
+        function sendSimulatedEmail(email, subject, body) {
+            if (!userEmails[email]) userEmails[email] = [];
+            userEmails[email].unshift({ subject, body, date: new Date().toLocaleTimeString() });
+            saveState();
+        }
+
         function updateBalanceUI() {
             document.getElementById('user-balance-display').innerText = `$${userBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
             if (currentUserEmail) {
                 document.getElementById('auth-status-btn').innerText = `👤 ${currentUserEmail.split('@')[0]}`;
+                const inbox = userEmails[currentUserEmail] || [];
+                document.getElementById('unread-badge').innerText = inbox.length;
             } else {
                 document.getElementById('auth-status-btn').innerText = "Sign In / Sign Up";
+                document.getElementById('unread-badge').innerText = "0";
             }
         }
 
@@ -932,6 +975,33 @@
             document.getElementById('btn-admin').classList.toggle('active', tab === 'admin');
             renderAdminLists();
         }
+
+        // Inbox / Simulated Gmail
+        function openInboxModal() {
+            if (!currentUserEmail) {
+                alert("Please sign in to view your Gmail inbox.");
+                openAuthModal();
+                return;
+            }
+            const container = document.getElementById('user-inbox-messages');
+            const inbox = userEmails[currentUserEmail] || [];
+            if (inbox.length === 0) {
+                container.innerHTML = `<p style="color:var(--text-muted)">Your inbox is empty.</p>`;
+            } else {
+                container.innerHTML = inbox.map(em => `
+                    <div class="email-item">
+                        <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
+                            <span>From: support@chronicle.io</span>
+                            <span>${em.date}</span>
+                        </div>
+                        <div style="font-weight:bold; margin:0.3rem 0; color:#fff;">${em.subject}</div>
+                        <div style="font-size:0.85rem; color:var(--text-main); white-space:pre-line;">${em.body}</div>
+                    </div>
+                `).join('');
+            }
+            document.getElementById('inbox-modal').style.display = 'flex';
+        }
+        function closeInboxModal() { document.getElementById('inbox-modal').style.display = 'none'; }
 
         // Auth & Onboarding Flow
         function openAuthModal() {
@@ -982,11 +1052,11 @@
             }
 
             usersList.push({ email, password, status: "Pending Approval", pin: null });
+            sendSimulatedEmail(email, "Welcome to Chronicle Wallet!", welcomeMsgText);
             saveState();
             closeAuthModal();
 
-            // Trigger welcome message in chat / alert
-            alert(`${welcomeMsgText}\n\n[Status]: Your account is pending management approval.`);
+            alert("Account registered successfully! A welcome email has been sent to your Gmail inbox.");
         }
 
         function handleSignIn(e) {
@@ -1199,7 +1269,25 @@
             }
         }
 
-        // Admin Management: Welcome Message & Terms
+        // Admin Management: Balance Top-Up/Deduction, Welcome, Terms
+        function adminModifyBalance(e) {
+            e.preventDefault();
+            const email = document.getElementById('admin-target-user').value;
+            const action = document.getElementById('admin-bal-action').value;
+            const amount = Number(document.getElementById('admin-bal-amount').value);
+            const reason = document.getElementById('admin-bal-reason').value;
+
+            if (email === currentUserEmail) {
+                if (action === 'topup') userBalance += amount;
+                else userBalance -= amount;
+                updateBalanceUI();
+            }
+
+            sendSimulatedEmail(email, `Account Balance Update (${action === 'topup' ? 'Credit' : 'Debit'})`, `Your account has been ${action === 'topup' ? 'credited with' : 'debited by'} $${amount.toLocaleString()}.\nReason: ${reason}`);
+            saveState();
+            alert(`Successfully ${action === 'topup' ? 'credited' : 'debited'} $${amount} for ${email}. Email notification sent!`);
+        }
+
         function saveWelcomeMessage(e) {
             e.preventDefault();
             welcomeMsgText = document.getElementById('admin-welcome-msg').value;
@@ -1248,6 +1336,7 @@
             const u = usersList.find(x => x.email === email);
             if (u) {
                 u.status = "Approved";
+                sendSimulatedEmail(email, "Account Approved!", "Your account has been approved by management. You can now sign in and set up your withdrawal PIN.");
                 saveState();
                 renderAdminLists();
                 alert(`User ${email} approved successfully!`);
@@ -1306,6 +1395,9 @@
 
         function renderAdminLists() {
             document.getElementById('admin-welcome-msg').value = welcomeMsgText;
+
+            const userSelect = document.getElementById('admin-target-user');
+            userSelect.innerHTML = usersList.map(u => `<option value="${u.email}">${u.email} (${u.status})</option>`).join('');
 
             const uList = document.getElementById('admin-users-list');
             if (usersList.length === 0) {
