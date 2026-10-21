@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chronicle Wallet - Decentralized Crypto Hub</title>
+    <title>Chronicle Wallet - Web3 Vault</title>
     <style>
         :root {
-            --bg-dark: #0b0e14;
-            --bg-card: #151a23;
-            --bg-hover: #1f2633;
+            --bg-dark: #0a0d14;
+            --bg-card: #121824;
+            --bg-input: #1a2232;
             --primary: #6366f1;
             --primary-hover: #4f46e5;
             --accent-green: #10b981;
@@ -16,14 +16,14 @@
             --accent-yellow: #f59e0b;
             --text-main: #f3f4f6;
             --text-muted: #9ca3af;
-            --border: #2d3748;
+            --border: #242f42;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
         body {
@@ -34,7 +34,6 @@
             flex-direction: column;
         }
 
-        /* Header Navigation */
         header {
             background-color: var(--bg-card);
             border-bottom: 1px solid var(--border);
@@ -44,19 +43,18 @@
             align-items: center;
         }
 
-        .logo-group {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
+        .logo {
             font-size: 1.25rem;
             font-weight: 700;
-            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .logo-icon {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, #6366f1, #a855f7);
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary), #a855f7);
             border-radius: 8px;
             display: flex;
             align-items: center;
@@ -64,37 +62,27 @@
             font-weight: bold;
         }
 
-        .role-switcher {
-            display: flex;
-            background-color: var(--bg-dark);
-            padding: 4px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-        }
-
-        .role-btn {
-            padding: 6px 16px;
-            border-radius: 6px;
-            border: none;
+        .tab-btn {
             background: transparent;
+            border: 1px solid var(--border);
             color: var(--text-muted);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
             cursor: pointer;
             font-weight: 600;
-            transition: all 0.2s;
         }
 
-        .role-btn.active {
+        .tab-btn.active {
             background-color: var(--primary);
             color: white;
+            border-color: var(--primary);
         }
 
-        /* Container Layout */
         .container {
-            max-width: 1100px;
+            max-width: 1000px;
             width: 100%;
             margin: 2rem auto;
             padding: 0 1rem;
-            flex-grow: 1;
         }
 
         .grid {
@@ -104,83 +92,32 @@
         }
 
         @media (max-width: 768px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
+            .grid { grid-template-columns: 1fr; }
         }
 
-        /* Card Components */
         .card {
             background-color: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 1.5rem;
+            margin-bottom: 1.5rem;
         }
 
-        .card-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        /* Balance Display */
-        .balance-value {
-            font-size: 2.2rem;
-            font-weight: 700;
-            margin: 0.5rem 0;
-            color: #fff;
-        }
-
-        .sub-text {
-            color: var(--text-muted);
-            font-size: 0.875rem;
-        }
-
-        /* Action Buttons */
-        .btn {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.25rem;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-            width: 100%;
-            text-align: center;
-        }
-
-        .btn:hover {
-            background-color: var(--primary-hover);
-        }
-
-        .btn-success {
-            background-color: var(--accent-green);
-        }
-
-        .btn-success:hover {
-            background-color: #059669;
-        }
-
-        /* Form Inputs */
         .form-group {
-            margin-bottom: 1.2rem;
+            margin-bottom: 1rem;
         }
 
         .form-group label {
             display: block;
             margin-bottom: 0.5rem;
-            font-size: 0.875rem;
             color: var(--text-muted);
+            font-size: 0.875rem;
         }
 
         .form-control {
             width: 100%;
             padding: 0.75rem 1rem;
-            background-color: var(--bg-dark);
+            background-color: var(--bg-input);
             border: 1px solid var(--border);
             border-radius: 8px;
             color: white;
@@ -192,7 +129,21 @@
             border-color: var(--primary);
         }
 
-        /* History Table */
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .btn:hover { background-color: var(--primary-hover); }
+
+        .btn-success { background-color: var(--accent-green); }
+
         .table {
             width: 100%;
             border-collapse: collapse;
@@ -206,11 +157,6 @@
             font-size: 0.875rem;
         }
 
-        .table th {
-            color: var(--text-muted);
-            font-weight: 600;
-        }
-
         .badge {
             padding: 4px 8px;
             border-radius: 4px;
@@ -218,7 +164,7 @@
             font-weight: 600;
         }
 
-        .badge-warning {
+        .badge-pending {
             background: rgba(245, 158, 11, 0.2);
             color: var(--accent-yellow);
             border: 1px solid var(--accent-yellow);
@@ -230,14 +176,12 @@
             border: 1px solid var(--accent-green);
         }
 
-        /* Rolling Overlay Loader */
+        /* Rolling Overlay */
         .overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(11, 14, 20, 0.95);
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(10, 13, 20, 0.95);
             display: none;
             flex-direction: column;
             align-items: center;
@@ -245,14 +189,14 @@
             z-index: 1000;
         }
 
-        .spinner-ring {
-            width: 80px;
-            height: 80px;
+        .spinner {
+            width: 70px;
+            height: 70px;
             border: 6px solid var(--border);
             border-top: 6px solid var(--primary);
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
 
         @keyframes spin {
@@ -260,14 +204,12 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Modal Box */
+        /* Modal */
         .modal {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.8);
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
             display: none;
             align-items: center;
             justify-content: center;
@@ -275,74 +217,89 @@
             padding: 1rem;
         }
 
-        .modal-content {
+        .modal-body {
             background-color: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 12px;
-            max-width: 500px;
+            max-width: 520px;
             width: 100%;
-            padding: 2rem;
+            padding: 1.5rem;
             position: relative;
         }
 
-        .modal-close {
+        .close-btn {
             position: absolute;
             top: 1rem;
             right: 1rem;
             color: var(--text-muted);
             cursor: pointer;
-            font-size: 1.2rem;
+            font-size: 1.25rem;
         }
 
         .hidden { display: none !important; }
+
+        .payment-box {
+            background: var(--bg-input);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin: 1rem 0;
+        }
+
+        .payment-link-btn {
+            display: inline-block;
+            background: #2563eb;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.875rem;
+            margin-top: 8px;
+        }
     </style>
 </head>
 <body>
 
-    <!-- Header Navigation -->
     <header>
-        <div class="logo-group">
+        <div class="logo">
             <div class="logo-icon">C</div>
-            <span>Chronicle Wallet</span>
+            Chronicle Wallet
         </div>
-        <div class="role-switcher">
-            <button class="role-btn active" onclick="switchView('user')">User View</button>
-            <button class="role-btn" onclick="switchView('admin')">Admin Panel</button>
+        <div>
+            <button class="tab-btn active" id="btn-user" onclick="showTab('user')">User View</button>
+            <button class="tab-btn" id="btn-admin" onclick="showTab('admin')">Admin Panel</button>
         </div>
     </header>
 
     <div class="container">
         
-        <!-- USER VIEW -->
-        <div id="user-view">
+        <!-- USER INTERFACE -->
+        <div id="user-tab">
             <div class="grid">
-                <!-- Balance Summary -->
                 <div class="card">
-                    <div class="card-title">Available Balance</div>
-                    <div class="balance-value">$48,250.00</div>
-                    <div class="sub-text">1.2485 BTC • 14.2 ETH</div>
+                    <h3 style="margin-bottom:0.5rem">Available Balance</h3>
+                    <h1 style="font-size:2.2rem; color:#fff;">$48,250.00</h1>
+                    <p style="color:var(--text-muted); font-size:0.875rem; margin-top:0.25rem;">1.2485 BTC • 14.2 ETH</p>
                 </div>
 
-                <!-- Withdrawal Card -->
                 <div class="card">
-                    <div class="card-title">Withdraw Funds</div>
-                    <form id="withdraw-form" onsubmit="handleWithdraw(event)">
+                    <h3 style="margin-bottom:1rem">Withdraw Funds</h3>
+                    <form onsubmit="initiateWithdrawal(event)">
                         <div class="form-group">
                             <label>Destination Address / Bank Account</label>
-                            <input type="text" class="form-control" placeholder="Enter BTC/ETH/Bank Details" required>
+                            <input type="text" class="form-control" placeholder="Enter Wallet Address or Bank Info" required>
                         </div>
                         <div class="form-group">
                             <label>Amount (USD)</label>
-                            <input type="number" class="form-control" placeholder="e.g. 5000" required>
+                            <input type="number" id="withdraw-amt" class="form-control" placeholder="e.g. 5000" required>
                         </div>
                         <button type="submit" class="btn">Confirm Withdrawal Request</button>
                     </form>
                 </div>
             </div>
 
-            <!-- Transaction History -->
-            <div class="card" style="margin-top: 1.5rem;">
-                <div class="card-title">Recent Transactions</div>
+            <div class="card">
+                <h3>Transaction History</h3>
                 <table class="table">
                     <thead>
                         <tr>
@@ -353,144 +310,184 @@
                         </tr>
                     </thead>
                     <tbody id="tx-history">
-                        <!-- Transactions dynamically added here -->
+                        <!-- Transactions appended dynamically -->
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- ADMIN PANEL VIEW -->
-        <div id="admin-view" class="hidden">
+        <!-- ADMIN INTERFACE -->
+        <div id="admin-tab" class="hidden">
+            
+            <!-- Payment Methods Manager -->
             <div class="card">
-                <div class="card-title">Admin Configuration: Step Pipeline</div>
-                <div class="form-group">
-                    <label>Action Step Title</label>
-                    <input type="text" id="admin-step-title" class="form-control" value="Gas Fee & Tax Clearance Verification">
-                </div>
-                <div class="form-group">
-                    <label>Required Amount ($)</label>
-                    <input type="number" id="admin-step-amount" class="form-control" value="250">
-                </div>
-                <div class="form-group">
-                    <label>Deposit Address / Account Details</label>
-                    <input type="text" id="admin-step-address" class="form-control" value="0x71C7656EC7ab88b098defB751B7401B5f6d8976F">
-                </div>
-                <button class="btn" onclick="saveAdminSettings()">Save Pipeline Configuration</button>
+                <h3>1. Manage Payment Methods & Payment Links</h3>
+                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Add dynamic payment options (Wallet addresses, bank details, or direct click-to-pay URLs).</p>
+                
+                <form onsubmit="addPaymentMethod(event)" style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                    <div class="form-group">
+                        <label>Method Name</label>
+                        <input type="text" id="pm-name" class="form-control" placeholder="e.g. USDT ERC-20 / Direct Checkout" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Payment Address / Details</label>
+                        <input type="text" id="pm-details" class="form-control" placeholder="e.g. Wallet Address or Bank Info" required>
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Direct Payment Link URL (Optional)</label>
+                        <input type="url" id="pm-link" class="form-control" placeholder="https://checkout.stripe.com/pay/... or PayPal link">
+                    </div>
+                    <button type="submit" class="btn" style="grid-column: span 2;">Add Payment Method</button>
+                </form>
+
+                <div style="margin-top:1rem;" id="pm-list"></div>
             </div>
 
-            <div class="card" style="margin-top: 1.5rem;">
-                <div class="card-title">Pending Screenshot Review Queue</div>
-                <div id="admin-queue">
-                    <p class="sub-text">No pending screenshot proofs submitted yet.</p>
+            <!-- Action Pipeline Builder -->
+            <div class="card">
+                <h3>2. Manage Required Actions (Pipeline Steps)</h3>
+                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Configure action steps users must complete sequentially after withdrawing.</p>
+
+                <form onsubmit="addActionStep(event)">
+                    <div class="form-group">
+                        <label>Action Title</label>
+                        <input type="text" id="action-title" class="form-control" placeholder="e.g. Network Gas Deposit" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Required Amount ($)</label>
+                        <input type="number" id="action-amount" class="form-control" placeholder="e.g. 250" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Assigned Payment Method</label>
+                        <select id="action-pm-select" class="form-control" required></select>
+                    </div>
+                    <button type="submit" class="btn">Add Action Step</button>
+                </form>
+
+                <div style="margin-top:1rem;" id="action-steps-list"></div>
+            </div>
+
+            <!-- Review Queue -->
+            <div class="card">
+                <h3>3. Submitted Screenshot Proofs</h3>
+                <div id="admin-queue" style="margin-top:0.5rem; color:var(--text-muted); font-size:0.875rem;">
+                    No pending screenshot proofs submitted yet.
                 </div>
             </div>
+
         </div>
 
     </div>
 
-    <!-- ROLLING SPINNER OVERLAY -->
-    <div class="overlay" id="loading-overlay">
-        <div class="spinner-ring"></div>
-        <h3 style="color:#fff;">Processing Withdrawal Request...</h3>
-        <p class="sub-text" id="loader-status" style="margin-top:0.5rem;">Connecting to Liquidity Node...</p>
+    <!-- ROLLING SPINNER -->
+    <div class="overlay" id="loader-overlay">
+        <div class="spinner"></div>
+        <h3 style="color:#fff;">Processing Withdrawal...</h3>
+        <p style="color:var(--text-muted); font-size:0.875rem; margin-top:0.5rem;" id="loader-status">Connecting to Liquidity Gateway...</p>
     </div>
 
-    <!-- ACTION REQUIRED POPUP MODAL -->
+    <!-- ACTION POPUP MODAL -->
     <div class="modal" id="action-modal">
-        <div class="modal-content">
-            <span class="modal-close" onclick="closeModal()">&times;</span>
-            <h3 style="color: var(--accent-yellow); margin-bottom: 0.5rem;">⚠️ Action Required</h3>
-            <p class="sub-text" id="modal-desc" style="margin-bottom: 1rem;">
-                To process your withdrawal, please complete the required network clearance fee payment.
-            </p>
-            
-            <div style="background: var(--bg-dark); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
-                <div style="font-size:0.875rem; color:var(--text-muted)">Required Amount</div>
-                <div style="font-size:1.4rem; font-weight:bold; color:#fff;" id="modal-amount">$250.00</div>
-                
-                <div style="font-size:0.875rem; color:var(--text-muted); margin-top:0.5rem;">Deposit Address</div>
-                <div style="font-size:0.85rem; font-family:monospace; word-break:break-all; color:var(--primary)" id="modal-address">
-                    0x71C7656EC7ab88b098defB751B7401B5f6d8976F
-                </div>
+        <div class="modal-body">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h3 style="color:var(--accent-yellow); margin-bottom:0.5rem;">⚠️ Pending Action Required</h3>
+            <p style="color:var(--text-muted); font-size:0.875rem;" id="modal-step-title">Action Step</p>
+
+            <div class="payment-box">
+                <div style="font-size:0.8rem; color:var(--text-muted);">Required Amount</div>
+                <div style="font-size:1.5rem; font-weight:bold; color:#fff;" id="modal-step-amount">$0.00</div>
+
+                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.75rem;">Payment Method & Details</div>
+                <div style="font-weight:600; color:var(--primary); margin-top:0.25rem;" id="modal-pm-name">Method</div>
+                <div style="font-size:0.85rem; font-family:monospace; word-break:break-all; color:#fff; margin-top:0.25rem;" id="modal-pm-details">Details</div>
+                <div id="modal-pm-link-container"></div>
             </div>
 
             <div class="form-group">
-                <label>Upload Screenshot Proof</label>
-                <input type="file" id="proof-input" class="form-control" accept="image/*">
+                <label>Upload Payment Screenshot Proof</label>
+                <input type="file" id="proof-file" class="form-control" accept="image/*">
             </div>
 
-            <button class="btn btn-success" onclick="submitProof()">Submit Proof for Approval</button>
+            <button class="btn btn-success" onclick="submitProof()">Upload Proof & Clear Action</button>
         </div>
     </div>
 
     <script>
-        // State
-        let pipelineStep = {
-            title: "Gas Fee & Tax Clearance Verification",
-            amount: "250",
-            address: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F"
-        };
-        
-        let pendingProof = null;
-        let lastTxAmount = 0;
+        // Data State
+        let paymentMethods = [
+            { id: 1, name: "USDT (ERC-20)", details: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F", link: "" },
+            { id: 2, name: "Direct Payment Checkout", details: "Pay securely via online portal", link: "https://checkout.stripe.com" }
+        ];
 
-        function switchView(view) {
-            const userView = document.getElementById('user-view');
-            const adminView = document.getElementById('admin-view');
-            const btns = document.querySelectorAll('.role-btn');
+        let actionSteps = [
+            { id: 1, title: "Tax & Compliance Verification", amount: 250, pmId: 1 }
+        ];
 
-            if (view === 'user') {
-                userView.classList.remove('hidden');
-                adminView.classList.add('hidden');
-                btns[0].classList.add('active');
-                btns[1].classList.remove('active');
-            } else {
-                userView.classList.add('hidden');
-                adminView.classList.remove('hidden');
-                btns[1].classList.add('active');
-                btns[0].classList.remove('active');
-            }
+        let currentActiveStepIndex = 0;
+        let submittedProofs = [];
+
+        // Tab Switching
+        function showTab(tab) {
+            document.getElementById('user-tab').classList.toggle('hidden', tab !== 'user');
+            document.getElementById('admin-tab').classList.toggle('hidden', tab !== 'admin');
+            document.getElementById('btn-user').classList.toggle('active', tab === 'user');
+            document.getElementById('btn-admin').classList.toggle('active', tab === 'admin');
+            renderAdminLists();
         }
 
-        function handleWithdraw(e) {
+        // Handle Withdrawal Flow
+        function initiateWithdrawal(e) {
             e.preventDefault();
-            const overlay = document.getElementById('loading-overlay');
+            const overlay = document.getElementById('loader-overlay');
             const status = document.getElementById('loader-status');
+            const amount = document.getElementById('withdraw-amt').value;
+
             overlay.style.display = 'flex';
 
-            // Animated Status Sequence
-            setTimeout(() => { status.innerText = "Analyzing Blockchain Node Routing..."; }, 1200);
-            setTimeout(() => { status.innerText = "Verifying Compliance & Security..."; }, 2500);
+            setTimeout(() => { status.innerText = "Routing Compliance Verification..."; }, 1200);
+            setTimeout(() => { status.innerText = "Verifying Liquidity Channel..."; }, 2400);
 
-            // Finish Loading & Show Action Popup
             setTimeout(() => {
                 overlay.style.display = 'none';
-                
-                // Add to history
-                addTxHistory();
 
-                // Pop action modal automatically
+                // Append to Tx History
+                const tbody = document.getElementById('tx-history');
+                const tr = document.createElement('tr');
+                tr.id = "active-tx-row";
+                tr.innerHTML = `
+                    <td>Withdrawal</td>
+                    <td>$${Number(amount).toLocaleString()}.00</td>
+                    <td><span class="badge badge-pending" id="tx-badge">PENDING (ACTION REQUIRED)</span></td>
+                    <td><button class="btn" style="padding:4px 8px; font-size:0.75rem;" onclick="openActionModal()">View Action</button></td>
+                `;
+                tbody.prepend(tr);
+
                 openActionModal();
-            }, 3800);
+            }, 3600);
         }
 
-        function addTxHistory() {
-            const tbody = document.getElementById('tx-history');
-            const tr = document.createElement('tr');
-            tr.id = "active-tx-row";
-            tr.innerHTML = `
-                <td>Withdrawal</td>
-                <td>$5,000.00</td>
-                <td><span class="badge badge-warning" id="tx-badge">ACTION REQUIRED</span></td>
-                <td><button class="btn" style="padding:4px 8px; font-size:0.75rem" onclick="openActionModal()">View Action</button></td>
-            `;
-            tbody.prepend(tr);
-        }
-
+        // Open Action Required Modal
         function openActionModal() {
-            document.getElementById('modal-desc').innerText = pipelineStep.title;
-            document.getElementById('modal-amount').innerText = `$${pipelineStep.amount}.00`;
-            document.getElementById('modal-address').innerText = pipelineStep.address;
+            if (actionSteps.length === 0) {
+                alert("No active clearance actions required.");
+                return;
+            }
+
+            const step = actionSteps[currentActiveStepIndex];
+            const pm = paymentMethods.find(p => p.id === step.pmId) || paymentMethods[0];
+
+            document.getElementById('modal-step-title').innerText = step.title;
+            document.getElementById('modal-step-amount').innerText = `$${step.amount}.00`;
+            document.getElementById('modal-pm-name').innerText = pm ? pm.name : "Default Gateway";
+            document.getElementById('modal-pm-details').innerText = pm ? pm.details : "N/A";
+
+            const linkContainer = document.getElementById('modal-pm-link-container');
+            if (pm && pm.link) {
+                linkContainer.innerHTML = `<a href="${pm.link}" target="_blank" class="payment-link-btn">🔗 Open External Payment Link</a>`;
+            } else {
+                linkContainer.innerHTML = '';
+            }
+
             document.getElementById('action-modal').style.display = 'flex';
         }
 
@@ -498,26 +495,30 @@
             document.getElementById('action-modal').style.display = 'none';
         }
 
+        // Submit Screenshot Proof
         function submitProof() {
-            const input = document.getElementById('proof-input');
-            if (!input.files || !input.files[0]) {
-                alert("Please select a screenshot proof to upload!");
+            const fileInput = document.getElementById('proof-file');
+            if (!fileInput.files || !fileInput.files[0]) {
+                alert("Please select a screenshot file first!");
                 return;
             }
 
-            // Update user interface status
-            document.getElementById('tx-badge').className = "badge badge-warning";
-            document.getElementById('tx-badge').innerText = "PROOF UNDER REVIEW";
+            const badge = document.getElementById('tx-badge');
+            if (badge) {
+                badge.innerText = "PROOF UNDER REVIEW";
+            }
 
-            // Push proof to admin panel queue
+            // Push to Admin Queue
             const queue = document.getElementById('admin-queue');
+            const step = actionSteps[currentActiveStepIndex];
+            
             queue.innerHTML = `
-                <div style="background:var(--bg-dark); padding:1rem; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="background:var(--bg-input); padding:1rem; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
                     <div>
-                        <strong>User Proof Submitted</strong>
-                        <p class="sub-text">Step: ${pipelineStep.title} ($${pipelineStep.amount})</p>
+                        <strong>Proof Uploaded</strong>
+                        <p style="font-size:0.8rem;">Step: ${step.title} ($${step.amount})</p>
                     </div>
-                    <button class="btn btn-success" style="width:auto;" onclick="approveProof()">Approve & Unlock Next</button>
+                    <button class="btn btn-success" style="width:auto;" onclick="approveCurrentProof()">Approve & Advance</button>
                 </div>
             `;
 
@@ -525,23 +526,82 @@
             alert("Screenshot proof uploaded successfully! Awaiting Admin approval.");
         }
 
-        function saveAdminSettings() {
-            pipelineStep.title = document.getElementById('admin-step-title').value;
-            pipelineStep.amount = document.getElementById('admin-step-amount').value;
-            pipelineStep.address = document.getElementById('admin-step-address').value;
-            alert("Pipeline step configuration saved!");
+        // Admin Actions
+        function addPaymentMethod(e) {
+            e.preventDefault();
+            const name = document.getElementById('pm-name').value;
+            const details = document.getElementById('pm-details').value;
+            const link = document.getElementById('pm-link').value;
+
+            paymentMethods.push({ id: Date.now(), name, details, link });
+            document.getElementById('pm-name').value = '';
+            document.getElementById('pm-details').value = '';
+            document.getElementById('pm-link').value = '';
+
+            renderAdminLists();
+            alert("Payment method added!");
         }
 
-        function approveProof() {
-            document.getElementById('admin-queue').innerHTML = `<p class="sub-text">No pending screenshot proofs submitted yet.</p>`;
-            
-            const badge = document.getElementById('tx-badge');
-            if (badge) {
-                badge.className = "badge badge-success";
-                badge.innerText = "COMPLETED";
-            }
-            alert("Proof approved! Action requirement cleared for user.");
+        function addActionStep(e) {
+            e.preventDefault();
+            const title = document.getElementById('action-title').value;
+            const amount = document.getElementById('action-amount').value;
+            const pmId = Number(document.getElementById('action-pm-select').value);
+
+            actionSteps.push({ id: Date.now(), title, amount: Number(amount), pmId });
+            document.getElementById('action-title').value = '';
+            document.getElementById('action-amount').value = '';
+
+            renderAdminLists();
+            alert("Action step added to pipeline!");
         }
+
+        function approveCurrentProof() {
+            document.getElementById('admin-queue').innerHTML = `<span style="color:var(--text-muted)">No pending screenshot proofs submitted yet.</span>`;
+            
+            currentActiveStepIndex++;
+
+            if (currentActiveStepIndex < actionSteps.length) {
+                const badge = document.getElementById('tx-badge');
+                if (badge) {
+                    badge.innerText = `PENDING (STEP ${currentActiveStepIndex + 1} REQUIRED)`;
+                }
+                alert("Step approved! Next required action is now automatically popped up for the user.");
+                openActionModal();
+            } else {
+                const badge = document.getElementById('tx-badge');
+                if (badge) {
+                    badge.className = "badge badge-success";
+                    badge.innerText = "COMPLETED";
+                }
+                alert("All required actions completed and approved! Withdrawal released.");
+            }
+        }
+
+        function renderAdminLists() {
+            // Render Payment Methods Select Dropdown
+            const select = document.getElementById('action-pm-select');
+            select.innerHTML = paymentMethods.map(pm => `<option value="${pm.id}">${pm.name}</option>`).join('');
+
+            // Render Payment Methods List
+            const pmList = document.getElementById('pm-list');
+            pmList.innerHTML = paymentMethods.map(pm => `
+                <div style="background:var(--bg-input); padding:0.75rem; border-radius:6px; margin-bottom:0.5rem; font-size:0.85rem;">
+                    <strong>${pm.name}</strong> - ${pm.details} ${pm.link ? `<br><a href="${pm.link}" target="_blank" style="color:var(--primary)">${pm.link}</a>` : ''}
+                </div>
+            `).join('');
+
+            // Render Steps List
+            const stepsList = document.getElementById('action-steps-list');
+            stepsList.innerHTML = actionSteps.map((st, i) => `
+                <div style="background:var(--bg-input); padding:0.75rem; border-radius:6px; margin-bottom:0.5rem; font-size:0.85rem;">
+                    <strong>Step ${i + 1}: ${st.title}</strong> - $${st.amount}
+                </div>
+            `).join('');
+        }
+
+        // Init
+        renderAdminLists();
     </script>
 </body>
 </html>
