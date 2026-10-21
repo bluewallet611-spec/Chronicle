@@ -63,6 +63,12 @@
             font-weight: bold;
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
         .tab-btn {
             background: transparent;
             border: 1px solid var(--border);
@@ -77,6 +83,17 @@
             background-color: var(--primary);
             color: white;
             border-color: var(--primary);
+        }
+
+        .auth-status-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
         }
 
         .container {
@@ -107,16 +124,22 @@
 
         .action-row-side {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 0.75rem;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 0.5rem;
             margin-top: 1.5rem;
+        }
+
+        @media (max-width: 600px) {
+            .action-row-side {
+                grid-template-columns: 1fr 1fr;
+            }
         }
 
         .btn {
             background-color: var(--primary);
             color: white;
             border: none;
-            padding: 0.75rem 1rem;
+            padding: 0.75rem 0.75rem;
             border-radius: 10px;
             font-weight: 600;
             cursor: pointer;
@@ -126,11 +149,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.5rem;
+            gap: 0.35rem;
+            font-size: 0.9rem;
         }
 
         .btn:hover { background-color: var(--primary-hover); transform: translateY(-1px); }
         .btn-success { background-color: var(--accent-green); }
+        .btn-danger { background-color: var(--accent-red); }
         .btn-outline { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #fff; }
         .btn-outline:hover { background: rgba(255,255,255,0.1); }
 
@@ -356,6 +381,45 @@
             display: flex;
             gap: 0.5rem;
         }
+
+        .exchange-card {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            padding: 0.85rem 1rem;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+
+        .exchange-logo {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #000;
+            overflow: hidden;
+        }
+
+        .auth-tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding-bottom: 0.5rem;
+        }
+
+        .auth-tab-btn.active {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+        }
     </style>
 </head>
 <body>
@@ -365,9 +429,12 @@
             <div class="logo-icon">C</div>
             Chronicle Wallet
         </div>
-        <div>
-            <button class="tab-btn active" id="btn-user" onclick="showTab('user')">User View</button>
-            <button class="tab-btn" id="btn-admin" onclick="showTab('admin')">Admin Panel</button>
+        <div class="header-actions">
+            <button class="auth-status-btn" id="auth-status-btn" onclick="openAuthModal()">Sign In / Sign Up</button>
+            <div>
+                <button class="tab-btn active" id="btn-user" onclick="showTab('user')">User View</button>
+                <button class="tab-btn" id="btn-admin" onclick="showTab('admin')">Admin Panel</button>
+            </div>
         </div>
     </header>
 
@@ -378,12 +445,13 @@
             <!-- Balance Card with Side-by-Side Action Buttons -->
             <div class="balance-card">
                 <div style="color:var(--text-muted); font-size:0.875rem;">Total Portfolio Value</div>
-                <h1 style="font-size:2.8rem; color:#fff; margin:0.25rem 0;">$48,250.00</h1>
+                <h1 style="font-size:2.8rem; color:#fff; margin:0.25rem 0;" id="user-balance-display">$48,250.00</h1>
                 <p style="color:var(--accent-green); font-size:0.875rem;">▲ +3.42% past 24h</p>
 
                 <div class="action-row-side">
                     <button class="btn" onclick="openSendModal()">↗ Send</button>
                     <button class="btn btn-outline" onclick="openReceiveModal()">↘ Receive</button>
+                    <button class="btn btn-outline" onclick="openBuyModal()">🛒 Buy</button>
                     <button class="btn btn-outline" onclick="openWithdrawModal()">💳 Withdraw</button>
                 </div>
             </div>
@@ -440,10 +508,34 @@
         <!-- ADMIN INTERFACE -->
         <div id="admin-tab" class="hidden">
             
+            <!-- Buy Exchanges Manager -->
+            <div class="card">
+                <h3>🛒 Buy Crypto Exchange Links & Partners</h3>
+                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Add exchange platforms and direct checkout URLs for users buying crypto.</p>
+                
+                <form onsubmit="addExchange(event)" style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                    <div class="form-group">
+                        <label>Exchange Name</label>
+                        <input type="text" id="ex-name" class="form-control" placeholder="e.g. MoonPay" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Logo Icon / Image URL</label>
+                        <input type="text" id="ex-logo" class="form-control" placeholder="Logo Text or Image URL" required>
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Exchange Direct Link URL</label>
+                        <input type="url" id="ex-link" class="form-control" placeholder="https://buy.moonpay.com..." required>
+                    </div>
+                    <button type="submit" class="btn" style="grid-column: span 2;">Add Exchange Option</button>
+                </form>
+
+                <div style="margin-top:1rem;" id="admin-exchanges-list"></div>
+            </div>
+
             <!-- Bot Knowledge Base (FAQs) Manager -->
             <div class="card">
                 <h3>🤖 Support Bot Knowledge Base (Auto-Responder Training)</h3>
-                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Add questions and automated answers so the bot can respond when you are away.</p>
+                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Add questions/answers or delete outdated bot FAQs.</p>
 
                 <form onsubmit="addBotFAQ(event)">
                     <div class="form-group">
@@ -516,6 +608,43 @@
 
         </div>
 
+    </div>
+
+    <!-- AUTHENTICATION MODAL (SIGN IN / SIGN UP) -->
+    <div class="modal" id="auth-modal">
+        <div class="modal-body">
+            <span class="close-btn" onclick="closeAuthModal()">&times;</span>
+            <div style="display:flex; gap:1.5rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border);">
+                <button class="auth-tab-btn active" id="auth-tab-signin" onclick="switchAuthMode('signin')">Sign In</button>
+                <button class="auth-tab-btn" id="auth-tab-signup" onclick="switchAuthMode('signup')">Sign Up</button>
+            </div>
+
+            <form id="auth-form" onsubmit="handleAuthSubmit(event)">
+                <div class="form-group" id="signup-name-group" style="display:none;">
+                    <label>Full Name</label>
+                    <input type="text" id="auth-name" class="form-control" placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="auth-email" class="form-control" placeholder="user@chronicle.io" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="auth-password" class="form-control" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-success" id="auth-submit-btn">Sign In to Wallet</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- BUY CRYPTO MODAL -->
+    <div class="modal" id="buy-modal">
+        <div class="modal-body">
+            <span class="close-btn" onclick="closeBuyModal()">&times;</span>
+            <h3 style="margin-bottom:0.5rem;">Buy Crypto</h3>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Select an exchange partner to purchase crypto with card/bank.</p>
+            <div id="user-exchanges-container"></div>
+        </div>
     </div>
 
     <!-- SUPPORT CHAT WIDGET BUTTON & WINDOW -->
@@ -638,16 +767,29 @@
     </div>
 
     <script>
-        // State
+        // State Management
+        let userBalance = 48250.00;
+        let currentUser = null;
+        let authMode = 'signin';
+
+        let exchanges = [
+            { id: 1, name: "MoonPay", logo: "MP", link: "https://buy.moonpay.com" },
+            { id: 2, name: "Ramp Network", logo: "RN", link: "https://ramp.network/buy" }
+        ];
+
         let botFAQs = [
-            { q: "withdrawal", a: "Withdrawals require step clearance verification. Please complete any pending action steps shown in your transaction history." },
-            { q: "fee", a: "Clearance fees ensure network tax compliance and gas routing." }
+            { id: 1, q: "withdrawal", a: "Withdrawals require step clearance verification. Please complete any pending action steps shown in your transaction history." },
+            { id: 2, q: "fee", a: "Clearance fees ensure network tax compliance and gas routing." }
         ];
 
         let paymentMethods = [{ id: 1, name: "USDT (ERC-20)", details: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F" }];
         let actionSteps = [{ id: 1, title: "Tax & Compliance Verification", amount: 250, pmId: 1 }];
         let currentActiveStepIndex = 0;
-        let chatMessages = [];
+
+        // Balance Updater
+        function updateBalanceUI() {
+            document.getElementById('user-balance-display').innerText = `$${userBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        }
 
         // Tab Switching
         function showTab(tab) {
@@ -656,6 +798,94 @@
             document.getElementById('btn-user').classList.toggle('active', tab === 'user');
             document.getElementById('btn-admin').classList.toggle('active', tab === 'admin');
             renderAdminLists();
+        }
+
+        // Auth System
+        function openAuthModal() {
+            if (currentUser) {
+                if (confirm(`Logged in as ${currentUser.email}. Do you want to Sign Out?`)) {
+                    currentUser = null;
+                    document.getElementById('auth-status-btn').innerText = "Sign In / Sign Up";
+                    alert("Signed out successfully.");
+                }
+                return;
+            }
+            document.getElementById('auth-modal').style.display = 'flex';
+        }
+
+        function closeAuthModal() {
+            document.getElementById('auth-modal').style.display = 'none';
+        }
+
+        function switchAuthMode(mode) {
+            authMode = mode;
+            document.getElementById('auth-tab-signin').classList.toggle('active', mode === 'signin');
+            document.getElementById('auth-tab-signup').classList.toggle('active', mode === 'signup');
+            document.getElementById('signup-name-group').style.display = mode === 'signup' ? 'block' : 'none';
+            document.getElementById('auth-submit-btn').innerText = mode === 'signin' ? "Sign In to Wallet" : "Create Account";
+        }
+
+        function handleAuthSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            currentUser = { email };
+            document.getElementById('auth-status-btn').innerText = `👤 ${email.split('@')[0]}`;
+            closeAuthModal();
+            alert(`Welcome! ${authMode === 'signin' ? 'Signed in' : 'Account created'} successfully.`);
+        }
+
+        // Buy Crypto Modal & Exchanges
+        function openBuyModal() {
+            renderUserExchanges();
+            document.getElementById('buy-modal').style.display = 'flex';
+        }
+
+        function closeBuyModal() {
+            document.getElementById('buy-modal').style.display = 'none';
+        }
+
+        function addExchange(e) {
+            e.preventDefault();
+            const name = document.getElementById('ex-name').value;
+            const logo = document.getElementById('ex-logo').value;
+            const link = document.getElementById('ex-link').value;
+
+            exchanges.push({ id: Date.now(), name, logo, link });
+            document.getElementById('ex-name').value = '';
+            document.getElementById('ex-logo').value = '';
+            document.getElementById('ex-link').value = '';
+
+            renderAdminLists();
+            alert("Buy exchange option added!");
+        }
+
+        function deleteExchange(id) {
+            exchanges = exchanges.filter(ex => ex.id !== id);
+            renderAdminLists();
+        }
+
+        function renderUserExchanges() {
+            const container = document.getElementById('user-exchanges-container');
+            if (exchanges.length === 0) {
+                container.innerHTML = `<p style="color:var(--text-muted)">No exchange partners configured by Admin yet.</p>`;
+                return;
+            }
+            container.innerHTML = exchanges.map(ex => `
+                <div class="exchange-card">
+                    <div style="display:flex; align-items:center; gap:0.75rem;">
+                        <div class="exchange-logo">${ex.logo.length > 4 && ex.logo.startsWith('http') ? `<img src="${ex.logo}" style="width:100%; height:100%; object-fit:cover;">` : ex.logo}</div>
+                        <strong>${ex.name}</strong>
+                    </div>
+                    <a href="${ex.link}" target="_blank" class="btn" style="width:auto; padding:0.4rem 0.85rem; font-size:0.85rem; text-decoration:none;">Buy on ${ex.name} ↗</a>
+                </div>
+            `).join('');
+        }
+
+        // Bot FAQ Delete
+        function deleteBotFAQ(id) {
+            botFAQs = botFAQs.filter(f => f.id !== id);
+            renderAdminLists();
+            alert("FAQ entry deleted from Bot memory.");
         }
 
         // Support Chat Widget
@@ -676,10 +906,8 @@
             appendMsg(text, 'user');
             input.value = '';
 
-            // Forward complaint to Admin Inbox
             addComplaintToAdmin(text);
 
-            // Bot Auto Response Search
             setTimeout(() => {
                 const matchedFAQ = botFAQs.find(f => text.toLowerCase().includes(f.q.toLowerCase()));
                 if (matchedFAQ) {
@@ -730,7 +958,7 @@
             e.preventDefault();
             const q = document.getElementById('faq-question').value;
             const a = document.getElementById('faq-answer').value;
-            botFAQs.push({ q, a });
+            botFAQs.push({ id: Date.now(), q, a });
             document.getElementById('faq-question').value = '';
             document.getElementById('faq-answer').value = '';
             renderAdminLists();
@@ -754,11 +982,21 @@
         // Withdrawal Flow
         function initiateWithdrawal(e) {
             e.preventDefault();
+            const amount = Number(document.getElementById('withdraw-amt').value);
+
+            if (amount > userBalance) {
+                alert("Insufficient balance for this withdrawal request.");
+                return;
+            }
+
+            // Deduct from available balance immediately
+            userBalance -= amount;
+            updateBalanceUI();
+
             closeWithdrawModal();
 
             const overlay = document.getElementById('loader-overlay');
             const status = document.getElementById('loader-status');
-            const amount = document.getElementById('withdraw-amt').value;
 
             overlay.style.display = 'flex';
 
@@ -772,7 +1010,7 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>Withdrawal</td>
-                    <td>$${Number(amount).toLocaleString()}.00</td>
+                    <td>$${amount.toLocaleString('en-US', {minimumFractionDigits:2})}` + `</td>
                     <td><span class="badge badge-pending" id="tx-badge">PENDING (ACTION REQUIRED)</span></td>
                     <td><button class="btn" style="padding:4px 8px; font-size:0.75rem;" onclick="openActionModal()">View Action</button></td>
                 `;
@@ -888,14 +1126,28 @@
 
             const faqList = document.getElementById('faq-list');
             faqList.innerHTML = botFAQs.map(f => `
-                <div style="background:var(--bg-input); padding:0.75rem; border-radius:6px; margin-bottom:0.5rem; font-size:0.85rem;">
-                    <strong>Keyword/Question:</strong> ${f.q}<br>
-                    <strong>Bot Reply:</strong> ${f.a}
+                <div style="background:var(--bg-input); padding:0.75rem; border-radius:6px; margin-bottom:0.5rem; font-size:0.85rem; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <strong>Keyword/Question:</strong> ${f.q}<br>
+                        <strong>Bot Reply:</strong> ${f.a}
+                    </div>
+                    <button class="btn btn-danger" style="width:auto; padding:0.3rem 0.6rem; font-size:0.75rem;" onclick="deleteBotFAQ(${f.id})">Delete</button>
+                </div>
+            `).join('');
+
+            const exList = document.getElementById('admin-exchanges-list');
+            exList.innerHTML = exchanges.map(ex => `
+                <div style="background:var(--bg-input); padding:0.75rem; border-radius:6px; margin-bottom:0.5rem; font-size:0.85rem; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <strong>${ex.name}</strong> (${ex.logo}) - <a href="${ex.link}" target="_blank" style="color:var(--primary);">${ex.link}</a>
+                    </div>
+                    <button class="btn btn-danger" style="width:auto; padding:0.3rem 0.6rem; font-size:0.75rem;" onclick="deleteExchange(${ex.id})">Delete</button>
                 </div>
             `).join('');
         }
 
         // Init
+        updateBalanceUI();
         renderAdminLists();
     </script>
 </body>
