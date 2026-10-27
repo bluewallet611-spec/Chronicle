@@ -80,22 +80,6 @@
             gap: 1rem;
         }
 
-        .tab-btn {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .tab-btn.active {
-            background-color: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
         .auth-status-btn {
             background: rgba(255,255,255,0.05);
             border: 1px solid var(--border);
@@ -169,7 +153,6 @@
         .btn-danger { background-color: var(--accent-red); }
         .btn-outline { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text-main); }
         .light-mode .btn-outline { background: rgba(0,0,0,0.05); }
-        .btn-outline:hover { background: rgba(255,255,255,0.1); }
 
         .asset-row {
             display: flex;
@@ -310,6 +293,21 @@
             margin: 1rem 0;
         }
 
+        .payout-method-card {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            padding: 1rem;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            margin-bottom: 0.75rem;
+            transition: border-color 0.2s;
+        }
+
+        .payout-method-card:hover { border-color: var(--primary); }
+
         .chat-widget-btn {
             position: fixed;
             bottom: 20px;
@@ -412,10 +410,6 @@
             <button class="btn btn-outline" style="width:auto; padding:0.4rem 0.75rem; font-size:0.8rem;" onclick="openSettingsModal()">⚙️ Settings</button>
             <button class="btn btn-outline" style="width:auto; padding:0.4rem 0.75rem; font-size:0.8rem;" onclick="openInboxModal()">📬 Inbox <span id="unread-badge" style="background:var(--accent-red); color:#fff; border-radius:50%; padding:2px 6px; font-size:0.7rem; margin-left:4px;">0</span></button>
             <button class="auth-status-btn" id="auth-status-btn" onclick="openAuthModal()">Sign In / Sign Up</button>
-            <div>
-                <button class="tab-btn active" id="btn-user" onclick="showTab('user')">User View</button>
-                <button class="tab-btn" id="btn-admin" onclick="showTab('admin')">Admin Panel</button>
-            </div>
         </div>
     </header>
 
@@ -425,8 +419,8 @@
         <div id="user-tab">
             <div class="balance-card">
                 <div style="color:var(--text-muted); font-size:0.875rem;">Total Portfolio Value</div>
-                <h1 style="font-size:2.8rem; color:#fff; margin:0.25rem 0;" id="user-balance-display">$0.00</h1>
-                <p style="color:var(--accent-green); font-size:0.875rem;" id="portfolio-change">▲ +0.00% past 24h</p>
+                <h1 style="font-size:2.8rem; color:#fff; margin:0.25rem 0;" id="user-total-val">$0.00</h1>
+                <p style="color:var(--accent-green); font-size:0.875rem;" id="portfolio-change">▲ Portfolio Synced</p>
 
                 <div class="action-row-side">
                     <button class="btn" onclick="openSendModal()">↗ Send</button>
@@ -437,7 +431,7 @@
             </div>
 
             <div class="card">
-                <h3 style="margin-bottom:0.75rem;">Your Assets</h3>
+                <h3 style="margin-bottom:0.75rem;">Your Assets & Balances</h3>
                 <div class="asset-row">
                     <div class="asset-info">
                         <div class="asset-icon" style="background:#f7931a; color:#fff;">₿</div>
@@ -457,11 +451,25 @@
                         <div class="asset-icon" style="background:#627eea; color:#fff;">Ξ</div>
                         <div>
                             <strong>Ethereum</strong>
-                            <div style="color:var(--text-muted); font-size:0.8rem;">0.0000 ETH</div>
+                            <div style="color:var(--text-muted); font-size:0.8rem;" id="eth-holdings">0.0000 ETH</div>
                         </div>
                     </div>
                     <div style="text-align:right;">
                         <strong id="eth-fiat-value">$0.00</strong>
+                        <div style="color:var(--text-muted); font-size:0.8rem;" id="eth-live-price">Live ETH: Loading...</div>
+                    </div>
+                </div>
+
+                <div class="asset-row">
+                    <div class="asset-info">
+                        <div class="asset-icon" style="background:var(--accent-green); color:#fff;">💵</div>
+                        <div>
+                            <strong>USD Cash</strong>
+                            <div style="color:var(--text-muted); font-size:0.8rem;">Fiat Balance</div>
+                        </div>
+                    </div>
+                    <div style="text-align:right;">
+                        <strong id="usd-fiat-value">$0.00</strong>
                     </div>
                 </div>
             </div>
@@ -474,20 +482,27 @@
                             <th>Type</th>
                             <th>Amount</th>
                             <th>Status</th>
-                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody id="tx-history">
-                        <!-- Persisted History -->
+                        <tr><td colspan="3" style="text-align:center; color:var(--text-muted);">No recent transactions</td></tr>
                     </tbody>
                 </table>
             </div>
+
+            <!-- DISCREET ADMIN PORTAL LINK -->
+            <div style="text-align:center; margin-top:3rem; padding-bottom:1rem;">
+                <button onclick="openAdminLoginModal()" style="background:transparent; border:none; color:var(--text-muted); font-size:0.75rem; cursor:pointer; text-decoration:underline;">Admin Portal Access</button>
+            </div>
         </div>
 
-        <!-- ADMIN INTERFACE -->
+        <!-- ADMIN INTERFACE (HIDDEN BY DEFAULT) -->
         <div id="admin-tab" class="hidden">
-            
-            <!-- Balance Top-Up / Deduction Manager -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <h2>👑 Admin Management Dashboard</h2>
+                <button class="btn btn-danger" style="width:auto; padding:0.4rem 1rem;" onclick="logoutAdmin()">Lock Admin Panel</button>
+            </div>
+
             <div class="card">
                 <h3>💰 Manage User Balance (Top-Up / Deduction)</h3>
                 <form onsubmit="adminModifyBalance(event)">
@@ -503,8 +518,16 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Amount (USD)</label>
-                        <input type="number" id="admin-bal-amount" class="form-control" placeholder="e.g. 1000" required>
+                        <label>Target Asset</label>
+                        <select id="admin-bal-asset" class="form-control" required>
+                            <option value="btc">Bitcoin (BTC)</option>
+                            <option value="eth">Ethereum (ETH)</option>
+                            <option value="usd">USD Cash</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Amount</label>
+                        <input type="number" step="any" id="admin-bal-amount" class="form-control" placeholder="e.g. 1000" required>
                     </div>
                     <div class="form-group">
                         <label>Reason / Note for User</label>
@@ -514,39 +537,27 @@
                 </form>
             </div>
 
-            <!-- Custom Welcome Message Manager -->
             <div class="card">
                 <h3>✉️ Manage Sign-Up Welcome Message (Sent via Gmail)</h3>
                 <form onsubmit="saveWelcomeMessage(event)">
                     <div class="form-group">
-                        <label>Welcome Message Email Body</label>
                         <textarea id="admin-welcome-msg" class="form-control" rows="3" required></textarea>
                     </div>
                     <button type="submit" class="btn">Update Welcome Message</button>
                 </form>
             </div>
 
-            <!-- User Management & Approvals -->
             <div class="card">
-                <h3>👤 User Management & Management Approvals</h3>
-                <div id="admin-users-list">
-                    <p style="color:var(--text-muted); font-size:0.875rem;">No registered users pending review.</p>
-                </div>
+                <h3>👤 User Management & Approvals</h3>
+                <div id="admin-users-list"></div>
             </div>
 
-            <!-- Terms & Conditions Manager -->
             <div class="card">
                 <h3>📜 Manage Terms & Conditions</h3>
                 <form onsubmit="saveTerm(event)">
                     <input type="hidden" id="edit-term-id">
-                    <div class="form-group">
-                        <label>Term Title</label>
-                        <input type="text" id="term-title" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea id="term-desc" class="form-control" rows="3" required></textarea>
-                    </div>
+                    <div class="form-group"><label>Term Title</label><input type="text" id="term-title" class="form-control" required></div>
+                    <div class="form-group"><label>Description</label><textarea id="term-desc" class="form-control" rows="3" required></textarea></div>
                     <button type="submit" class="btn" id="term-submit-btn">Add Term</button>
                 </form>
                 <div style="margin-top:1rem;" id="admin-terms-list"></div>
@@ -555,18 +566,9 @@
             <div class="card">
                 <h3>🛒 Buy Crypto Exchange Links & Partners</h3>
                 <form onsubmit="addExchange(event)" style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
-                    <div class="form-group">
-                        <label>Exchange Name</label>
-                        <input type="text" id="ex-name" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Logo Icon / URL</label>
-                        <input type="text" id="ex-logo" class="form-control" required>
-                    </div>
-                    <div class="form-group" style="grid-column: span 2;">
-                        <label>Exchange Link URL</label>
-                        <input type="url" id="ex-link" class="form-control" required>
-                    </div>
+                    <div class="form-group"><label>Exchange Name</label><input type="text" id="ex-name" class="form-control" required></div>
+                    <div class="form-group"><label>Logo Icon</label><input type="text" id="ex-logo" class="form-control" required></div>
+                    <div class="form-group" style="grid-column: span 2;"><label>URL</label><input type="url" id="ex-link" class="form-control" required></div>
                     <button type="submit" class="btn" style="grid-column: span 2;">Add Exchange Option</button>
                 </form>
                 <div style="margin-top:1rem;" id="admin-exchanges-list"></div>
@@ -575,35 +577,18 @@
             <div class="card">
                 <h3>🤖 Support Bot Knowledge Base</h3>
                 <form onsubmit="addBotFAQ(event)">
-                    <div class="form-group">
-                        <label>Keyword / Question</label>
-                        <input type="text" id="faq-question" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Bot Answer</label>
-                        <textarea id="faq-answer" class="form-control" rows="2" required></textarea>
-                    </div>
+                    <div class="form-group"><label>Question / Keyword</label><input type="text" id="faq-question" class="form-control" required></div>
+                    <div class="form-group"><label>Answer</label><textarea id="faq-answer" class="form-control" rows="2" required></textarea></div>
                     <button type="submit" class="btn">Add FAQ</button>
                 </form>
                 <div style="margin-top:1rem;" id="faq-list"></div>
             </div>
 
             <div class="card">
-                <h3>💬 User Complaints Inbox</h3>
-                <div id="admin-inbox"><p style="color:var(--text-muted); font-size:0.875rem;">No messages yet.</p></div>
-            </div>
-
-            <div class="card">
                 <h3>💳 Payment Methods</h3>
                 <form onsubmit="addPaymentMethod(event)" style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
-                    <div class="form-group">
-                        <label>Method Name</label>
-                        <input type="text" id="pm-name" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Address / Details</label>
-                        <input type="text" id="pm-details" class="form-control" required>
-                    </div>
+                    <div class="form-group"><label>Method Name</label><input type="text" id="pm-name" class="form-control" required></div>
+                    <div class="form-group"><label>Details</label><input type="text" id="pm-details" class="form-control" required></div>
                     <button type="submit" class="btn" style="grid-column: span 2;">Add Payment Method</button>
                 </form>
                 <div style="margin-top:1rem;" id="pm-list"></div>
@@ -613,27 +598,110 @@
                 <h3>⚙️ Action Verification Pipeline</h3>
                 <form onsubmit="saveActionStep(event)">
                     <input type="hidden" id="edit-action-id">
-                    <div class="form-group">
-                        <label>Action Title</label>
-                        <input type="text" id="action-title" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Required Amount ($)</label>
-                        <input type="number" id="action-amount" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Payment Method</label>
-                        <select id="action-pm-select" class="form-control" required></select>
-                    </div>
+                    <div class="form-group"><label>Action Title</label><input type="text" id="action-title" class="form-control" required></div>
+                    <div class="form-group"><label>Amount ($)</label><input type="number" id="action-amount" class="form-control" required></div>
+                    <div class="form-group"><label>Payment Method</label><select id="action-pm-select" class="form-control" required></select></div>
                     <button type="submit" class="btn" id="action-submit-btn">Add Action Step</button>
                 </form>
                 <div style="margin-top:1rem;" id="action-steps-list"></div>
             </div>
 
             <div class="card">
-                <h3>🖼️ Submitted Proofs</h3>
+                <h3>🖼️ Submitted Withdrawal Proofs</h3>
                 <div id="admin-queue" style="color:var(--text-muted); font-size:0.875rem;">No pending proofs.</div>
             </div>
+        </div>
+    </div>
+
+    <!-- ADMIN LOGIN MODAL -->
+    <div class="modal" id="admin-login-modal">
+        <div class="modal-body">
+            <span class="close-btn" onclick="closeAdminLoginModal()">&times;</span>
+            <h3 style="margin-bottom:1rem; color:var(--primary);">👑 Admin Portal Login</h3>
+            <form onsubmit="handleAdminLogin(event)">
+                <div class="form-group"><label>Username</label><input type="text" id="admin-user-input" class="form-control" required></div>
+                <div class="form-group"><label>Password</label><input type="password" id="admin-pass-input" class="form-control" required></div>
+                <button type="submit" class="btn btn-success">Access Admin Panel</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- WITHDRAW METHOD MODAL -->
+    <div class="modal" id="withdraw-modal">
+        <div class="modal-body">
+            <span class="close-btn" onclick="closeWithdrawModal()">&times;</span>
+            <h3 style="margin-bottom:1rem;">Select Payout Method</h3>
+            
+            <div class="payout-method-card" onclick="selectWithdrawMethod('Bank Transfer')">
+                <div style="font-size:1.8rem;">🏦</div>
+                <div><strong>Bank Transfer</strong><div style="font-size:0.8rem; color:var(--text-muted);">Direct deposit to local bank account</div></div>
+            </div>
+            <div class="payout-method-card" onclick="selectWithdrawMethod('PayPal')">
+                <div style="font-size:1.8rem; color:#0070ba;">🅿️</div>
+                <div><strong>PayPal</strong><div style="font-size:0.8rem; color:var(--text-muted);">Instant transfer to PayPal email</div></div>
+            </div>
+            <div class="payout-method-card" onclick="selectWithdrawMethod('Zelle')">
+                <div style="font-size:1.8rem; color:#6d1ed5;">⚡</div>
+                <div><strong>Zelle</strong><div style="font-size:0.8rem; color:var(--text-muted);">Fast transfer via email or phone</div></div>
+            </div>
+            <div class="payout-method-card" onclick="selectWithdrawMethod('CashApp')">
+                <div style="font-size:1.8rem; color:#00D632;">💵</div>
+                <div><strong>CashApp</strong><div style="font-size:0.8rem; color:var(--text-muted);">Transfer to your $Cashtag</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- WITHDRAW FORM MODAL -->
+    <div class="modal" id="withdraw-form-modal">
+        <div class="modal-body">
+            <span class="close-btn" onclick="closeWithdrawFormModal()">&times;</span>
+            <h3 style="margin-bottom:1rem;" id="withdraw-method-title">Withdraw</h3>
+            <form onsubmit="requestWithdrawalPinCheck(event)">
+                <div class="form-group"><label id="withdraw-destination-label">Account Details</label><input type="text" id="withdraw-addr" class="form-control" required></div>
+                <div class="form-group"><label>Amount (USD)</label><input type="number" id="withdraw-amt" class="form-control" required></div>
+                <button type="submit" class="btn btn-success">Proceed to PIN Authorization</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SEND MODAL -->
+    <div class="modal" id="send-modal">
+        <div class="modal-body">
+            <span class="close-btn" onclick="closeSendModal()">&times;</span>
+            <h3 style="margin-bottom:1rem;">Send Crypto / Funds</h3>
+            <form onsubmit="handleSend(event)">
+                <div class="form-group">
+                    <label>Select Asset to Send</label>
+                    <select id="send-asset-type" class="form-control" required>
+                        <option value="btc">Bitcoin (BTC)</option>
+                        <option value="eth">Ethereum (ETH)</option>
+                        <option value="usd">USD Cash</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Recipient Address / Tag</label><input type="text" id="send-recipient" class="form-control" required></div>
+                <div class="form-group"><label>Amount</label><input type="number" step="any" id="send-amount" class="form-control" required></div>
+                <button type="submit" class="btn btn-success">Send Funds</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- RECEIVE MODAL -->
+    <div class="modal" id="receive-modal">
+        <div class="modal-body" style="text-align:center;">
+            <span class="close-btn" onclick="closeReceiveModal()">&times;</span>
+            <h3 style="margin-bottom:1rem;">Receive Funds</h3>
+            <div class="form-group" style="text-align:left;">
+                <label>Select Asset to Receive</label>
+                <select id="receive-asset-type" class="form-control" onchange="updateReceiveAddress()">
+                    <option value="btc">Bitcoin (BTC)</option>
+                    <option value="eth">Ethereum (ETH)</option>
+                    <option value="usd">USD Cash</option>
+                </select>
+            </div>
+            <div style="background:#fff; padding:1rem; display:inline-block; margin:1rem 0; border-radius:8px;">
+                <div style="width:140px; height:140px; background:#000; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.75rem;">[QR CODE]</div>
+            </div>
+            <input type="text" id="receive-address-box" class="form-control" value="bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" readonly>
         </div>
     </div>
 
@@ -641,46 +709,35 @@
     <div class="modal" id="settings-modal">
         <div class="modal-body">
             <span class="close-btn" onclick="closeSettingsModal()">&times;</span>
-            <h3 style="margin-bottom:1.25rem;">⚙️ Account & App Settings</h3>
-            
+            <h3 style="margin-bottom:1.25rem;">⚙️ Settings</h3>
             <div class="form-group" style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-input); padding:0.75rem; border-radius:8px;">
                 <span>Appearance Mode</span>
-                <button class="btn btn-outline" style="width:auto; padding:0.4rem 0.8rem;" onclick="toggleTheme()" id="theme-toggle-btn">Switch Theme</button>
+                <button class="btn btn-outline" style="width:auto; padding:0.4rem 0.8rem;" onclick="toggleTheme()">Switch Theme</button>
             </div>
-
             <hr style="border:0; border-top:1px solid var(--border); margin:1.25rem 0;">
-
             <h4 style="margin-bottom:0.75rem; font-size:0.95rem;">Change Email Address</h4>
             <form onsubmit="handleSettingsEmailChange(event)" style="margin-bottom:1.5rem;">
-                <div class="form-group">
-                    <input type="email" id="settings-new-email" class="form-control" placeholder="New email address" required>
-                </div>
+                <div class="form-group"><input type="email" id="settings-new-email" class="form-control" placeholder="New email" required></div>
                 <button type="submit" class="btn">Update Email</button>
             </form>
-
-            <h4 style="margin-bottom:0.75rem; font-size:0.95rem;">Change Login Password</h4>
+            <h4 style="margin-bottom:0.75rem; font-size:0.95rem;">Reset Login Password</h4>
             <form onsubmit="handleSettingsPasswordChange(event)" style="margin-bottom:1.5rem;">
-                <div class="form-group">
-                    <input type="password" id="settings-new-password" class="form-control" placeholder="New login password" required>
-                </div>
+                <div class="form-group"><input type="password" id="settings-new-password" class="form-control" placeholder="New password" required></div>
                 <button type="submit" class="btn">Update Password</button>
             </form>
-
             <h4 style="margin-bottom:0.75rem; font-size:0.95rem;">Reset Withdrawal PIN</h4>
             <form onsubmit="handleSettingsPinChange(event)">
-                <div class="form-group">
-                    <input type="password" id="settings-new-pin" class="form-control" maxlength="4" pattern="\d{4}" placeholder="New 4-digit PIN" required>
-                </div>
-                <button type="submit" class="btn btn-success">Update Withdrawal PIN</button>
+                <div class="form-group"><input type="password" id="settings-new-pin" class="form-control" maxlength="4" pattern="\d{4}" placeholder="4-digit PIN" required></div>
+                <button type="submit" class="btn btn-success">Update PIN</button>
             </form>
         </div>
     </div>
 
-    <!-- INBOX / GMAIL MODAL -->
+    <!-- INBOX MODAL -->
     <div class="modal" id="inbox-modal">
         <div class="modal-body">
             <span class="close-btn" onclick="closeInboxModal()">&times;</span>
-            <h3 style="margin-bottom:1rem;">📬 Simulated Gmail / Notifications</h3>
+            <h3 style="margin-bottom:1rem;">📬 Simulated Gmail Inbox</h3>
             <div id="user-inbox-messages" style="max-height:400px; overflow-y:auto;">
                 <p style="color:var(--text-muted); font-size:0.875rem;">No emails in inbox.</p>
             </div>
@@ -692,126 +749,78 @@
         <div class="modal-body">
             <span class="close-btn" onclick="closeAuthModal()">&times;</span>
             <div style="display:flex; gap:1.5rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border);">
-                <button class="auth-tab-btn active" id="auth-tab-signin" onclick="switchAuthMode('signin')">Sign In</button>
-                <button class="auth-tab-btn" id="auth-tab-signup" onclick="switchAuthMode('signup')">Sign Up</button>
+                <button class="btn btn-outline active" id="auth-tab-signin" onclick="switchAuthMode('signin')">Sign In</button>
+                <button class="btn btn-outline" id="auth-tab-signup" onclick="switchAuthMode('signup')">Sign Up</button>
             </div>
             
             <form id="signin-form" onsubmit="handleSignIn(event)">
-                <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" id="signin-email" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="signin-password" class="form-control" required>
-                </div>
-                <div style="margin-bottom:1rem; text-align:right;">
-                    <a href="#" onclick="openForgotPasswordModal(); return false;" style="color:var(--primary); font-size:0.8rem; text-decoration:none;">Forgot Password?</a>
-                </div>
+                <div class="form-group"><label>Email Address</label><input type="email" id="signin-email" class="form-control" required></div>
+                <div class="form-group"><label>Password</label><input type="password" id="signin-password" class="form-control" required></div>
+                <div style="margin-bottom:1rem; text-align:right;"><a href="#" onclick="openForgotPasswordModal(); return false;" style="color:var(--primary); font-size:0.8rem; text-decoration:none;">Forgot Password?</a></div>
                 <button type="submit" class="btn btn-success">Sign In</button>
             </form>
 
             <form id="signup-form" class="hidden" onsubmit="handleSignUp(event)">
-                <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" id="signup-name" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" id="signup-email" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="signup-password" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>How did you hear about us?</label>
-                    <select id="signup-referral" class="form-control" required>
-                        <option value="">Select option...</option>
-                        <option value="Social Media">Social Media</option>
-                        <option value="Friend / Referral">Friend / Referral</option>
-                        <option value="Search Engine">Search Engine</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-                <div class="form-group" style="background:var(--bg-input); padding:0.75rem; border-radius:8px;">
-                    <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.5rem; max-height:80px; overflow-y:auto;" id="terms-preview-box"></div>
-                    <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; color:var(--text-main); cursor:pointer;">
-                        <input type="checkbox" id="signup-terms" required> I agree to the Terms and Conditions
-                    </label>
-                </div>
+                <div class="form-group"><label>Full Name</label><input type="text" id="signup-name" class="form-control" required></div>
+                <div class="form-group"><label>Email Address</label><input type="email" id="signup-email" class="form-control" required></div>
+                <div class="form-group"><label>Password</label><input type="password" id="signup-password" class="form-control" required></div>
+                <div class="form-group"><label><input type="checkbox" required> I agree to Terms & Conditions</label></div>
                 <button type="submit" class="btn btn-success">Create Account</button>
             </form>
         </div>
     </div>
 
-    <!-- OTHER MODALS -->
+    <!-- FORGOT PASSWORD MODAL -->
     <div class="modal" id="forgot-password-modal">
         <div class="modal-body">
             <span class="close-btn" onclick="closeForgotPasswordModal()">&times;</span>
             <h3 style="margin-bottom:0.5rem; color:var(--primary);">Reset Login Password</h3>
             <form onsubmit="handlePasswordReset(event)">
-                <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" id="reset-pw-email" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>New Password</label>
-                    <input type="password" id="reset-pw-new" class="form-control" required>
-                </div>
+                <div class="form-group"><label>Email Address</label><input type="email" id="reset-pw-email" class="form-control" required></div>
+                <div class="form-group"><label>New Password</label><input type="password" id="reset-pw-new" class="form-control" required></div>
                 <button type="submit" class="btn btn-success">Reset Password</button>
             </form>
         </div>
     </div>
 
+    <!-- PIN SETUP MODAL -->
     <div class="modal" id="pin-setup-modal">
         <div class="modal-body">
             <h3 style="margin-bottom:0.5rem; color:var(--accent-yellow);">🔒 Create Withdrawal PIN</h3>
             <form onsubmit="handlePinSetup(event)">
-                <div class="form-group">
-                    <label>4-Digit PIN</label>
-                    <input type="password" id="new-pin-input" class="form-control" maxlength="4" pattern="\d{4}" required>
-                </div>
-                <button type="submit" class="btn btn-success">Save PIN & Continue</button>
+                <div class="form-group"><label>4-Digit PIN</label><input type="password" id="new-pin-input" class="form-control" maxlength="4" pattern="\d{4}" required></div>
+                <button type="submit" class="btn btn-success">Save PIN</button>
             </form>
         </div>
     </div>
 
+    <!-- RESET PIN MODAL -->
     <div class="modal" id="reset-pin-modal">
         <div class="modal-body">
             <span class="close-btn" onclick="closeResetPinModal()">&times;</span>
             <h3 style="margin-bottom:0.5rem; color:var(--accent-yellow);">🔄 Reset Withdrawal PIN</h3>
             <form onsubmit="handlePinReset(event)">
-                <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" id="reset-pin-email" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>New 4-Digit PIN</label>
-                    <input type="password" id="reset-pin-new" class="form-control" maxlength="4" pattern="\d{4}" required>
-                </div>
+                <div class="form-group"><label>Email Address</label><input type="email" id="reset-pin-email" class="form-control" required></div>
+                <div class="form-group"><label>New 4-Digit PIN</label><input type="password" id="reset-pin-new" class="form-control" maxlength="4" pattern="\d{4}" required></div>
                 <button type="submit" class="btn btn-success">Reset PIN</button>
             </form>
         </div>
     </div>
 
+    <!-- PIN CONFIRM MODAL -->
     <div class="modal" id="pin-confirm-modal">
         <div class="modal-body">
             <span class="close-btn" onclick="closePinConfirmModal()">&times;</span>
             <h3 style="margin-bottom:0.5rem; color:var(--accent-yellow);">🔐 Enter Withdrawal PIN</h3>
             <form onsubmit="verifyPinAndProceed(event)">
-                <div class="form-group">
-                    <label>Withdrawal PIN</label>
-                    <input type="password" id="verify-pin-input" class="form-control" maxlength="4" pattern="\d{4}" required>
-                </div>
-                <div style="margin-bottom:1rem; text-align:right;">
-                    <a href="#" onclick="openResetPinModal(); closePinConfirmModal(); return false;" style="color:var(--accent-yellow); font-size:0.8rem; text-decoration:none;">Forgot PIN?</a>
-                </div>
-                <button type="submit" class="btn btn-success">Authorize & Withdraw</button>
+                <div class="form-group"><label>PIN</label><input type="password" id="verify-pin-input" class="form-control" maxlength="4" pattern="\d{4}" required></div>
+                <div style="margin-bottom:1rem; text-align:right;"><a href="#" onclick="openResetPinModal(); closePinConfirmModal(); return false;" style="color:var(--accent-yellow); font-size:0.8rem; text-decoration:none;">Forgot PIN?</a></div>
+                <button type="submit" class="btn btn-success">Authorize Withdrawal</button>
             </form>
         </div>
     </div>
 
+    <!-- BUY MODAL -->
     <div class="modal" id="buy-modal">
         <div class="modal-body">
             <span class="close-btn" onclick="closeBuyModal()">&times;</span>
@@ -820,70 +829,16 @@
         </div>
     </div>
 
-    <div class="overlay" id="loader-overlay">
-        <div class="spinner"></div>
-        <h3 style="color:#fff;">Processing Withdrawal...</h3>
-        <p style="color:var(--text-muted); font-size:0.875rem; margin-top:0.5rem;" id="loader-status">Connecting to Gateway...</p>
-    </div>
-
-    <div class="modal" id="withdraw-modal">
-        <div class="modal-body">
-            <span class="close-btn" onclick="closeWithdrawModal()">&times;</span>
-            <h3 style="margin-bottom:1rem;">Withdraw Funds</h3>
-            <form onsubmit="requestWithdrawalPinCheck(event)">
-                <div class="form-group">
-                    <label>Destination Address</label>
-                    <input type="text" id="withdraw-addr" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>Amount (USD)</label>
-                    <input type="number" id="withdraw-amt" class="form-control" required>
-                </div>
-                <button type="submit" class="btn btn-success">Proceed to PIN Authorization</button>
-            </form>
-        </div>
-    </div>
-
-    <div class="modal" id="send-modal">
-        <div class="modal-body">
-            <span class="close-btn" onclick="closeSendModal()">&times;</span>
-            <h3 style="margin-bottom:1rem;">Send Crypto</h3>
-            <form onsubmit="handleSend(event)">
-                <div class="form-group">
-                    <label>Recipient Address</label>
-                    <input type="text" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>Amount</label>
-                    <input type="number" class="form-control" required>
-                </div>
-                <button type="submit" class="btn btn-success">Send Funds</button>
-            </form>
-        </div>
-    </div>
-
-    <div class="modal" id="receive-modal">
-        <div class="modal-body" style="text-align:center;">
-            <span class="close-btn" onclick="closeReceiveModal()">&times;</span>
-            <h3 style="margin-bottom:0.5rem;">Receive Funds</h3>
-            <div style="background:#fff; padding:1rem; display:inline-block; margin:1rem 0; border-radius:8px;">
-                <div style="width:140px; height:140px; background:#000; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.75rem;">[QR CODE]</div>
-            </div>
-            <input type="text" class="form-control" value="bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" readonly>
-        </div>
-    </div>
-
+    <!-- ACTION / PROOF MODAL -->
     <div class="modal" id="action-modal">
         <div class="modal-body">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <span class="close-btn" onclick="closeActionModal()">&times;</span>
             <h3 style="color:var(--accent-yellow); margin-bottom:0.5rem;">⚠️ Pending Action Required</h3>
             <p style="color:var(--text-muted); font-size:0.875rem;" id="modal-step-title">Action Step</p>
 
             <div class="payment-box">
                 <div style="font-size:0.8rem; color:var(--text-muted);">Required Clearance Fee</div>
                 <div style="font-size:1.5rem; font-weight:bold; color:var(--text-main);" id="modal-step-amount">$0.00</div>
-                <div style="font-size:0.75rem; color:var(--accent-green); margin-top:0.35rem;" id="fee-refund-note">ℹ️ Note: This clearance fee will be added back to your pending withdrawal amount upon approval.</div>
-
                 <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.75rem;">Payment Details</div>
                 <div style="font-weight:600; color:var(--primary); margin-top:0.25rem;" id="modal-pm-name">Method</div>
                 <div style="font-size:0.85rem; font-family:monospace; word-break:break-all; color:var(--text-main); margin-top:0.25rem;" id="modal-pm-details">Details</div>
@@ -898,14 +853,11 @@
         </div>
     </div>
 
+    <!-- SUPPORT CHAT -->
     <button class="chat-widget-btn" onclick="toggleChat()">💬</button>
-
     <div class="chat-window" id="chat-window">
         <div class="chat-header">
-            <div>
-                <strong>Support Assistant</strong>
-                <div style="font-size:0.75rem; color:var(--accent-green);">● Online</div>
-            </div>
+            <div><strong>Support Assistant</strong><div style="font-size:0.75rem; color:var(--accent-green);">● Online</div></div>
             <span class="close-btn" style="position:static" onclick="toggleChat()">&times;</span>
         </div>
         <div class="chat-body" id="chat-body">
@@ -920,34 +872,33 @@
     <script>
         // Multi-User Database & State
         let usersList = JSON.parse(localStorage.getItem('chronicle_users')) || [
-            { email: "demo@chronicle.io", password: "password123", status: "Approved", pin: "1234", balance: 48250.00, txs: [], stepIdx: 0, activeTxId: null }
+            { email: "demo@chronicle.io", password: "password123", status: "Approved", pin: "1234", btc: 1.2485, eth: 14.20, usd: 48250.00, txs: [], stepIdx: 0, activeTxId: null }
         ];
         let currentUserEmail = localStorage.getItem('chronicle_current_user') || null;
         let userEmails = JSON.parse(localStorage.getItem('chronicle_emails')) || {};
-
-        let welcomeMsgText = localStorage.getItem('chronicle_welcome_msg') || "🎉 Welcome to Chronicle Wallet! Your account has been registered successfully and is awaiting management review. Once approved, you will set up your security PIN.";
-
-        let termsList = JSON.parse(localStorage.getItem('chronicle_terms')) || [
-            { id: 1, title: "1. Account Security & Compliance", desc: "All users must maintain secure credentials." }
-        ];
-
+        let welcomeMsgText = localStorage.getItem('chronicle_welcome_msg') || "🎉 Welcome to Chronicle Wallet! Your account has been registered successfully and is awaiting management review.";
+        let termsList = JSON.parse(localStorage.getItem('chronicle_terms')) || [{ id: 1, title: "1. Account Security & Compliance", desc: "All users must maintain secure credentials." }];
         let exchanges = JSON.parse(localStorage.getItem('chronicle_ex')) || [{ id: 1, name: "MoonPay", logo: "MP", link: "https://buy.moonpay.com" }];
         let botFAQs = JSON.parse(localStorage.getItem('chronicle_faqs')) || [{ id: 1, q: "withdrawal", a: "Withdrawals require clearance verification." }];
         let paymentMethods = JSON.parse(localStorage.getItem('chronicle_pms')) || [{ id: 1, name: "USDT (ERC-20)", details: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F" }];
         let actionSteps = JSON.parse(localStorage.getItem('chronicle_steps')) || [{ id: 1, title: "Tax & Compliance Verification", amount: 250, pmId: 1 }];
 
-        // Theme preference
         let currentTheme = localStorage.getItem('chronicle_theme') || 'dark';
         if (currentTheme === 'light') document.getElementById('app-body').classList.add('light-mode');
 
+        let liveBtcUsd = 65000;
+        let liveEthUsd = 3500;
+
         function getCurrentUserData() {
-            if (!currentUserEmail) return { balance: 0, txs: [], stepIdx: 0, activeTxId: null };
+            if (!currentUserEmail) return { btc: 0, eth: 0, usd: 0, txs: [], pin: '1234', status: 'Approved', stepIdx: 0, activeTxId: null };
             let u = usersList.find(x => x.email === currentUserEmail);
             if (!u) {
-                u = { email: currentUserEmail, password: "", status: "Approved", pin: "1234", balance: 0.00, txs: [], stepIdx: 0, activeTxId: null };
+                u = { email: currentUserEmail, password: "", status: "Approved", pin: "1234", btc: 0, eth: 0, usd: 0, txs: [], stepIdx: 0, activeTxId: null };
                 usersList.push(u);
             }
-            if (u.balance === undefined) u.balance = 0.00;
+            if (u.btc === undefined) u.btc = 0;
+            if (u.eth === undefined) u.eth = 0;
+            if (u.usd === undefined) u.usd = 0;
             if (!u.txs) u.txs = [];
             return u;
         }
@@ -973,442 +924,179 @@
 
         function updateBalanceUI() {
             const u = getCurrentUserData();
-            document.getElementById('user-balance-display').innerText = `$${Number(u.balance).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            const btcVal = u.btc * liveBtcUsd;
+            const ethVal = u.eth * liveEthUsd;
+            const totalVal = btcVal + ethVal + u.usd;
+
+            document.getElementById('user-total-val').innerText = `$${totalVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('btc-holdings').innerText = `${u.btc.toFixed(4)} BTC`;
+            document.getElementById('btc-fiat-value').innerText = `$${btcVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('eth-holdings').innerText = `${u.eth.toFixed(4)} ETH`;
+            document.getElementById('eth-fiat-value').innerText = `$${ethVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('usd-fiat-value').innerText = `$${u.usd.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
             if (currentUserEmail) {
                 document.getElementById('auth-status-btn').innerText = `👤 ${currentUserEmail.split('@')[0]}`;
-                const inbox = userEmails[currentUserEmail] || [];
-                document.getElementById('unread-badge').innerText = inbox.length;
+                document.getElementById('unread-badge').innerText = (userEmails[currentUserEmail] || []).length;
             } else {
                 document.getElementById('auth-status-btn').innerText = "Sign In / Sign Up";
                 document.getElementById('unread-badge').innerText = "0";
             }
+            renderHistoryTable();
         }
 
-        async function fetchLiveBtcPrice() {
+        async function fetchPrices() {
             try {
-                const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
+                const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd');
                 const data = await res.json();
                 if (data.bitcoin && data.bitcoin.usd) {
-                    const price = data.bitcoin.usd;
-                    document.getElementById('btc-live-price').innerText = `Live BTC: $${price.toLocaleString()} USD`;
-                    document.getElementById('btc-fiat-value').innerText = `$${(1.2485 * price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-                    document.getElementById('btc-holdings').innerText = `1.2485 BTC`;
+                    liveBtcUsd = data.bitcoin.usd;
+                    document.getElementById('btc-live-price').innerText = `Live BTC: $${liveBtcUsd.toLocaleString()}`;
                 }
-            } catch (e) {
-                document.getElementById('btc-live-price').innerText = "Live BTC: $65,000";
-            }
+                if (data.ethereum && data.ethereum.usd) {
+                    liveEthUsd = data.ethereum.usd;
+                    document.getElementById('eth-live-price').innerText = `Live ETH: $${liveEthUsd.toLocaleString()}`;
+                }
+                updateBalanceUI();
+            } catch (e) {}
         }
-        fetchLiveBtcPrice();
-        setInterval(fetchLiveBtcPrice, 30000);
+        fetchPrices();
+        setInterval(fetchPrices, 30000);
 
         function renderHistoryTable() {
             const u = getCurrentUserData();
             const tbody = document.getElementById('tx-history');
             if (!u.txs || u.txs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No recent transactions</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">No recent transactions</td></tr>`;
                 return;
             }
             tbody.innerHTML = u.txs.map(tx => `
                 <tr>
-                    <td>Withdrawal</td>
+                    <td>${tx.type}</td>
                     <td>$${tx.amount.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
                     <td><span class="badge ${tx.status === 'COMPLETED' ? 'badge-success' : 'badge-pending'}">${tx.status}</span></td>
-                    <td><button class="btn" style="padding:4px 8px; font-size:0.75rem;" onclick="openActionModal()">View Action</button></td>
                 </tr>
             `).join('');
         }
 
-        function showTab(tab) {
-            document.getElementById('user-tab').classList.toggle('hidden', tab !== 'user');
-            document.getElementById('admin-tab').classList.toggle('hidden', tab !== 'admin');
-            document.getElementById('btn-user').classList.toggle('active', tab === 'user');
-            document.getElementById('btn-admin').classList.toggle('active', tab === 'admin');
-            renderAdminLists();
+        // Receive logic
+        function openReceiveModal() { document.getElementById('receive-modal').style.display = 'flex'; updateReceiveAddress(); }
+        function closeReceiveModal() { document.getElementById('receive-modal').style.display = 'none'; }
+        function updateReceiveAddress() {
+            const asset = document.getElementById('receive-asset-type').value;
+            const box = document.getElementById('receive-address-box');
+            if (asset === 'btc') box.value = "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh";
+            else if (asset === 'eth') box.value = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
+            else box.value = "CHRONICLE-USD-TAG-" + (currentUserEmail || "guest");
         }
 
-        // Settings Modal
-        function openSettingsModal() {
-            if (!currentUserEmail) {
-                alert("Please sign in to access settings.");
-                openAuthModal();
-                return;
-            }
-            document.getElementById('settings-modal').style.display = 'flex';
-        }
-        function closeSettingsModal() { document.getElementById('settings-modal').style.display = 'none'; }
-
-        function toggleTheme() {
-            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            document.getElementById('app-body').classList.toggle('light-mode', currentTheme === 'light');
-            saveState();
-        }
-
-        function handleSettingsEmailChange(e) {
+        // Send logic
+        function openSendModal() { document.getElementById('send-modal').style.display = 'flex'; }
+        function closeSendModal() { document.getElementById('send-modal').style.display = 'none'; }
+        function handleSend(e) {
             e.preventDefault();
-            const newEmail = document.getElementById('settings-new-email').value;
-            const u = usersList.find(x => x.email === currentUserEmail);
-            if (!u) return;
-            if (usersList.some(x => x.email === newEmail)) {
-                alert("Email already in use.");
-                return;
-            }
-            if (userEmails[currentUserEmail]) {
-                userEmails[newEmail] = userEmails[currentUserEmail];
-                delete userEmails[currentUserEmail];
-            }
-            u.email = newEmail;
-            currentUserEmail = newEmail;
+            if (!currentUserEmail) { alert("Please sign in first."); openAuthModal(); return; }
+            const asset = document.getElementById('send-asset-type').value;
+            const amt = Number(document.getElementById('send-amount').value);
+            const u = getCurrentUserData();
+
+            if (asset === 'btc' && amt > u.btc) { alert("Insufficient BTC balance."); return; }
+            if (asset === 'eth' && amt > u.eth) { alert("Insufficient ETH balance."); return; }
+            if (asset === 'usd' && amt > u.usd) { alert("Insufficient USD balance."); return; }
+
+            if (asset === 'btc') u.btc -= amt;
+            else if (asset === 'eth') u.eth -= amt;
+            else u.usd -= amt;
+
+            u.txs.unshift({ type: `Send (${asset.toUpperCase()})`, amount: amt, status: 'COMPLETED' });
             saveState();
             updateBalanceUI();
-            alert("Email updated successfully!");
-            closeSettingsModal();
+            closeSendModal();
+            alert("Funds sent successfully!");
         }
 
-        function handleSettingsPasswordChange(e) {
-            e.preventDefault();
-            const newPw = document.getElementById('settings-new-password').value;
-            const u = usersList.find(x => x.email === currentUserEmail);
-            if (u) {
-                u.password = newPw;
-                saveState();
-                alert("Login password updated successfully!");
-                closeSettingsModal();
-            }
+        // Withdraw logic & Payout options
+        function openWithdrawModal() {
+            if (!currentUserEmail) { alert("Please sign in first."); openAuthModal(); return; }
+            document.getElementById('withdraw-modal').style.display = 'flex';
         }
-
-        function handleSettingsPinChange(e) {
-            e.preventDefault();
-            const newPin = document.getElementById('settings-new-pin').value;
-            if (newPin.length !== 4) {
-                alert("PIN must be exactly 4 digits.");
-                return;
-            }
-            const u = usersList.find(x => x.email === currentUserEmail);
-            if (u) {
-                u.pin = newPin;
-                saveState();
-                alert("Withdrawal PIN updated successfully!");
-                closeSettingsModal();
-            }
+        function closeWithdrawModal() { document.getElementById('withdraw-modal').style.display = 'none'; }
+        let selectedWithdrawMethodName = "";
+        function selectWithdrawMethod(method) {
+            selectedWithdrawMethodName = method;
+            closeWithdrawModal();
+            document.getElementById('withdraw-method-title').innerText = `Withdraw via ${method}`;
+            document.getElementById('withdraw-destination-label').innerText = method === 'Bank Transfer' ? 'IBAN / Account Number' : method === 'PayPal' ? 'PayPal Email' : method === 'Zelle' ? 'Zelle Phone / Email' : '$Cashtag';
+            document.getElementById('withdraw-form-modal').style.display = 'flex';
         }
-
-        // Inbox & Auth
-        function openInboxModal() {
-            if (!currentUserEmail) {
-                alert("Please sign in to view your Gmail inbox.");
-                openAuthModal();
-                return;
-            }
-            const container = document.getElementById('user-inbox-messages');
-            const inbox = userEmails[currentUserEmail] || [];
-            if (inbox.length === 0) {
-                container.innerHTML = `<p style="color:var(--text-muted)">Your inbox is empty.</p>`;
-            } else {
-                container.innerHTML = inbox.map(em => `
-                    <div class="email-item">
-                        <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
-                            <span>From: support@chronicle.io</span>
-                            <span>${em.date}</span>
-                        </div>
-                        <div style="font-weight:bold; margin:0.3rem 0; color:var(--text-main);">${em.subject}</div>
-                        <div style="font-size:0.85rem; color:var(--text-main); white-space:pre-line;">${em.body}</div>
-                    </div>
-                `).join('');
-            }
-            document.getElementById('inbox-modal').style.display = 'flex';
-        }
-        function closeInboxModal() { document.getElementById('inbox-modal').style.display = 'none'; }
-
-        function openAuthModal() {
-            if (currentUserEmail) {
-                if (confirm(`Logged in as ${currentUserEmail}. Do you want to Sign Out?`)) {
-                    currentUserEmail = null;
-                    saveState();
-                    updateBalanceUI();
-                    renderHistoryTable();
-                    alert("Signed out successfully.");
-                }
-                return;
-            }
-            renderTermsPreview();
-            document.getElementById('auth-modal').style.display = 'flex';
-        }
-
-        function closeAuthModal() { document.getElementById('auth-modal').style.display = 'none'; }
-        function openForgotPasswordModal() { closeAuthModal(); document.getElementById('forgot-password-modal').style.display = 'flex'; }
-        function closeForgotPasswordModal() { document.getElementById('forgot-password-modal').style.display = 'none'; }
-        function openResetPinModal() { document.getElementById('reset-pin-modal').style.display = 'flex'; }
-        function closeResetPinModal() { document.getElementById('reset-pin-modal').style.display = 'none'; }
-
-        function switchAuthMode(mode) {
-            document.getElementById('auth-tab-signin').classList.toggle('active', mode === 'signin');
-            document.getElementById('auth-tab-signup').classList.toggle('active', mode === 'signup');
-            document.getElementById('signin-form').classList.toggle('hidden', mode !== 'signin');
-            document.getElementById('signup-form').classList.toggle('hidden', mode !== 'signup');
-            if (mode === 'signup') renderTermsPreview();
-        }
-
-        function renderTermsPreview() {
-            const box = document.getElementById('terms-preview-box');
-            if (termsList.length === 0) {
-                box.innerHTML = "No terms published yet.";
-                return;
-            }
-            box.innerHTML = termsList.map(t => `<strong>${t.title}</strong><br>${t.desc}<br><br>`).join('');
-        }
-
-        function handleSignUp(e) {
-            e.preventDefault();
-            const email = document.getElementById('signup-email').value;
-            const password = document.getElementById('signup-password').value;
-            const existing = usersList.find(u => u.email === email);
-            if (existing) {
-                alert("Account with this email already exists!");
-                return;
-            }
-
-            usersList.push({ email, password, status: "Pending Approval", pin: null, balance: 0.00, txs: [], stepIdx: 0, activeTxId: null });
-            sendSimulatedEmail(email, "Welcome to Chronicle Wallet!", welcomeMsgText);
-            saveState();
-            closeAuthModal();
-
-            alert("Account registered successfully! A welcome email has been sent to your Gmail inbox.");
-        }
-
-        function handleSignIn(e) {
-            e.preventDefault();
-            const email = document.getElementById('signin-email').value;
-            const password = document.getElementById('signin-password').value;
-            const u = usersList.find(x => x.email === email);
-
-            if (!u || u.password !== password) {
-                alert("Invalid email or password.");
-                return;
-            }
-
-            if (u.status !== "Approved") {
-                alert("Your account is awaiting management approval. Please check back later.");
-                return;
-            }
-
-            currentUserEmail = email;
-            saveState();
-            updateBalanceUI();
-            renderHistoryTable();
-            closeAuthModal();
-
-            if (!u.pin) {
-                document.getElementById('pin-setup-modal').style.display = 'flex';
-            } else {
-                alert("Signed in successfully!");
-            }
-        }
-
-        function handlePasswordReset(e) {
-            e.preventDefault();
-            const email = document.getElementById('reset-pw-email').value;
-            const newPw = document.getElementById('reset-pw-new').value;
-            const u = usersList.find(x => x.email === email);
-
-            if (!u) {
-                alert("Account not found with this email.");
-                return;
-            }
-
-            u.password = newPw;
-            saveState();
-            closeForgotPasswordModal();
-            alert("Password reset successfully! You can now sign in.");
-        }
-
-        function handlePinSetup(e) {
-            e.preventDefault();
-            const pin = document.getElementById('new-pin-input').value;
-            if (pin.length !== 4) {
-                alert("PIN must be exactly 4 digits.");
-                return;
-            }
-
-            const u = usersList.find(x => x.email === currentUserEmail);
-            if (u) {
-                u.pin = pin;
-                saveState();
-            }
-            document.getElementById('pin-setup-modal').style.display = 'none';
-            alert("Withdrawal PIN created successfully!");
-        }
-
-        function handlePinReset(e) {
-            e.preventDefault();
-            const email = document.getElementById('reset-pin-email').value;
-            const newPin = document.getElementById('reset-pin-new').value;
-            if (newPin.length !== 4) {
-                alert("PIN must be exactly 4 digits.");
-                return;
-            }
-
-            const u = usersList.find(x => x.email === email);
-            if (!u) {
-                alert("User not found.");
-                return;
-            }
-
-            u.pin = newPin;
-            saveState();
-            closeResetPinModal();
-            alert("Withdrawal PIN reset successfully!");
-        }
-
-        // Withdrawal & PIN Verification
-        let pendingWithdrawalData = null;
+        function closeWithdrawFormModal() { document.getElementById('withdraw-form-modal').style.display = 'none'; }
 
         function requestWithdrawalPinCheck(e) {
             e.preventDefault();
-            if (!currentUserEmail) {
-                alert("Please sign in first.");
-                openAuthModal();
-                return;
-            }
-
+            const amt = Number(document.getElementById('withdraw-amt').value);
             const u = getCurrentUserData();
-            const amount = Number(document.getElementById('withdraw-amt').value);
-            const addr = document.getElementById('withdraw-addr').value;
+            if (amt > u.usd) { alert("Insufficient USD cash balance for withdrawal."); return; }
 
-            if (amount > u.balance) {
-                alert("Insufficient balance.");
-                return;
-            }
-
-            pendingWithdrawalData = { amount, addr };
-            closeWithdrawModal();
+            closeWithdrawFormModal();
             document.getElementById('verify-pin-input').value = '';
             document.getElementById('pin-confirm-modal').style.display = 'flex';
         }
-
         function closePinConfirmModal() { document.getElementById('pin-confirm-modal').style.display = 'none'; }
 
         function verifyPinAndProceed(e) {
             e.preventDefault();
-            const enteredPin = document.getElementById('verify-pin-input').value;
-            const u = usersList.find(x => x.email === currentUserEmail);
-
-            if (!u || u.pin !== enteredPin) {
-                alert("Incorrect withdrawal PIN!");
-                return;
-            }
-
+            const pin = document.getElementById('verify-pin-input').value;
+            const u = getCurrentUserData();
+            if (u.pin !== pin) { alert("Incorrect withdrawal PIN!"); return; }
             closePinConfirmModal();
-            executeWithdrawal(pendingWithdrawalData.amount);
-        }
 
-        function executeWithdrawal(amount) {
-            const u = getCurrentUserData();
-            u.balance -= amount;
+            const amt = Number(document.getElementById('withdraw-amt').value);
+            u.usd -= amt;
+            u.txs.unshift({ type: `Withdraw (${selectedWithdrawMethodName})`, amount: amt, status: 'PENDING' });
+            saveState();
             updateBalanceUI();
-
-            const overlay = document.getElementById('loader-overlay');
-            const status = document.getElementById('loader-status');
-            overlay.style.display = 'flex';
-
-            setTimeout(() => { status.innerText = "Checking Liquidity Nodes..."; }, 1200);
-            setTimeout(() => { status.innerText = "Routing Network Protocol..."; }, 2400);
-
-            setTimeout(() => {
-                overlay.style.display = 'none';
-                const txId = Date.now();
-                u.activeTxId = txId;
-                u.stepIdx = 0;
-
-                u.txs.unshift({ id: txId, amount: amount, status: "PENDING (ACTION REQUIRED)" });
-                saveState();
-                renderHistoryTable();
-                openActionModal();
-            }, 3600);
+            alert("Withdrawal submitted successfully!");
         }
 
-        function openActionModal() {
-            if (actionSteps.length === 0) return;
-            const u = getCurrentUserData();
-            const step = actionSteps[u.stepIdx || 0];
-            const pm = paymentMethods.find(p => p.id == step.pmId) || paymentMethods[0];
-
-            document.getElementById('modal-step-title').innerText = `Step ${(u.stepIdx || 0) + 1}: ${step.title}`;
-            document.getElementById('modal-step-amount').innerText = `$${step.amount}.00`;
-            document.getElementById('modal-pm-name').innerText = pm ? pm.name : "Default";
-            document.getElementById('modal-pm-details').innerText = pm ? pm.details : "N/A";
-
-            document.getElementById('action-modal').style.display = 'flex';
-        }
-
-        function closeModal() { document.getElementById('action-modal').style.display = 'none'; }
-
-        function submitProof() {
-            const file = document.getElementById('proof-file');
-            if (!file.files || !file.files[0]) {
-                alert("Please select a screenshot file first!");
-                return;
-            }
-
-            const u = getCurrentUserData();
-            const step = actionSteps[u.stepIdx || 0];
-            const queue = document.getElementById('admin-queue');
-            queue.innerHTML = `
-                <div style="background:var(--bg-input); padding:1rem; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <strong>Proof Submitted by ${currentUserEmail}</strong>
-                        <p style="font-size:0.8rem;">Step: ${step.title} ($${step.amount})</p>
-                    </div>
-                    <button class="btn btn-success" style="width:auto;" onclick="approveCurrentProof('${currentUserEmail}')">Approve & Advance</button>
-                </div>
-            `;
-
-            closeModal();
-            alert("Screenshot submitted for Admin review!");
-        }
-
-        function approveCurrentProof(targetEmail) {
-            const u = usersList.find(x => x.email === targetEmail) || getCurrentUserData();
-            const step = actionSteps[u.stepIdx || 0];
-            const tx = u.txs.find(t => t.id == u.activeTxId);
-            if (tx) {
-                tx.amount += step.amount;
-            }
-
-            document.getElementById('admin-queue').innerHTML = `<span style="color:var(--text-muted)">No pending proofs.</span>`;
-            u.stepIdx = (u.stepIdx || 0) + 1;
-
-            if (u.stepIdx < actionSteps.length) {
-                if (tx) tx.status = `PENDING (STEP ${u.stepIdx + 1} REQUIRED)`;
-                saveState();
-                renderHistoryTable();
-                alert(`Step approved! $${step.amount} fee added back to withdrawal total.`);
-                if (currentUserEmail === targetEmail) openActionModal();
+        // Admin Access & Functions
+        function openAdminLoginModal() { document.getElementById('admin-login-modal').style.display = 'flex'; }
+        function closeAdminLoginModal() { document.getElementById('admin-login-modal').style.display = 'none'; }
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('admin-user-input').value;
+            const p = document.getElementById('admin-pass-input').value;
+            if (u === 'Admin' && p === 'Femifresh') {
+                closeAdminLoginModal();
+                document.getElementById('user-tab').classList.add('hidden');
+                document.getElementById('admin-tab').classList.remove('hidden');
+                renderAdminDashboard();
             } else {
-                if (tx) tx.status = "COMPLETED";
-                saveState();
-                renderHistoryTable();
-                alert(`All steps approved! $${step.amount} fee added back. Withdrawal fully released.`);
+                alert("Invalid admin credentials.");
             }
         }
+        function logoutAdmin() {
+            document.getElementById('admin-tab').classList.add('hidden');
+            document.getElementById('user-tab').classList.remove('hidden');
+        }
 
-        // Admin Management: Balance Top-Up/Deduction, Welcome, Terms
         function adminModifyBalance(e) {
             e.preventDefault();
             const email = document.getElementById('admin-target-user').value;
             const action = document.getElementById('admin-bal-action').value;
+            const asset = document.getElementById('admin-bal-asset').value;
             const amount = Number(document.getElementById('admin-bal-amount').value);
             const reason = document.getElementById('admin-bal-reason').value;
 
-            const targetUser = usersList.find(x => x.email === email);
-            if (targetUser) {
-                if (action === 'topup') targetUser.balance += amount;
-                else targetUser.balance -= amount;
-            }
-            updateBalanceUI();
+            let targetUser = usersList.find(x => x.email === email);
+            if (!targetUser) return;
 
-            sendSimulatedEmail(email, `Account Balance Update (${action === 'topup' ? 'Credit' : 'Debit'})`, `Your account has been ${action === 'topup' ? 'credited with' : 'debited by'} $${amount.toLocaleString()}.\nReason: ${reason}`);
+            if (action === 'topup') targetUser[asset] += amount;
+            else targetUser[asset] -= amount;
+
+            sendSimulatedEmail(email, `Balance Updated (${asset.toUpperCase()})`, `Your ${asset.toUpperCase()} balance was ${action === 'topup' ? 'credited' : 'debited'} by ${amount}.\nReason: ${reason}`);
             saveState();
-            alert(`Successfully ${action === 'topup' ? 'credited' : 'debited'} $${amount} for ${email}. Email notification sent!`);
+            updateBalanceUI();
+            alert(`Successfully updated ${asset.toUpperCase()} for ${email}!`);
         }
 
         function saveWelcomeMessage(e) {
@@ -1423,7 +1111,6 @@
             const editId = document.getElementById('edit-term-id').value;
             const title = document.getElementById('term-title').value;
             const desc = document.getElementById('term-desc').value;
-
             if (editId) {
                 const t = termsList.find(x => x.id == editId);
                 if (t) { t.title = title; t.desc = desc; }
@@ -1432,14 +1119,12 @@
             } else {
                 termsList.push({ id: Date.now(), title, desc });
             }
-
             document.getElementById('term-title').value = '';
             document.getElementById('term-desc').value = '';
             saveState();
-            renderAdminLists();
-            alert("Terms & Conditions updated!");
+            renderAdminDashboard();
+            alert("Terms updated!");
         }
-
         function editTerm(id) {
             const t = termsList.find(x => x.id == id);
             if (!t) return;
@@ -1448,34 +1133,25 @@
             document.getElementById('term-desc').value = t.desc;
             document.getElementById('term-submit-btn').innerText = "Update Term";
         }
+        function deleteTerm(id) { termsList = termsList.filter(x => x.id != id); saveState(); renderAdminDashboard(); }
 
-        function deleteTerm(id) {
-            termsList = termsList.filter(x => x.id != id);
-            saveState();
-            renderAdminLists();
-        }
-
-        function approveUserAccount(email) {
-            const u = usersList.find(x => x.email === email);
-            if (u) {
-                u.status = "Approved";
-                sendSimulatedEmail(email, "Account Approved!", "Your account has been approved by management. You can now sign in and set up your withdrawal PIN.");
-                saveState();
-                renderAdminLists();
-                alert(`User ${email} approved successfully!`);
-            }
-        }
-
-        // Admin Management
         function addPaymentMethod(e) {
             e.preventDefault();
             paymentMethods.push({ id: Date.now(), name: document.getElementById('pm-name').value, details: document.getElementById('pm-details').value });
-            document.getElementById('pm-name').value = '';
-            document.getElementById('pm-details').value = '';
-            saveState();
-            renderAdminLists();
-            alert("Payment method added!");
+            saveState(); renderAdminDashboard(); alert("Payment method added!");
         }
+        function addExchange(e) {
+            e.preventDefault();
+            exchanges.push({ id: Date.now(), name: document.getElementById('ex-name').value, logo: document.getElementById('ex-logo').value, link: document.getElementById('ex-link').value });
+            saveState(); renderAdminDashboard(); alert("Exchange added!");
+        }
+        function deleteExchange(id) { exchanges = exchanges.filter(x => x.id != id); saveState(); renderAdminDashboard(); }
+        function addBotFAQ(e) {
+            e.preventDefault();
+            botFAQs.push({ id: Date.now(), q: document.getElementById('faq-question').value, a: document.getElementById('faq-answer').value });
+            saveState(); renderAdminDashboard(); alert("FAQ added!");
+        }
+        function deleteBotFAQ(id) { botFAQs = botFAQs.filter(x => x.id != id); saveState(); renderAdminDashboard(); }
 
         function saveActionStep(e) {
             e.preventDefault();
@@ -1483,7 +1159,6 @@
             const title = document.getElementById('action-title').value;
             const amount = Number(document.getElementById('action-amount').value);
             const pmId = Number(document.getElementById('action-pm-select').value);
-
             if (editId) {
                 const s = actionSteps.find(x => x.id == editId);
                 if (s) { s.title = title; s.amount = amount; s.pmId = pmId; }
@@ -1492,116 +1167,183 @@
             } else {
                 actionSteps.push({ id: Date.now(), title, amount, pmId });
             }
-
-            document.getElementById('action-title').value = '';
-            document.getElementById('action-amount').value = '';
-            saveState();
-            renderAdminLists();
-            alert("Action pipeline updated!");
+            saveState(); renderAdminDashboard(); alert("Action step saved!");
         }
+        function deleteActionStep(id) { actionSteps = actionSteps.filter(x => x.id != id); saveState(); renderAdminDashboard(); }
 
-        function editActionStep(id) {
-            const s = actionSteps.find(x => x.id == id);
-            if (!s) return;
-            document.getElementById('edit-action-id').value = s.id;
-            document.getElementById('action-title').value = s.title;
-            document.getElementById('action-amount').value = s.amount;
-            document.getElementById('action-pm-select').value = s.pmId;
-            document.getElementById('action-submit-btn').innerText = "Update Action Step";
-        }
-
-        function deleteActionStep(id) { actionSteps = actionSteps.filter(x => x.id != id); saveState(); renderAdminLists(); }
-        function addExchange(e) { e.preventDefault(); exchanges.push({ id: Date.now(), name: document.getElementById('ex-name').value, logo: document.getElementById('ex-logo').value, link: document.getElementById('ex-link').value }); saveState(); renderAdminLists(); alert("Exchange added!"); }
-        function deleteExchange(id) { exchanges = exchanges.filter(x => x.id != id); saveState(); renderAdminLists(); }
-        function addBotFAQ(e) { e.preventDefault(); botFAQs.push({ id: Date.now(), q: document.getElementById('faq-question').value, a: document.getElementById('faq-answer').value }); saveState(); renderAdminLists(); alert("FAQ added!"); }
-        function deleteBotFAQ(id) { botFAQs = botFAQs.filter(x => x.id != id); saveState(); renderAdminLists(); }
-
-        function renderAdminLists() {
-            document.getElementById('admin-welcome-msg').value = welcomeMsgText;
-
-            const userSelect = document.getElementById('admin-target-user');
-            userSelect.innerHTML = usersList.map(u => `<option value="${u.email}">${u.email} (${u.status})</option>`).join('');
-
-            const uList = document.getElementById('admin-users-list');
-            if (usersList.length === 0) {
-                uList.innerHTML = `<p style="color:var(--text-muted)">No users registered yet.</p>`;
-            } else {
-                uList.innerHTML = usersList.map(u => `
-                    <div style="background:var(--bg-input); padding:0.75rem; border-radius:6px; margin-bottom:0.5rem; font-size:0.85rem; display:flex; justify-content:space-between; align-items:center;">
-                        <div><strong>${u.email}</strong> - Status: <span style="color:${u.status === 'Approved' ? 'var(--accent-green)' : 'var(--accent-yellow)'}; font-weight:bold;">${u.status}</span></div>
-                        ${u.status !== 'Approved' ? `<button class="btn btn-success" style="width:auto; padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="approveUserAccount('${u.email}')">Approve Account</button>` : '<span style="color:var(--text-muted)">Active</span>'}
-                    </div>
-                `).join('');
+        function approveUserAccount(email) {
+            const u = usersList.find(x => x.email === email);
+            if (u) {
+                u.status = "Approved";
+                sendSimulatedEmail(email, "Account Approved!", "Your account has been approved by management. You can now sign in and set up your withdrawal PIN.");
+                saveState(); renderAdminDashboard(); alert(`User ${email} approved!`);
             }
+        }
 
-            document.getElementById('admin-terms-list').innerHTML = termsList.map(t => `
-                <div style="background:var(--bg-input); padding:0.75rem; border-radius:6px; margin-bottom:0.5rem; font-size:0.85rem; display:flex; justify-content:space-between; align-items:center;">
-                    <div><strong>${t.title}</strong><br><span style="color:var(--text-muted);">${t.desc}</span></div>
-                    <div style="display:flex; gap:0.5rem;">
-                        <button class="btn btn-outline" style="width:auto; padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="editTerm(${t.id})">Edit</button>
-                        <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="deleteTerm(${t.id})">Delete</button>
-                    </div>
+        function renderAdminDashboard() {
+            document.getElementById('admin-welcome-msg').value = welcomeMsgText;
+            document.getElementById('admin-target-user').innerHTML = usersList.map(u => `<option value="${u.email}">${u.email} (${u.status})</option>`).join('');
+            document.getElementById('admin-users-list').innerHTML = usersList.map(u => `
+                <div style="background:var(--bg-input); padding:0.75rem; border-radius:6px; margin-bottom:0.5rem; display:flex; justify-content:space-between; align-items:center;">
+                    <span><strong>${u.email}</strong> - Status: <span style="color:${u.status === 'Approved' ? 'var(--accent-green)' : 'var(--accent-yellow)'};">${u.status}</span> (BTC: ${u.btc.toFixed(2)} | ETH: ${u.eth.toFixed(2)} | USD: $${u.usd})</span>
+                    ${u.status !== 'Approved' ? `<button class="btn btn-success" style="width:auto; padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="approveUserAccount('${u.email}')">Approve</button>` : ''}
                 </div>
             `).join('');
-
+            document.getElementById('admin-terms-list').innerHTML = termsList.map(t => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>${t.title}</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteTerm(${t.id})">Delete</button></div>`).join('');
+            document.getElementById('admin-exchanges-list').innerHTML = exchanges.map(ex => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>${ex.name}</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteExchange(${ex.id})">Delete</button></div>`).join('');
+            document.getElementById('faq-list').innerHTML = botFAQs.map(f => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>${f.q}</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteBotFAQ(${f.id})">Delete</button></div>`).join('');
             document.getElementById('action-pm-select').innerHTML = paymentMethods.map(pm => `<option value="${pm.id}">${pm.name}</option>`).join('');
             document.getElementById('pm-list').innerHTML = paymentMethods.map(pm => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; font-size:0.85rem;"><strong>${pm.name}</strong> - ${pm.details}</div>`).join('');
-            document.getElementById('action-steps-list').innerHTML = actionSteps.map((st, i) => `
-                <div style="background:var(--bg-input); padding:0.75rem; border-radius:6px; margin-bottom:0.5rem; font-size:0.85rem; display:flex; justify-content:space-between; align-items:center;">
-                    <span>Step ${i+1}: ${st.title} ($${st.amount})</span>
-                    <div>
-                        <button class="btn btn-outline" style="width:auto; padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="editActionStep(${st.id})">Edit</button>
-                        <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="deleteActionStep(${st.id})">Delete</button>
-                    </div>
-                </div>
-            `).join('');
-            document.getElementById('faq-list').innerHTML = botFAQs.map(f => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; font-size:0.85rem; display:flex; justify-content:space-between;"><span>${f.q}</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteBotFAQ(${f.id})">Delete</button></div>`).join('');
-            document.getElementById('admin-exchanges-list').innerHTML = exchanges.map(ex => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; font-size:0.85rem; display:flex; justify-content:space-between;"><span>${ex.name}</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteExchange(${ex.id})">Delete</button></div>`).join('');
+            document.getElementById('action-steps-list').innerHTML = actionSteps.map((st, i) => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>Step ${i+1}: ${st.title} ($${st.amount})</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteActionStep(${st.id})">Delete</button></div>`).join('');
         }
 
-        // Modals & Chat
-        function openWithdrawModal() {
-            const u = usersList.find(x => x.email === currentUserEmail);
-            if (!currentUserEmail || !u || u.status !== "Approved") {
-                alert("Account approval required before initiating withdrawals.");
-                openAuthModal();
-                return;
-            }
-            document.getElementById('withdraw-modal').style.display = 'flex';
+        // Settings, Inbox, Auth Modals
+        function openSettingsModal() { if (!currentUserEmail) { openAuthModal(); return; } document.getElementById('settings-modal').style.display = 'flex'; }
+        function closeSettingsModal() { document.getElementById('settings-modal').style.display = 'none'; }
+        function toggleTheme() {
+            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.getElementById('app-body').classList.toggle('light-mode', currentTheme === 'light');
+            saveState();
         }
-        function closeWithdrawModal() { document.getElementById('withdraw-modal').style.display = 'none'; }
-        function openSendModal() { document.getElementById('send-modal').style.display = 'flex'; }
-        function closeSendModal() { document.getElementById('send-modal').style.display = 'none'; }
-        function openReceiveModal() { document.getElementById('receive-modal').style.display = 'flex'; }
-        function closeReceiveModal() { document.getElementById('receive-modal').style.display = 'none'; }
+        function openInboxModal() {
+            if (!currentUserEmail) { openAuthModal(); return; }
+            const container = document.getElementById('user-inbox-messages');
+            const inbox = userEmails[currentUserEmail] || [];
+            container.innerHTML = inbox.length === 0 ? `<p style="color:var(--text-muted)">Inbox is empty.</p>` : inbox.map(em => `
+                <div class="email-item"><strong>${em.subject}</strong><br>${em.body}<br><small style="color:var(--text-muted);">${em.date}</small></div>
+            `).join('');
+            document.getElementById('inbox-modal').style.display = 'flex';
+        }
+        function closeInboxModal() { document.getElementById('inbox-modal').style.display = 'none'; }
+
+        function openAuthModal() { document.getElementById('auth-modal').style.display = 'flex'; }
+        function closeAuthModal() { document.getElementById('auth-modal').style.display = 'none'; }
+        function openForgotPasswordModal() { closeAuthModal(); document.getElementById('forgot-password-modal').style.display = 'flex'; }
+        function closeForgotPasswordModal() { document.getElementById('forgot-password-modal').style.display = 'none'; }
+        function openResetPinModal() { document.getElementById('reset-pin-modal').style.display = 'flex'; }
+        function closeResetPinModal() { document.getElementById('reset-pin-modal').style.display = 'none'; }
+
+        function switchAuthMode(mode) {
+            document.getElementById('auth-tab-signin').classList.toggle('active', mode === 'signin');
+            document.getElementById('auth-tab-signup').classList.toggle('active', mode === 'signup');
+            document.getElementById('signin-form').classList.toggle('hidden', mode !== 'signin');
+            document.getElementById('signup-form').classList.toggle('hidden', mode !== 'signup');
+        }
+
+        function handleSignUp(e) {
+            e.preventDefault();
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            if (usersList.some(x => x.email === email)) { alert("Account with this email already exists!"); return; }
+            usersList.push({ email, password, status: 'Pending Approval', pin: null, btc: 0, eth: 0, usd: 0, txs: [] });
+            sendSimulatedEmail(email, "Welcome to Chronicle Wallet!", welcomeMsgText);
+            currentUserEmail = email;
+            saveState();
+            closeAuthModal();
+            updateBalanceUI();
+            alert("Account registered successfully! Welcome email sent to your inbox.");
+        }
+
+        function handleSignIn(e) {
+            e.preventDefault();
+            const email = document.getElementById('signin-email').value;
+            const password = document.getElementById('signin-password').value;
+            const u = usersList.find(x => x.email === email && x.password === password);
+            if (!u) { alert("Invalid email or password."); return; }
+            if (u.status !== 'Approved') { alert("Your account is awaiting management approval."); return; }
+            currentUserEmail = email;
+            saveState();
+            closeAuthModal();
+            updateBalanceUI();
+            if (!u.pin) { document.getElementById('pin-setup-modal').style.display = 'flex'; }
+            else { alert("Signed in successfully!"); }
+        }
+
+        function handlePasswordReset(e) {
+            e.preventDefault();
+            const email = document.getElementById('reset-pw-email').value;
+            const newPw = document.getElementById('reset-pw-new').value;
+            const u = usersList.find(x => x.email === email);
+            if (!u) { alert("User not found."); return; }
+            u.password = newPw;
+            saveState();
+            closeForgotPasswordModal();
+            alert("Password reset successfully!");
+        }
+        function handlePinSetup(e) {
+            e.preventDefault();
+            const pin = document.getElementById('new-pin-input').value;
+            const u = usersList.find(x => x.email === currentUserEmail);
+            if (u) { u.pin = pin; saveState(); }
+            document.getElementById('pin-setup-modal').style.display = 'none';
+            alert("Withdrawal PIN created successfully!");
+        }
+        function handlePinReset(e) {
+            e.preventDefault();
+            const email = document.getElementById('reset-pin-email').value;
+            const newPin = document.getElementById('reset-pin-new').value;
+            const u = usersList.find(x => x.email === email);
+            if (!u) { alert("User not found."); return; }
+            u.pin = newPin;
+            saveState();
+            closeResetPinModal();
+            alert("PIN reset successfully!");
+        }
+
+        function handleSettingsEmailChange(e) {
+            e.preventDefault();
+            const newEmail = document.getElementById('settings-new-email').value;
+            const u = usersList.find(x => x.email === currentUserEmail);
+            if (!u) return;
+            if (usersList.some(x => x.email === newEmail)) { alert("Email in use."); return; }
+            if (userEmails[currentUserEmail]) { userEmails[newEmail] = userEmails[currentUserEmail]; delete userEmails[currentUserEmail]; }
+            u.email = newEmail; currentUserEmail = newEmail; saveState(); updateBalanceUI(); alert("Email updated!"); closeSettingsModal();
+        }
+        function handleSettingsPasswordChange(e) {
+            e.preventDefault();
+            const u = usersList.find(x => x.email === currentUserEmail);
+            if (u) { u.password = document.getElementById('settings-new-password').value; saveState(); alert("Password updated!"); closeSettingsModal(); }
+        }
+        function handleSettingsPinChange(e) {
+            e.preventDefault();
+            const u = usersList.find(x => x.email === currentUserEmail);
+            if (u) { u.pin = document.getElementById('settings-new-pin').value; saveState(); alert("PIN updated!"); closeSettingsModal(); }
+        }
+
+        // Chatbot
+        function toggleChat() {
+            const c = document.getElementById('chat-window');
+            c.style.display = c.style.display === 'flex' ? 'none' : 'flex';
+        }
+        function handleChatKey(e) { if (e.key === 'Enter') sendChatMessage(); }
+        function sendChatMessage() {
+            const input = document.getElementById('user-chat-input');
+            if (!input.value.trim()) return;
+            const body = document.getElementById('chat-body');
+            body.innerHTML += `<div class="chat-msg msg-user">${input.value}</div>`;
+            input.value = '';
+            setTimeout(() => {
+                body.innerHTML += `<div class="chat-msg msg-bot">Message received! Support will reply via your inbox.</div>`;
+                body.scrollTop = body.scrollHeight;
+            }, 1000);
+        }
+
         function openBuyModal() {
             document.getElementById('user-exchanges-container').innerHTML = exchanges.map(ex => `
                 <div class="exchange-card">
                     <div style="display:flex; align-items:center; gap:0.75rem;">
-                        <div class="exchange-logo" style="width:32px; height:32px; border-radius:6px; background:#fff; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#000;">${ex.logo}</div>
+                        <div style="width:32px; height:32px; border-radius:6px; background:#fff; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#000;">${ex.logo}</div>
                         <strong>${ex.name}</strong>
                     </div>
-                    <a href="${ex.link}" target="_blank" class="btn" style="width:auto; padding:0.4rem 0.85rem; font-size:0.85rem; text-decoration:none;">Buy on ${ex.name} ↗</a>
+                    <a href="${ex.link}" target="_blank" class="btn" style="width:auto; padding:0.4rem 0.85rem; font-size:0.85rem; text-decoration:none;">Buy ↗</a>
                 </div>
             `).join('');
             document.getElementById('buy-modal').style.display = 'flex';
         }
         function closeBuyModal() { document.getElementById('buy-modal').style.display = 'none'; }
-        function toggleChat() { const c = document.getElementById('chat-window'); c.style.display = c.style.display === 'flex' ? 'none' : 'flex'; }
-        function handleChatKey(e) { if (e.key === 'Enter') sendChatMessage(); }
-        function sendChatMessage() {
-            const input = document.getElementById('user-chat-input');
-            if(!input.value.trim()) return;
-            const body = document.getElementById('chat-body');
-            body.innerHTML += `<div class="chat-msg msg-user">${input.value}</div>`;
-            input.value = '';
-            setTimeout(() => { body.innerHTML += `<div class="chat-msg msg-bot">Message received! An admin will review shortly.</div>`; body.scrollTop = body.scrollHeight; }, 1000);
-        }
 
         // Init
         updateBalanceUI();
-        renderHistoryTable();
-        renderAdminLists();
     </script>
 </body>
 </html>
