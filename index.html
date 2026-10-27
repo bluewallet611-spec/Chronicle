@@ -129,7 +129,6 @@
         <div class="header-actions">
             <button class="btn btn-outline" style="width:auto; padding:0.4rem 0.75rem; font-size:0.8rem;" onclick="openSettingsModal()">⚙️ Settings</button>
             <button class="btn btn-outline" style="width:auto; padding:0.4rem 0.75rem; font-size:0.8rem;" onclick="openInboxModal()">📬 Inbox <span id="unread-badge" style="background:var(--accent-red); color:#fff; border-radius:50%; padding:2px 6px; font-size:0.7rem; margin-left:4px;">0</span></button>
-            <!-- AUTH / PROFILE BUTTON -->
             <button class="auth-status-btn" id="auth-status-btn" onclick="handleAuthHeaderClick()">Sign In / Sign Up</button>
         </div>
     </header>
@@ -139,7 +138,6 @@
         <!-- USER INTERFACE -->
         <div id="user-tab">
             
-            <!-- GUEST PROMPT BANNER (SHOWN WHEN NOT LOGGED IN) -->
             <div id="guest-prompt-card" class="card" style="text-align:center; background:linear-gradient(135deg, var(--bg-card), var(--bg-input)); border: 1px dashed var(--primary);">
                 <h3 style="margin-bottom:0.5rem;">Welcome to Chronicle Wallet</h3>
                 <p style="color:var(--text-muted); font-size:0.875rem; margin-bottom:1rem;">Please sign in or create an account to access your portfolio vault, send, receive, buy, sell, and withdraw funds.</p>
@@ -149,7 +147,6 @@
                 </div>
             </div>
 
-            <!-- WALLET DASHBOARD (SHOWN ONLY WHEN LOGGED IN & APPROVED) -->
             <div id="wallet-dashboard-container" class="hidden">
                 <div class="balance-card">
                     <div style="color:var(--text-muted); font-size:0.875rem;">Total Portfolio Value</div>
@@ -166,7 +163,6 @@
                 </div>
             </div>
 
-            <!-- PUBLIC / LIVE CRYPTO PREVIEW (VISIBLE TO EVERYONE) -->
             <div class="card">
                 <h3 style="margin-bottom:0.75rem;">Live Market Cryptos</h3>
                 <div class="asset-row">
@@ -211,7 +207,6 @@
                 </div>
             </div>
 
-            <!-- TRANSACTION HISTORY (VISIBLE WHEN LOGGED IN) -->
             <div class="card hidden" id="tx-history-card">
                 <h3>Transaction History</h3>
                 <table class="table">
@@ -229,13 +224,12 @@
                 </table>
             </div>
 
-            <!-- DISCREET ADMIN PORTAL LINK -->
             <div style="text-align:center; margin-top:3rem; padding-bottom:1rem;">
                 <button onclick="openAdminLoginModal()" style="background:transparent; border:none; color:var(--text-muted); font-size:0.75rem; cursor:pointer; text-decoration:underline;">Admin Portal Access</button>
             </div>
         </div>
 
-        <!-- ADMIN INTERFACE (HIDDEN BY DEFAULT) -->
+        <!-- ADMIN INTERFACE -->
         <div id="admin-tab" class="hidden">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
                 <h2>👑 Admin Management Dashboard</h2>
@@ -243,37 +237,41 @@
             </div>
 
             <div class="card">
-                <h3>🪙 Global Receive Wallet Addresses</h3>
+                <h3>🪙 Global Receive Wallet Addresses & QR Image</h3>
                 <form onsubmit="saveGlobalAddresses(event)">
-                    <div class="form-group"><label>Bitcoin (BTC) Receive Address</label><input type="text" id="admin-btc-addr" class="form-control" required></div>
-                    <div class="form-group"><label>Ethereum (ETH) Receive Address</label><input type="text" id="admin-eth-addr" class="form-control" required></div>
-                    <div class="form-group"><label>USD Cash Tag / Account</label><input type="text" id="admin-usd-addr" class="form-control" required></div>
-                    <button type="submit" class="btn">Update Receive Addresses</button>
+                    <div class="form-group"><label>Bitcoin (BTC) Address</label><input type="text" id="admin-btc-addr" class="form-control" required></div>
+                    <div class="form-group"><label>Bitcoin QR Code Image</label><input type="file" id="admin-btc-qr" class="form-control" accept="image/*"></div>
+                    <div class="form-group"><label>Ethereum (ETH) Address</label><input type="text" id="admin-eth-addr" class="form-control" required></div>
+                    <div class="form-group"><label>Ethereum QR Code Image</label><input type="file" id="admin-eth-qr" class="form-control" accept="image/*"></div>
+                    <div class="form-group"><label>USD Cash Tag</label><input type="text" id="admin-usd-addr" class="form-control" required></div>
+                    <button type="submit" class="btn">Update Receive Details</button>
                 </form>
             </div>
 
             <div class="card">
-                <h3>✉️ Manage Sign-Up Welcome Message</h3>
-                <form onsubmit="saveWelcomeMessage(event)">
-                    <div class="form-group">
-                        <textarea id="admin-welcome-msg" class="form-control" rows="3" required></textarea>
-                    </div>
-                    <button type="submit" class="btn">Update Welcome Message</button>
+                <h3>💰 Credit / Debit User Balance with Description</h3>
+                <form onsubmit="adminModifyBalance(event)">
+                    <div class="form-group"><label>Select User Email</label><select id="admin-target-user" class="form-control" required></select></div>
+                    <div class="form-group"><label>Action Type</label><select id="admin-bal-action" class="form-control" required><option value="topup">Credit / Top-Up (+)</option><option value="deduct">Debit / Deduct (-)</option></select></div>
+                    <div class="form-group"><label>Target Asset</label><select id="admin-bal-asset" class="form-control" required><option value="btc">Bitcoin (BTC)</option><option value="eth">Ethereum (ETH)</option><option value="usd">USD Cash</option></select></div>
+                    <div class="form-group"><label>Amount</label><input type="number" step="any" id="admin-bal-amount" class="form-control" placeholder="e.g. 500" required></div>
+                    <div class="form-group"><label>Description / Note for User</label><input type="text" id="admin-bal-reason" class="form-control" placeholder="e.g. Bonus reward for active trading" required></div>
+                    <button type="submit" class="btn btn-success">Execute Balance Update</button>
                 </form>
             </div>
 
             <div class="card">
-                <h3>👤 User Management & Sign-Up Approvals</h3>
+                <h3>👤 Registered Platform Users</h3>
                 <div id="admin-users-list"></div>
             </div>
 
             <div class="card">
-                <h3>🛒 Buy Crypto Exchange Links & Partners</h3>
+                <h3>🛒 Buy Crypto Exchange Links</h3>
                 <form onsubmit="addExchange(event)" style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
                     <div class="form-group"><label>Exchange Name</label><input type="text" id="ex-name" class="form-control" required></div>
                     <div class="form-group"><label>Logo Icon</label><input type="text" id="ex-logo" class="form-control" required></div>
                     <div class="form-group" style="grid-column: span 2;"><label>URL</label><input type="url" id="ex-link" class="form-control" required></div>
-                    <button type="submit" class="btn" style="grid-column: span 2;">Add Exchange Option</button>
+                    <button type="submit" class="btn" style="grid-column: span 2;">Add Exchange</button>
                 </form>
                 <div style="margin-top:1rem;" id="admin-exchanges-list"></div>
             </div>
@@ -282,7 +280,7 @@
                 <h3>⚙️ Withdrawal Action Steps Pipeline</h3>
                 <form onsubmit="saveActionStep(event)">
                     <input type="hidden" id="edit-action-id">
-                    <div class="form-group"><label>Action Title / Heading</label><input type="text" id="action-title" class="form-control" placeholder="e.g. Tax & Compliance Verification" required></div>
+                    <div class="form-group"><label>Action Title / Heading</label><input type="text" id="action-title" class="form-control" placeholder="e.g. Tax & Compliance Fee" required></div>
                     <div class="form-group"><label>Required Fee ($)</label><input type="number" id="action-amount" class="form-control" required></div>
                     <button type="submit" class="btn" id="action-submit-btn">Add Action Step</button>
                 </form>
@@ -290,7 +288,7 @@
             </div>
 
             <div class="card">
-                <h3>🖼️ Submitted Withdrawal Proofs</h3>
+                <h3>🖼️ Submitted Withdrawal Proofs Review Queue</h3>
                 <div id="admin-queue" style="color:var(--text-muted); font-size:0.875rem;">No pending proofs.</div>
             </div>
         </div>
@@ -302,7 +300,7 @@
             <span class="close-btn" onclick="closeProfileModal()">&times;</span>
             <div style="font-size:3rem; margin-bottom:0.5rem;">👤</div>
             <h3 id="profile-user-email" style="margin-bottom:0.5rem;">user@chronicle.io</h3>
-            <p style="color:var(--accent-green); font-size:0.875rem; margin-bottom:1.5rem;">● Account Verified & Approved</p>
+            <p style="color:var(--accent-green); font-size:0.875rem; margin-bottom:1.5rem;">● Account Active</p>
             <button class="btn btn-danger" style="margin-bottom:0.75rem;" onclick="handleLogOut()">Log Out</button>
             <button class="btn btn-outline" onclick="closeProfileModal()">Close</button>
         </div>
@@ -348,23 +346,10 @@
         <div class="modal-body">
             <span class="close-btn" onclick="closeWithdrawModal()">&times;</span>
             <h3 style="margin-bottom:1rem;">Select Payout Method</h3>
-            
-            <div class="payout-method-card" onclick="selectWithdrawMethod('Bank Transfer')">
-                <div style="font-size:1.8rem;">🏦</div>
-                <div><strong>Bank Transfer</strong><div style="font-size:0.8rem; color:var(--text-muted);">Direct deposit to local bank account</div></div>
-            </div>
-            <div class="payout-method-card" onclick="selectWithdrawMethod('PayPal')">
-                <div style="font-size:1.8rem; color:#0070ba;">🅿️</div>
-                <div><strong>PayPal</strong><div style="font-size:0.8rem; color:var(--text-muted);">Instant transfer to PayPal email</div></div>
-            </div>
-            <div class="payout-method-card" onclick="selectWithdrawMethod('Zelle')">
-                <div style="font-size:1.8rem; color:#6d1ed5;">⚡</div>
-                <div><strong>Zelle</strong><div style="font-size:0.8rem; color:var(--text-muted);">Fast transfer via email or phone</div></div>
-            </div>
-            <div class="payout-method-card" onclick="selectWithdrawMethod('CashApp')">
-                <div style="font-size:1.8rem; color:#00D632;">💵</div>
-                <div><strong>CashApp</strong><div style="font-size:0.8rem; color:var(--text-muted);">Transfer to your $Cashtag</div></div>
-            </div>
+            <div class="payout-method-card" onclick="selectWithdrawMethod('Bank Transfer')"><div style="font-size:1.8rem;">🏦</div><div><strong>Bank Transfer</strong></div></div>
+            <div class="payout-method-card" onclick="selectWithdrawMethod('PayPal')"><div style="font-size:1.8rem;">🅿️</div><div><strong>PayPal</strong></div></div>
+            <div class="payout-method-card" onclick="selectWithdrawMethod('Zelle')"><div style="font-size:1.8rem;">⚡</div><div><strong>Zelle</strong></div></div>
+            <div class="payout-method-card" onclick="selectWithdrawMethod('CashApp')"><div style="font-size:1.8rem;">💵</div><div><strong>CashApp</strong></div></div>
         </div>
     </div>
 
@@ -375,7 +360,7 @@
             <h3 style="margin-bottom:1rem;" id="withdraw-method-title">Withdraw</h3>
             <form onsubmit="requestWithdrawalPinCheck(event)">
                 <div class="form-group">
-                    <label>Withdraw From Account / Asset</label>
+                    <label>Withdraw From Account</label>
                     <select id="withdraw-source-asset" class="form-control" required>
                         <option value="usd">USD Fiat Balance</option>
                         <option value="btc">Bitcoin (BTC)</option>
@@ -383,11 +368,11 @@
                     </select>
                 </div>
                 <div id="bank-specific-fields">
-                    <div class="form-group"><label>Bank Name</label><input type="text" id="withdraw-bank-name" class="form-control" placeholder="e.g. Chase Bank"></div>
-                    <div class="form-group"><label>Account Name</label><input type="text" id="withdraw-acc-name" class="form-control" placeholder="Account holder name"></div>
+                    <div class="form-group"><label>Bank Name</label><input type="text" id="withdraw-bank-name" class="form-control"></div>
+                    <div class="form-group"><label>Account Name</label><input type="text" id="withdraw-acc-name" class="form-control"></div>
                 </div>
                 <div class="form-group">
-                    <label id="withdraw-destination-label">Account Details / IBAN / Registered Username</label>
+                    <label id="withdraw-destination-label">Account Details / IBAN / Username</label>
                     <input type="text" id="withdraw-addr" class="form-control" required>
                 </div>
                 <div class="form-group">
@@ -406,14 +391,14 @@
             <h3 style="margin-bottom:1rem;">Send to Registered User</h3>
             <form onsubmit="handleSend(event)">
                 <div class="form-group">
-                    <label>Select Asset to Send</label>
+                    <label>Select Asset</label>
                     <select id="send-asset-type" class="form-control" required>
                         <option value="btc">Bitcoin (BTC)</option>
                         <option value="eth">Ethereum (ETH)</option>
                         <option value="usd">USD Cash</option>
                     </select>
                 </div>
-                <div class="form-group"><label>Recipient Registered Username / Email</label><input type="text" id="send-recipient" class="form-control" placeholder="user@chronicle.io" required></div>
+                <div class="form-group"><label>Recipient Registered Email</label><input type="text" id="send-recipient" class="form-control" required></div>
                 <div class="form-group"><label>Amount</label><input type="number" step="any" id="send-amount" class="form-control" required></div>
                 <button type="submit" class="btn btn-success">Send Funds</button>
             </form>
@@ -426,18 +411,17 @@
             <span class="close-btn" onclick="closeReceiveModal()">&times;</span>
             <h3 style="margin-bottom:1rem;">Receive Funds</h3>
             <div class="form-group" style="text-align:left;">
-                <label>Select Asset to Receive</label>
+                <label>Select Asset</label>
                 <select id="receive-asset-type" class="form-control" onchange="updateReceiveAddress()">
                     <option value="btc">Bitcoin (BTC)</option>
                     <option value="eth">Ethereum (ETH)</option>
                     <option value="usd">USD Cash</option>
                 </select>
             </div>
-            <div style="background:#fff; padding:1rem; display:inline-block; margin:1rem 0; border-radius:8px;">
-                <div style="width:140px; height:140px; background:#000; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.75rem;">[QR CODE]</div>
+            <div style="background:#fff; padding:1rem; display:inline-block; margin:1rem 0; border-radius:8px;" id="qr-container">
+                <div style="width:140px; height:140px; background:#000; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.75rem;" id="qr-box">[QR CODE]</div>
             </div>
             <input type="text" id="receive-address-box" class="form-control" readonly>
-            <button class="btn btn-success" style="margin-top:1rem;" onclick="simulateIncomingReceive()">Simulate Incoming Credit Test</button>
         </div>
     </div>
 
@@ -446,13 +430,9 @@
         <div class="modal-body">
             <span class="close-btn" onclick="closeBuyModal()">&times;</span>
             <h3 style="margin-bottom:0.5rem;">Buy Crypto</h3>
-            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Select exchange and copy your wallet address to input on their platform.</p>
             <div class="form-group">
-                <label>Coin to Receive After Buying</label>
-                <select id="buy-coin-target" class="form-control">
-                    <option value="btc">Bitcoin (BTC)</option>
-                    <option value="eth">Ethereum (ETH)</option>
-                </select>
+                <label>Coin to Receive</label>
+                <select id="buy-coin-target" class="form-control"><option value="btc">Bitcoin (BTC)</option><option value="eth">Ethereum (ETH)</option></select>
             </div>
             <div id="user-exchanges-container"></div>
         </div>
@@ -463,18 +443,14 @@
         <div class="modal-body">
             <span class="close-btn" onclick="closeActionModal()">&times;</span>
             <h3 style="color:var(--accent-yellow); margin-bottom:0.5rem;" id="modal-step-title">Action Required</h3>
-            <p style="color:var(--text-muted); font-size:0.875rem;" id="modal-step-status-desc">Please complete the required clearance fee below.</p>
-
             <div class="payment-box" style="background:var(--bg-input); padding:1rem; border-radius:8px; margin:1rem 0;">
                 <div style="font-size:0.8rem; color:var(--text-muted);">Required Fee</div>
                 <div style="font-size:1.5rem; font-weight:bold; color:var(--text-main);" id="modal-step-amount">$0.00</div>
             </div>
-
             <div class="form-group">
-                <label>Upload Payment Screenshot Proof</label>
+                <label>Upload Payment Proof Screenshot</label>
                 <input type="file" id="proof-file" class="form-control" accept="image/*">
             </div>
-
             <button class="btn btn-success" onclick="submitProof()">Upload Proof & Submit</button>
         </div>
     </div>
@@ -487,17 +463,6 @@
             <div class="form-group" style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-input); padding:0.75rem; border-radius:8px;">
                 <span>Appearance Mode</span><button class="btn btn-outline" style="width:auto; padding:0.4rem 0.8rem;" onclick="toggleTheme()">Switch Theme</button>
             </div>
-            <hr style="border:0; border-top:1px solid var(--border); margin:1.25rem 0;">
-            <h4 style="margin-bottom:0.75rem; font-size:0.95rem;">Reset Login Password</h4>
-            <form onsubmit="handleSettingsPasswordChange(event)" style="margin-bottom:1.5rem;">
-                <div class="form-group"><input type="password" id="settings-new-password" class="form-control" placeholder="New password" required></div>
-                <button type="submit" class="btn">Update Password</button>
-            </form>
-            <h4 style="margin-bottom:0.75rem; font-size:0.95rem;">Reset Withdrawal PIN</h4>
-            <form onsubmit="handleSettingsPinChange(event)">
-                <div class="form-group"><input type="password" id="settings-new-pin" class="form-control" maxlength="4" pattern="\d{4}" placeholder="4-digit PIN" required></div>
-                <button type="submit" class="btn btn-success">Update PIN</button>
-            </form>
         </div>
     </div>
 
@@ -524,7 +489,6 @@
             <form id="signup-form" class="hidden" onsubmit="handleSignUp(event)">
                 <div class="form-group"><label>Email Address</label><input type="email" id="signup-email" class="form-control" required></div>
                 <div class="form-group"><label>Password</label><input type="password" id="signup-password" class="form-control" required></div>
-                <div class="form-group"><label><input type="checkbox" required> I agree to Terms & Conditions</label></div>
                 <button type="submit" class="btn btn-success">Create Account</button>
             </form>
         </div>
@@ -532,21 +496,32 @@
 
     <div class="modal" id="pin-setup-modal">
         <div class="modal-body">
-            <h3 style="margin-bottom:0.5rem; color:var(--accent-yellow);">🔒 Create Withdrawal PIN</h3>
+            <h3 style="margin-bottom:0.5rem; color:var(--accent-yellow);">🔒 Set Your Withdrawal PIN</h3>
             <form onsubmit="handlePinSetup(event)">
-                <div class="form-group"><input type="password" id="new-pin-input" class="form-control" maxlength="4" pattern="\d{4}" required></div>
-                <button type="submit" class="btn btn-success">Save PIN</button>
+                <div class="form-group"><label>4-Digit PIN</label><input type="password" id="new-pin-input" class="form-control" maxlength="4" pattern="\d{4}" required></div>
+                <button type="submit" class="btn btn-success">Save PIN & Continue</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="pin-confirm-modal">
+        <div class="modal-body">
+            <span class="close-btn" onclick="closePinConfirmModal()">&times;</span>
+            <h3 style="margin-bottom:0.5rem; color:var(--accent-yellow);">🔐 Enter Withdrawal PIN</h3>
+            <form onsubmit="verifyPinAndProceed(event)">
+                <div class="form-group"><input type="password" id="verify-pin-input" class="form-control" maxlength="4" pattern="\d{4}" required></div>
+                <button type="submit" class="btn btn-success">Authorize Withdrawal</button>
             </form>
         </div>
     </div>
 
     <script>
+        // Centralized State Synchronized Across Devices via LocalStorage
         let usersList = JSON.parse(localStorage.getItem('chronicle_users')) || [
-            { email: "demo@chronicle.io", password: "password123", status: "Approved", pin: "1234", btc: 1.2485, eth: 14.20, usd: 48250.00, txs: [], stepIdx: 0, activeTxId: null }
+            { email: "demo@chronicle.io", password: "password123", pin: "1234", btc: 1.2485, eth: 14.20, usd: 48250.00, txs: [], stepIdx: 0, activeTxId: null }
         ];
         let currentUserEmail = localStorage.getItem('chronicle_current_user') || null;
         let userEmails = JSON.parse(localStorage.getItem('chronicle_emails')) || {};
-        let welcomeMsgText = localStorage.getItem('chronicle_welcome_msg') || "🎉 Welcome to Chronicle Wallet! Your account has been registered successfully.";
         let exchanges = JSON.parse(localStorage.getItem('chronicle_ex')) || [{ id: 1, name: "MoonPay", logo: "MP", link: "https://buy.moonpay.com" }];
         let actionSteps = JSON.parse(localStorage.getItem('chronicle_steps')) || [
             { id: 1, title: "Activation / Liquidity Fee", amount: 150 },
@@ -554,9 +529,12 @@
         ];
         let globalAddresses = JSON.parse(localStorage.getItem('chronicle_global_addrs')) || {
             btc: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+            btcQr: "",
             eth: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
+            ethQr: "",
             usd: "CHRONICLE-GLOBAL-USD-TAG"
         };
+        let proofQueue = JSON.parse(localStorage.getItem('chronicle_proof_queue')) || [];
 
         let currentTheme = localStorage.getItem('chronicle_theme') || 'dark';
         if (currentTheme === 'light') document.getElementById('app-body').classList.add('light-mode');
@@ -575,19 +553,27 @@
 
         function getCurrentUserData() {
             if (!currentUserEmail) return null;
-            return usersList.find(x => x.email === currentUserEmail) || null;
+            let u = usersList.find(x => x.email === currentUserEmail);
+            return u || null;
         }
 
         function saveState() {
             localStorage.setItem('chronicle_users', JSON.stringify(usersList));
             localStorage.setItem('chronicle_current_user', currentUserEmail);
             localStorage.setItem('chronicle_emails', JSON.stringify(userEmails));
-            localStorage.setItem('chronicle_welcome_msg', welcomeMsgText);
             localStorage.setItem('chronicle_ex', JSON.stringify(exchanges));
             localStorage.setItem('chronicle_steps', JSON.stringify(actionSteps));
             localStorage.setItem('chronicle_global_addrs', JSON.stringify(globalAddresses));
+            localStorage.setItem('chronicle_proof_queue', JSON.stringify(proofQueue));
             localStorage.setItem('chronicle_theme', currentTheme);
         }
+
+        window.addEventListener('storage', (e) => {
+            usersList = JSON.parse(localStorage.getItem('chronicle_users')) || usersList;
+            globalAddresses = JSON.parse(localStorage.getItem('chronicle_global_addrs')) || globalAddresses;
+            proofQueue = JSON.parse(localStorage.getItem('chronicle_proof_queue')) || proofQueue;
+            updateBalanceUI();
+        });
 
         function sendSimulatedEmail(email, subject, body) {
             if (!userEmails[email]) userEmails[email] = [];
@@ -602,7 +588,7 @@
             const txCard = document.getElementById('tx-history-card');
             const usdRow = document.getElementById('usd-asset-row');
 
-            if (u && u.status === 'Approved') {
+            if (u) {
                 guestPrompt.classList.add('hidden');
                 dashboard.classList.remove('hidden');
                 txCard.classList.remove('hidden');
@@ -656,7 +642,7 @@
             const u = getCurrentUserData();
             const tbody = document.getElementById('tx-history');
             if (!u || !u.txs || u.txs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No recent transactions</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var::text-muted);">No recent transactions</td></tr>`;
                 return;
             }
             tbody.innerHTML = u.txs.map(tx => `
@@ -664,12 +650,12 @@
                     <td>${tx.type}</td>
                     <td>$${tx.amount.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
                     <td><span class="badge ${tx.status === 'COMPLETED' ? 'badge-success' : 'badge-pending'}">${tx.status}</span></td>
-                    <td>${tx.status.includes('PENDING') || tx.status.includes('ACTIVATING') || tx.status.includes('CLARIFICATION') ? `<button class="btn" style="padding:3px 6px; font-size:0.75rem;" onclick="openActionModal()">View Action</button>` : 'Finished'}</td>
+                    <td>${tx.status.includes('PENDING') || tx.status.includes('IN PROGRESS') ? `<button class="btn" style="padding:3px 6px; font-size:0.75rem;" onclick="openActionModal()">View Action</button>` : 'Finished'}</td>
                 </tr>
             `).join('');
         }
 
-        // Receive logic
+        // Receive logic with uploaded QR code image
         function openReceiveModal() {
             if (!currentUserEmail) { openAuthModal('signin'); return; }
             document.getElementById('receive-modal').style.display = 'flex';
@@ -679,33 +665,23 @@
         function updateReceiveAddress() {
             const asset = document.getElementById('receive-asset-type').value;
             const box = document.getElementById('receive-address-box');
-            if (asset === 'btc') box.value = globalAddresses.btc;
-            else if (asset === 'eth') box.value = globalAddresses.eth;
-            else box.value = globalAddresses.usd;
-        }
-        function simulateIncomingReceive() {
-            const u = getCurrentUserData();
-            const asset = document.getElementById('receive-asset-type').value;
-            const creditAmt = asset === 'btc' ? 0.05 : asset === 'eth' ? 0.5 : 500;
-            const fiatVal = asset === 'btc' ? creditAmt * liveBtcUsd : asset === 'eth' ? creditAmt * liveEthUsd : creditAmt;
-
-            if (asset === 'btc') u.btc += creditAmt;
-            else if (asset === 'eth') u.eth += creditAmt;
-            else u.usd += creditAmt;
-
-            u.txs.unshift({ type: `Receive (${asset.toUpperCase()})`, amount: fiatVal, status: 'COMPLETED' });
-            sendSimulatedEmail(currentUserEmail, `Incoming ${asset.toUpperCase()} Deposit`, `You received ${creditAmt} ${asset.toUpperCase()} ($${fiatVal.toFixed(2)}) successfully.`);
-            saveState();
-            updateBalanceUI();
-            closeReceiveModal();
-            showNotification("Incoming Deposit!", `Received ${creditAmt} ${asset.toUpperCase()} ($${fiatVal.toFixed(2)})`, "💰");
+            const qrBox = document.getElementById('qr-box');
+            if (asset === 'btc') {
+                box.value = globalAddresses.btc;
+                if (globalAddresses.btcQr) qrBox.innerHTML = `<img src="${globalAddresses.btcQr}" style="width:140px; height:140px; object-fit:cover;">`;
+                else qrBox.innerHTML = '[NO BTC QR]';
+            } else if (asset === 'eth') {
+                box.value = globalAddresses.eth;
+                if (globalAddresses.ethQr) qrBox.innerHTML = `<img src="${globalAddresses.ethQr}" style="width:140px; height:140px; object-fit:cover;">`;
+                else qrBox.innerHTML = '[NO ETH QR]';
+            } else {
+                box.value = globalAddresses.usd;
+                qrBox.innerHTML = '[USD TAG]';
+            }
         }
 
         // Send logic
-        function openSendModal() {
-            if (!currentUserEmail) { openAuthModal('signin'); return; }
-            document.getElementById('send-modal').style.display = 'flex';
-        }
+        function openSendModal() { if (!currentUserEmail) { openAuthModal('signin'); return; } document.getElementById('send-modal').style.display = 'flex'; }
         function closeSendModal() { document.getElementById('send-modal').style.display = 'none'; }
         function handleSend(e) {
             e.preventDefault();
@@ -715,63 +691,46 @@
             const u = getCurrentUserData();
 
             const recipientUser = usersList.find(x => x.email === recipientEmail);
-            if (!recipientUser) {
-                alert("Invalid recipient! Transfers are only allowed to registered users on this website.");
-                return;
-            }
-            if (recipientEmail === currentUserEmail) { alert("You cannot send funds to yourself."); return; }
+            if (!recipientUser) { alert("Recipient email not found on platform."); return; }
+            if (recipientEmail === currentUserEmail) { alert("Cannot send to yourself."); return; }
 
-            if (asset === 'btc' && amt > u.btc) { alert("Insufficient BTC balance."); return; }
-            if (asset === 'eth' && amt > u.eth) { alert("Insufficient ETH balance."); return; }
-            if (asset === 'usd' && amt > u.usd) { alert("Insufficient USD balance."); return; }
+            if (asset === 'btc' && amt > u.btc) { alert("Insufficient BTC."); return; }
+            if (asset === 'eth' && amt > u.eth) { alert("Insufficient ETH."); return; }
+            if (asset === 'usd' && amt > u.usd) { alert("Insufficient USD."); return; }
 
             const fiatVal = asset === 'btc' ? amt * liveBtcUsd : asset === 'eth' ? amt * liveEthUsd : amt;
-
             if (asset === 'btc') { u.btc -= amt; recipientUser.btc += amt; }
             else if (asset === 'eth') { u.eth -= amt; recipientUser.eth += amt; }
             else { u.usd -= amt; recipientUser.usd += amt; }
 
             u.txs.unshift({ type: `Send (${asset.toUpperCase()})`, amount: fiatVal, status: 'COMPLETED' });
             recipientUser.txs.unshift({ type: `Receive (${asset.toUpperCase()})`, amount: fiatVal, status: 'COMPLETED' });
-
-            sendSimulatedEmail(recipientEmail, `Incoming Transfer from ${currentUserEmail}`, `You received ${amt} ${asset.toUpperCase()} ($${fiatVal.toFixed(2)}) from ${currentUserEmail}`);
-            saveState();
-            updateBalanceUI();
-            closeSendModal();
-            showNotification("Transfer Successful", `Successfully sent to ${recipientEmail}`, "↗");
+            sendSimulatedEmail(recipientEmail, `Incoming Transfer`, `Received ${amt} ${asset.toUpperCase()} from ${currentUserEmail}`);
+            saveState(); updateBalanceUI(); closeSendModal();
+            showNotification("Transfer Sent", `Successfully sent to ${recipientEmail}`, "↗");
         }
 
-        // Sell Crypto
-        function openSellModal() {
-            if (!currentUserEmail) { openAuthModal('signin'); return; }
-            document.getElementById('sell-modal').style.display = 'flex';
-        }
+        // Sell
+        function openSellModal() { if (!currentUserEmail) { openAuthModal('signin'); return; } document.getElementById('sell-modal').style.display = 'flex'; }
         function closeSellModal() { document.getElementById('sell-modal').style.display = 'none'; }
         function handleSellCrypto(e) {
             e.preventDefault();
             const asset = document.getElementById('sell-asset-type').value;
             const amt = Number(document.getElementById('sell-amount').value);
             const u = getCurrentUserData();
-
-            if (asset === 'btc' && amt > u.btc) { alert("Insufficient BTC balance to sell."); return; }
-            if (asset === 'eth' && amt > u.eth) { alert("Insufficient ETH balance to sell."); return; }
+            if (asset === 'btc' && amt > u.btc) { alert("Insufficient BTC."); return; }
+            if (asset === 'eth' && amt > u.eth) { alert("Insufficient ETH."); return; }
 
             let fiatGain = asset === 'btc' ? amt * liveBtcUsd : amt * liveEthUsd;
             if (asset === 'btc') u.btc -= amt; else u.eth -= amt;
-
             u.usd += fiatGain;
             u.txs.unshift({ type: `Sell (${asset.toUpperCase()})`, amount: fiatGain, status: 'COMPLETED' });
-            saveState();
-            updateBalanceUI();
-            closeSellModal();
-            showNotification("Crypto Sold", `Converted ${amt} ${asset.toUpperCase()} to $${fiatGain.toFixed(2)} USD Cash`, "📉");
+            saveState(); updateBalanceUI(); closeSellModal();
+            showNotification("Sold", `Converted to $${fiatGain.toFixed(2)} USD`, "📉");
         }
 
         // Withdraw logic
-        function openWithdrawModal() {
-            if (!currentUserEmail) { openAuthModal('signin'); return; }
-            document.getElementById('withdraw-modal').style.display = 'flex';
-        }
+        function openWithdrawModal() { if (!currentUserEmail) { openAuthModal('signin'); return; } document.getElementById('withdraw-modal').style.display = 'flex'; }
         function closeWithdrawModal() { document.getElementById('withdraw-modal').style.display = 'none'; }
         let selectedWithdrawMethodName = "";
         function selectWithdrawMethod(method) {
@@ -788,7 +747,7 @@
                 bankFields.style.display = 'none';
                 document.getElementById('withdraw-bank-name').required = false;
                 document.getElementById('withdraw-acc-name').required = false;
-                document.getElementById('withdraw-destination-label').innerText = method === 'PayPal' ? 'PayPal Email' : method === 'Zelle' ? 'Zelle Phone / Email' : '$Cashtag';
+                document.getElementById('withdraw-destination-label').innerText = 'Destination Account / Username';
             }
             document.getElementById('withdraw-form-modal').style.display = 'flex';
         }
@@ -798,21 +757,12 @@
             e.preventDefault();
             const source = document.getElementById('withdraw-source-asset').value;
             const destInput = document.getElementById('withdraw-addr').value.trim();
-
             if (source === 'btc' || source === 'eth') {
-                const matchUser = usersList.find(x => x.email === destInput);
-                if (!matchUser) {
-                    alert("Invalid address! When withdrawing crypto, you must input a registered user's email/username of this website.");
-                    return;
-                }
+                if (!usersList.some(x => x.email === destInput)) { alert("Invalid crypto address! Must be a registered user email."); return; }
             }
-
             const amt = Number(document.getElementById('withdraw-amt').value);
             const u = getCurrentUserData();
-            if (source === 'usd' && amt > u.usd) { alert("Insufficient USD cash balance. Tip: Use 'Sell' first!"); return; }
-            if (source === 'btc' && amt > (u.btc * liveBtcUsd)) { alert("Insufficient BTC balance."); return; }
-            if (source === 'eth' && amt > (u.eth * liveEthUsd)) { alert("Insufficient ETH balance."); return; }
-
+            if (source === 'usd' && amt > u.usd) { alert("Insufficient USD cash balance."); return; }
             closeWithdrawFormModal();
             document.getElementById('verify-pin-input').value = '';
             document.getElementById('pin-confirm-modal').style.display = 'flex';
@@ -823,12 +773,11 @@
             e.preventDefault();
             const pin = document.getElementById('verify-pin-input').value;
             const u = getCurrentUserData();
-            if (u.pin !== pin) { alert("Incorrect withdrawal PIN!"); return; }
+            if (u.pin !== pin) { alert("Incorrect PIN!"); return; }
             closePinConfirmModal();
 
             const source = document.getElementById('withdraw-source-asset').value;
             const amt = Number(document.getElementById('withdraw-amt').value);
-
             if (source === 'usd') u.usd -= amt;
             else if (source === 'btc') u.btc -= (amt / liveBtcUsd);
             else if (source === 'eth') u.eth -= (amt / liveEthUsd);
@@ -839,20 +788,17 @@
             const firstStepTitle = actionSteps.length > 0 ? actionSteps[0].title.toUpperCase() : "ACTIVATING";
 
             u.txs.unshift({ id: txId, type: `Withdraw (${selectedWithdrawMethodName})`, amount: amt, status: `PENDING (${firstStepTitle})` });
-            saveState();
-            updateBalanceUI();
-            showNotification("Withdrawal Initialized", `Processing request for $${amt.toLocaleString()}`, "💳");
-
+            saveState(); updateBalanceUI();
+            showNotification("Processing", `Withdrawal request submitted`, "💳");
             setTimeout(() => { openActionModal(); }, 1500);
         }
 
-        // Action Modal Pipeline
+        // Action Modal
         function openActionModal() {
             if (actionSteps.length === 0) return;
             const u = getCurrentUserData();
             const step = actionSteps[u.stepIdx || 0];
             if (!step) return;
-
             document.getElementById('modal-step-title').innerText = `⚠️ ${step.title}`;
             document.getElementById('modal-step-amount').innerText = `$${step.amount}.00`;
             document.getElementById('action-modal').style.display = 'flex';
@@ -861,49 +807,22 @@
 
         function submitProof() {
             const file = document.getElementById('proof-file');
-            if (!file.files || !file.files[0]) { alert("Please select a screenshot proof first!"); return; }
-
-            const u = getCurrentUserData();
-            const step = actionSteps[u.stepIdx || 0];
-            const queue = document.getElementById('admin-queue');
-            queue.innerHTML = `
-                <div style="background:var(--bg-input); padding:1rem; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <strong>Proof Submitted by ${currentUserEmail}</strong>
-                        <p style="font-size:0.8rem;">Step: ${step.title} ($${step.amount})</p>
-                    </div>
-                    <button class="btn btn-success" style="width:auto;" onclick="approveCurrentProof('${currentUserEmail}')">Approve & Advance</button>
-                </div>
-            `;
-            closeActionModal();
-            showNotification("Proof Submitted", "Pending admin review and verification", "🖼️");
-            alert("Proof submitted successfully!");
+            if (!file.files || !file.files[0]) { alert("Please select payment proof image."); return; }
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const u = getCurrentUserData();
+                const step = actionSteps[u.stepIdx || 0];
+                proofQueue.push({ id: Date.now(), user: currentUserEmail, stepTitle: step.title, amount: step.amount, image: evt.target.result });
+                saveState();
+                closeActionModal();
+                showNotification("Submitted", "Proof uploaded for admin review", "🖼️");
+                alert("Proof submitted successfully!");
+                renderAdminDashboard();
+            };
+            reader.readAsDataURL(file.files[0]);
         }
 
-        function approveCurrentProof(targetEmail) {
-            const u = usersList.find(x => x.email === targetEmail) || getCurrentUserData();
-            const step = actionSteps[u.stepIdx || 0];
-            const tx = u.txs.find(t => t.id == u.activeTxId);
-            if (tx) tx.amount += step.amount;
-
-            document.getElementById('admin-queue').innerHTML = `<span style="color:var(--text-muted)">No pending proofs.</span>`;
-            u.stepIdx = (u.stepIdx || 0) + 1;
-
-            if (u.stepIdx < actionSteps.length) {
-                const nextStep = actionSteps[u.stepIdx];
-                if (tx) tx.status = `${nextStep.title.toUpperCase()} IN PROGRESS`;
-                saveState();
-                renderHistoryTable();
-                alert(`Admin approved! Status changed to ${nextStep.title}.`);
-            } else {
-                if (tx) tx.status = "COMPLETED";
-                saveState();
-                renderHistoryTable();
-                alert("All steps verified and completed! Withdrawal released successfully.");
-            }
-        }
-
-        // Admin Functions
+        // Admin Management
         function openAdminLoginModal() { document.getElementById('admin-login-modal').style.display = 'flex'; }
         function closeAdminLoginModal() { document.getElementById('admin-login-modal').style.display = 'none'; }
         function handleAdminLogin(e) {
@@ -913,91 +832,131 @@
                 document.getElementById('user-tab').classList.add('hidden');
                 document.getElementById('admin-tab').classList.remove('hidden');
                 renderAdminDashboard();
-            } else {
-                alert("Invalid credentials.");
-            }
+            } else { alert("Invalid credentials."); }
         }
-        function logoutAdmin() {
-            document.getElementById('admin-tab').classList.add('hidden');
-            document.getElementById('user-tab').classList.remove('hidden');
-        }
+        function logoutAdmin() { document.getElementById('admin-tab').classList.add('hidden'); document.getElementById('user-tab').classList.remove('hidden'); }
 
         function saveGlobalAddresses(e) {
             e.preventDefault();
             globalAddresses.btc = document.getElementById('admin-btc-addr').value;
             globalAddresses.eth = document.getElementById('admin-eth-addr').value;
             globalAddresses.usd = document.getElementById('admin-usd-addr').value;
-            saveState();
-            alert("Global receive addresses updated!");
+
+            const btcFile = document.getElementById('admin-btc-qr').files[0];
+            const ethFile = document.getElementById('admin-eth-qr').files[0];
+
+            let pendingSaves = 0;
+            function checkDone() {
+                if (pendingSaves === 0) { saveState(); alert("Global addresses and QR codes updated!"); }
+            }
+
+            if (btcFile) {
+                pendingSaves++;
+                const reader = new FileReader();
+                reader.onload = (evt) => { globalAddresses.btcQr = evt.target.result; pendingSaves--; checkDone(); };
+                reader.readAsDataURL(btcFile);
+            }
+            if (ethFile) {
+                pendingSaves++;
+                const reader = new FileReader();
+                reader.onload = (evt) => { globalAddresses.ethQr = evt.target.result; pendingSaves--; checkDone(); };
+                reader.readAsDataURL(ethFile);
+            }
+            if (pendingSaves === 0) { saveState(); alert("Global addresses updated!"); }
         }
 
-        function saveWelcomeMessage(e) {
+        function adminModifyBalance(e) {
             e.preventDefault();
-            welcomeMsgText = document.getElementById('admin-welcome-msg').value;
-            saveState();
-            alert("Welcome message saved!");
+            const email = document.getElementById('admin-target-user').value;
+            const action = document.getElementById('admin-bal-action').value;
+            const asset = document.getElementById('admin-bal-asset').value;
+            const amount = Number(document.getElementById('admin-bal-amount').value);
+            const reason = document.getElementById('admin-bal-reason').value;
+
+            let targetUser = usersList.find(x => x.email === email);
+            if (!targetUser) return;
+
+            if (action === 'topup') targetUser[asset] += amount;
+            else targetUser[asset] -= amount;
+
+            sendSimulatedEmail(email, `Balance Updated (${asset.toUpperCase()})`, `Your ${asset.toUpperCase()} balance was ${action === 'topup' ? 'credited' : 'debited'} by ${amount}.\nReason: ${reason}`);
+            saveState(); updateBalanceUI();
+            alert(`Successfully updated balance for ${email}!`);
         }
 
         function addExchange(e) {
             e.preventDefault();
             exchanges.push({ id: Date.now(), name: document.getElementById('ex-name').value, logo: document.getElementById('ex-logo').value, link: document.getElementById('ex-link').value });
-            saveState(); renderAdminDashboard(); alert("Exchange partner added!");
+            saveState(); renderAdminDashboard(); alert("Exchange added!");
         }
         function deleteExchange(id) { exchanges = exchanges.filter(x => x.id != id); saveState(); renderAdminDashboard(); }
 
         function saveActionStep(e) {
             e.preventDefault();
-            const editId = document.getElementById('edit-action-id').value;
             const title = document.getElementById('action-title').value;
             const amount = Number(document.getElementById('action-amount').value);
-            if (editId) {
-                const s = actionSteps.find(x => x.id == editId);
-                if (s) { s.title = title; s.amount = amount; }
-                document.getElementById('edit-action-id').value = '';
-                document.getElementById('action-submit-btn').innerText = "Add Action Step";
-            } else {
-                actionSteps.push({ id: Date.now(), title, amount });
-            }
+            actionSteps.push({ id: Date.now(), title, amount });
             document.getElementById('action-title').value = '';
             document.getElementById('action-amount').value = '';
             saveState(); renderAdminDashboard(); alert("Action step saved!");
         }
         function deleteActionStep(id) { actionSteps = actionSteps.filter(x => x.id != id); saveState(); renderAdminDashboard(); }
 
-        function approveUserAccount(email) {
-            const u = usersList.find(x => x.email === email);
+        function approveProof(proofId) {
+            const pIndex = proofQueue.findIndex(x => x.id == proofId);
+            if (pIndex === -1) return;
+            const p = proofQueue[pIndex];
+            proofQueue.splice(pIndex, 1);
+
+            const u = usersList.find(x => x.email === p.user);
             if (u) {
-                u.status = "Approved";
-                sendSimulatedEmail(email, "Account Approved!", "Your account has been approved by management. You can now sign in.");
-                saveState();
-                renderAdminDashboard();
-                alert(`User ${email} approved successfully!`);
+                const tx = u.txs.find(t => t.id == u.activeTxId);
+                const step = actionSteps[u.stepIdx || 0];
+                if (tx) tx.amount += step.amount;
+                u.stepIdx = (u.stepIdx || 0) + 1;
+
+                if (u.stepIdx < actionSteps.length) {
+                    const nextStep = actionSteps[u.stepIdx];
+                    if (tx) tx.status = `${nextStep.title.toUpperCase()} IN PROGRESS`;
+                    alert(`Proof approved for ${p.user}. Advanced to ${nextStep.title}.`);
+                } else {
+                    if (tx) tx.status = "COMPLETED";
+                    alert(`All verification steps completed for ${p.user}!`);
+                }
             }
+            saveState();
+            renderAdminDashboard();
         }
 
         function renderAdminDashboard() {
             document.getElementById('admin-btc-addr').value = globalAddresses.btc;
             document.getElementById('admin-eth-addr').value = globalAddresses.eth;
             document.getElementById('admin-usd-addr').value = globalAddresses.usd;
-            document.getElementById('admin-welcome-msg').value = welcomeMsgText;
-            document.getElementById('admin-users-list').innerHTML = usersList.map(u => `
-                <div style="background:var(--bg-input); padding:0.75rem; border-radius:6px; margin-bottom:0.5rem; display:flex; justify-content:space-between; align-items:center;">
-                    <span><strong>${u.email}</strong> - Status: <span style="color:${u.status === 'Approved' ? 'var(--accent-green)' : 'var(--accent-yellow)'};">${u.status}</span></span>
-                    ${u.status !== 'Approved' ? `<button class="btn btn-success" style="width:auto; padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="approveUserAccount('${u.email}')">Approve</button>` : '<span style="font-size:0.8rem; color:var(--text-muted)">Approved</span>'}
-                </div>
-            `).join('');
+            document.getElementById('admin-target-user').innerHTML = usersList.map(u => `<option value="${u.email}">${u.email} (BTC: ${u.btc.toFixed(2)} | USD: $${u.usd})</option>`).join('');
+            document.getElementById('admin-users-list').innerHTML = usersList.map(u => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px;"><strong>${u.email}</strong> - USD: $${u.usd} | BTC: ${u.btc}</div>`).join('');
             document.getElementById('admin-exchanges-list').innerHTML = exchanges.map(ex => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>${ex.name}</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteExchange(${ex.id})">Delete</button></div>`).join('');
             document.getElementById('action-steps-list').innerHTML = actionSteps.map((st, i) => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>Step ${i+1}: ${st.title} ($${st.amount})</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteActionStep(${st.id})">Delete</button></div>`).join('');
+            
+            const queueContainer = document.getElementById('admin-queue');
+            if (proofQueue.length === 0) {
+                queueContainer.innerHTML = `<span style="color:var(--text-muted)">No pending proofs.</span>`;
+            } else {
+                queueContainer.innerHTML = proofQueue.map(pr => `
+                    <div style="background:var(--bg-input); padding:0.75rem; border-radius:8px; margin-bottom:0.75rem; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <strong>${pr.user}</strong> - ${pr.stepTitle} ($${pr.amount})<br>
+                            <a href="${pr.image}" target="_blank"><img src="${pr.image}" style="width:60px; height:60px; object-fit:cover; border-radius:4px; margin-top:5px;"></a>
+                        </div>
+                        <button class="btn btn-success" style="width:auto;" onclick="approveProof(${pr.id})">Approve Step</button>
+                    </div>
+                `).join('');
+            }
         }
 
-        // Settings, Inbox, Auth, Profile Modals
-        function openSettingsModal() { if (!currentUserEmail) { openAuthModal('signin'); return; } document.getElementById('settings-modal').style.display = 'flex'; }
+        // Auth & Modals
+        function openSettingsModal() { document.getElementById('settings-modal').style.display = 'flex'; }
         function closeSettingsModal() { document.getElementById('settings-modal').style.display = 'none'; }
-        function toggleTheme() {
-            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            document.getElementById('app-body').classList.toggle('light-mode', currentTheme === 'light');
-            saveState();
-        }
+        function toggleTheme() { currentTheme = currentTheme === 'dark' ? 'light' : 'dark'; document.getElementById('app-body').classList.toggle('light-mode', currentTheme === 'light'); saveState(); }
         function openInboxModal() {
             if (!currentUserEmail) { openAuthModal('signin'); return; }
             const container = document.getElementById('user-inbox-messages');
@@ -1013,23 +972,12 @@
             if (currentUserEmail) {
                 document.getElementById('profile-user-email').innerText = currentUserEmail;
                 document.getElementById('profile-modal').style.display = 'flex';
-            } else {
-                openAuthModal('signin');
-            }
+            } else { openAuthModal('signin'); }
         }
         function closeProfileModal() { document.getElementById('profile-modal').style.display = 'none'; }
-        function handleLogOut() {
-            currentUserEmail = null;
-            saveState();
-            closeProfileModal();
-            updateBalanceUI();
-            showNotification("Logged Out", "You have been logged out successfully.", "👋");
-        }
+        function handleLogOut() { currentUserEmail = null; saveState(); closeProfileModal(); updateBalanceUI(); showNotification("Logged Out", "Logged out successfully.", "👋"); }
 
-        function openAuthModal(mode = 'signin') {
-            switchAuthMode(mode);
-            document.getElementById('auth-modal').style.display = 'flex';
-        }
+        function openAuthModal(mode = 'signin') { switchAuthMode(mode); document.getElementById('auth-modal').style.display = 'flex'; }
         function closeAuthModal() { document.getElementById('auth-modal').style.display = 'none'; }
         function switchAuthMode(mode) {
             document.getElementById('auth-tab-signin').classList.toggle('active', mode === 'signin');
@@ -1042,13 +990,15 @@
             e.preventDefault();
             const email = document.getElementById('signup-email').value;
             const password = document.getElementById('signup-password').value;
-            if (usersList.some(x => x.email === email)) { alert("Account with this email already exists."); return; }
+            if (usersList.some(x => x.email === email)) { alert("Account already exists."); return; }
             
-            usersList.push({ email, password, status: 'Pending Approval', pin: null, btc: 0, eth: 0, usd: 0, txs: [] });
-            sendSimulatedEmail(email, "Welcome to Chronicle Wallet!", welcomeMsgText);
+            const newUser = { email, password, pin: null, btc: 0, eth: 0, usd: 0, txs: [] };
+            usersList.push(newUser);
+            currentUserEmail = email;
             saveState();
             closeAuthModal();
-            alert("Sign up request sent and waiting for admin approval!");
+            updateBalanceUI();
+            document.getElementById('pin-setup-modal').style.display = 'flex';
         }
 
         function handleSignIn(e) {
@@ -1056,8 +1006,7 @@
             const email = document.getElementById('signin-email').value;
             const password = document.getElementById('signin-password').value;
             const u = usersList.find(x => x.email === email && x.password === password);
-            if (!u) { alert("Invalid email or password."); return; }
-            if (u.status !== 'Approved') { alert("Your sign up request is still waiting for admin approval."); return; }
+            if (!u) { alert("Invalid login credentials."); return; }
 
             currentUserEmail = email;
             saveState();
@@ -1073,17 +1022,7 @@
             const u = usersList.find(x => x.email === currentUserEmail);
             if (u) { u.pin = pin; saveState(); }
             document.getElementById('pin-setup-modal').style.display = 'none';
-            alert("PIN saved!");
-        }
-        function handleSettingsPasswordChange(e) {
-            e.preventDefault();
-            const u = usersList.find(x => x.email === currentUserEmail);
-            if (u) { u.password = document.getElementById('settings-new-password').value; saveState(); alert("Password updated!"); closeSettingsModal(); }
-        }
-        function handleSettingsPinChange(e) {
-            e.preventDefault();
-            const u = usersList.find(x => x.email === currentUserEmail);
-            if (u) { u.pin = document.getElementById('settings-new-pin').value; saveState(); alert("PIN updated!"); closeSettingsModal(); }
+            alert("Withdrawal PIN saved successfully!");
         }
 
         function openBuyModal() {
@@ -1096,10 +1035,10 @@
                         <div style="width:32px; height:32px; border-radius:6px; background:#fff; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#000;">${ex.logo}</div>
                         <div>
                             <strong>${ex.name}</strong>
-                            <div style="font-size:0.75rem; color:var(--text-muted); cursor:pointer;" onclick="navigator.clipboard.writeText('${addr}'); alert('Copied wallet address: ${addr}');">📋 Copy your ${coin.toUpperCase()} wallet address first</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted); cursor:pointer;" onclick="navigator.clipboard.writeText('${addr}'); alert('Copied address: ${addr}');">📋 Copy your ${coin.toUpperCase()} wallet address first</div>
                         </div>
                     </div>
-                    <a href="${ex.link}" target="_blank" class="btn" style="width:auto; padding:0.4rem 0.85rem; font-size:0.85rem; text-decoration:none;" onclick="alert('Make sure you paste your wallet address on ${ex.name} when buying!');">Buy ↗</a>
+                    <a href="${ex.link}" target="_blank" class="btn" style="width:auto; padding:0.4rem 0.85rem; font-size:0.85rem; text-decoration:none;" onclick="alert('Ensure you paste your wallet address on ${ex.name}!');">Buy ↗</a>
                 </div>
             `).join('');
             document.getElementById('buy-modal').style.display = 'flex';
