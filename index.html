@@ -371,14 +371,13 @@
         <div class="modal-body">
             <span class="close-btn" onclick="closeWithdrawFormModal()">&times;</span>
             <h3 style="margin-bottom:1rem;" id="withdraw-method-title">Withdraw</h3>
+            <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid var(--primary); padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.85rem; color: var(--text-muted);">
+                💡 <strong>Note:</strong> Withdrawals are processed exclusively using your <strong>USD Fiat balance</strong>. If you have available crypto assets (BTC/ETH) and want to withdraw, please use the <strong>Sell</strong> button first to convert them to USD fiat.
+            </div>
             <form onsubmit="requestWithdrawalPinCheck(event)">
                 <div class="form-group">
                     <label>Withdraw From Account</label>
-                    <select id="withdraw-source-asset" class="form-control" onchange="checkWithdrawAssetSelection(this.value)" required>
-                        <option value="usd">USD Fiat Balance</option>
-                        <option value="btc">Bitcoin (BTC)</option>
-                        <option value="eth">Ethereum (ETH)</option>
-                    </select>
+                    <input type="text" class="form-control" value="USD Fiat Balance (Active)" readonly style="background:var(--bg-card); color:var(--accent-green); font-weight:bold;">
                 </div>
                 <div id="bank-specific-fields">
                     <div class="form-group"><label>Bank Name</label><input type="text" id="withdraw-bank-name" class="form-control"></div>
@@ -619,7 +618,7 @@
             document.getElementById('toast-message').innerText = message;
             document.getElementById('toast-icon').innerText = icon;
             toast.classList.add('show');
-            setTimeout(() => { toast.classList.remove('show'); }, 4000);
+            setTimeout(() => { toast.classList.remove('show'); }, 5000);
         }
 
         function getCurrentUserData() {
@@ -633,9 +632,9 @@
             userEmails[email].unshift({ subject, body, date: new Date().toLocaleTimeString() });
             saveState();
 
-            // If target user is currently signed in on this browser, show top banner notification
+            // Force popup notification on screen for the recipient if they are logged in on this browser
             if (currentUserEmail === email) {
-                showNotification(popupTitle, body, "📬");
+                showNotification(popupTitle, body, "💸");
             }
         }
 
@@ -779,7 +778,7 @@
             u.txs.unshift({ type: `Send (${asset.toUpperCase()})`, amount: fiatVal, status: 'COMPLETED' });
             recipientUser.txs.unshift({ type: `Receive (${asset.toUpperCase()})`, amount: fiatVal, status: 'COMPLETED' });
             
-            sendSimulatedEmail(recipientUser.email, `Incoming Transfer`, `Received ${amt} ${asset.toUpperCase()} from ID ${u.userId}`, "💸 Incoming Transfer!");
+            sendSimulatedEmail(recipientUser.email, `Incoming Transfer`, `Received ${amt} ${asset.toUpperCase()} from ID ${u.userId}`, "💸 Incoming Transfer Received!");
             saveState(); updateBalanceUI(); closeSendModal();
             showNotification("Transfer Sent", `Successfully sent to ${recipientId}`, "↗");
         }
@@ -804,18 +803,9 @@
 
         function openWithdrawModal() {
             if (!currentUserEmail) { openAuthModal('signin'); return; }
-            // Default select USD
-            document.getElementById('withdraw-source-asset').value = 'usd';
             document.getElementById('withdraw-modal').style.display = 'flex';
         }
         function closeWithdrawModal() { document.getElementById('withdraw-modal').style.display = 'none'; }
-
-        function checkWithdrawAssetSelection(val) {
-            if (val !== 'usd') {
-                alert("You must sell your crypto to USD Fiat first before withdrawing! Please click on the 'Sell' button on your dashboard.");
-                document.getElementById('withdraw-source-asset').value = 'usd';
-            }
-        }
 
         let selectedWithdrawMethodName = "";
         function selectWithdrawMethod(method) {
@@ -840,14 +830,12 @@
 
         function requestWithdrawalPinCheck(e) {
             e.preventDefault();
-            const source = document.getElementById('withdraw-source-asset').value;
-            if (source !== 'usd') {
-                alert("Withdrawals are only permitted in USD Fiat balance!");
-                return;
-            }
             const amt = Number(document.getElementById('withdraw-amt').value);
             const u = getCurrentUserData();
-            if (amt > u.usd) { alert("Insufficient USD cash balance."); return; }
+            if (amt > u.usd) { 
+                alert("Insufficient USD cash balance! Please use the 'Sell' button on your dashboard to convert your crypto assets to USD fiat first."); 
+                return; 
+            }
             closeWithdrawFormModal();
             document.getElementById('verify-pin-input').value = '';
             document.getElementById('pin-confirm-modal').style.display = 'flex';
