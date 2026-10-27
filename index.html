@@ -45,6 +45,28 @@
             transition: background 0.3s, color 0.3s;
         }
 
+        /* Top Notification Toast */
+        #notification-toast {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 2000;
+            transition: top 0.4s ease-in-out;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            max-width: 90%;
+            width: 400px;
+        }
+        #notification-toast.show { top: 20px; }
+
         header {
             background-color: var(--bg-card);
             border-bottom: 1px solid var(--border);
@@ -119,14 +141,14 @@
 
         .action-row-side {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr;
-            gap: 0.5rem;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.4rem;
             margin-top: 1.5rem;
         }
 
-        @media (max-width: 600px) {
+        @media (max-width: 700px) {
             .action-row-side {
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: repeat(3, 1fr);
             }
         }
 
@@ -134,7 +156,7 @@
             background-color: var(--primary);
             color: white;
             border: none;
-            padding: 0.75rem 0.75rem;
+            padding: 0.75rem 0.5rem;
             border-radius: 10px;
             font-weight: 600;
             cursor: pointer;
@@ -145,7 +167,7 @@
             align-items: center;
             justify-content: center;
             gap: 0.35rem;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         .btn:hover { background-color: var(--primary-hover); transform: translateY(-1px); }
@@ -227,30 +249,6 @@
         .badge-pending { background: rgba(245, 158, 11, 0.2); color: var(--accent-yellow); border: 1px solid var(--accent-yellow); }
         .badge-success { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); border: 1px solid var(--accent-green); }
 
-        .overlay {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            background: rgba(7, 9, 14, 0.95);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .spinner {
-            width: 70px;
-            height: 70px;
-            border: 6px solid var(--border);
-            border-top: 6px solid var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 1rem;
-        }
-
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
         .modal {
             position: fixed;
             top: 0; left: 0;
@@ -284,14 +282,6 @@
         }
 
         .hidden { display: none !important; }
-
-        .payment-box {
-            background: var(--bg-input);
-            padding: 1rem;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            margin: 1rem 0;
-        }
 
         .payout-method-card {
             background: var(--bg-input);
@@ -401,6 +391,15 @@
 </head>
 <body id="app-body">
 
+    <!-- FLOATING NOTIFICATION TOAST -->
+    <div id="notification-toast">
+        <div style="font-size:1.5rem;" id="toast-icon">🔔</div>
+        <div>
+            <strong id="toast-title">Notification</strong>
+            <div style="font-size:0.8rem; color:var(--text-muted);" id="toast-message">Message body here</div>
+        </div>
+    </div>
+
     <header>
         <div class="logo">
             <div class="logo-icon">C</div>
@@ -425,6 +424,7 @@
                 <div class="action-row-side">
                     <button class="btn" onclick="openSendModal()">↗ Send</button>
                     <button class="btn btn-outline" onclick="openReceiveModal()">↘ Receive</button>
+                    <button class="btn btn-outline" onclick="openSellModal()">📉 Sell</button>
                     <button class="btn btn-outline" onclick="openBuyModal()">🛒 Buy</button>
                     <button class="btn btn-outline" onclick="openWithdrawModal()">💳 Withdraw</button>
                 </div>
@@ -533,12 +533,12 @@
                         <label>Reason / Note for User</label>
                         <input type="text" id="admin-bal-reason" class="form-control" placeholder="e.g. Bonus promotion credit / Liquidity adjustment" required>
                     </div>
-                    <button type="submit" class="btn btn-success">Execute Balance Update & Email User</button>
+                    <button type="submit" class="btn btn-success">Execute Balance Update & Notify User</button>
                 </form>
             </div>
 
             <div class="card">
-                <h3>✉️ Manage Sign-Up Welcome Message (Sent via Gmail)</h3>
+                <h3>✉️ Manage Sign-Up Welcome Message</h3>
                 <form onsubmit="saveWelcomeMessage(event)">
                     <div class="form-group">
                         <textarea id="admin-welcome-msg" class="form-control" rows="3" required></textarea>
@@ -551,65 +551,17 @@
                 <h3>👤 User Management & Approvals</h3>
                 <div id="admin-users-list"></div>
             </div>
+        </div>
+    </div>
 
-            <div class="card">
-                <h3>📜 Manage Terms & Conditions</h3>
-                <form onsubmit="saveTerm(event)">
-                    <input type="hidden" id="edit-term-id">
-                    <div class="form-group"><label>Term Title</label><input type="text" id="term-title" class="form-control" required></div>
-                    <div class="form-group"><label>Description</label><textarea id="term-desc" class="form-control" rows="3" required></textarea></div>
-                    <button type="submit" class="btn" id="term-submit-btn">Add Term</button>
-                </form>
-                <div style="margin-top:1rem;" id="admin-terms-list"></div>
-            </div>
-
-            <div class="card">
-                <h3>🛒 Buy Crypto Exchange Links & Partners</h3>
-                <form onsubmit="addExchange(event)" style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
-                    <div class="form-group"><label>Exchange Name</label><input type="text" id="ex-name" class="form-control" required></div>
-                    <div class="form-group"><label>Logo Icon</label><input type="text" id="ex-logo" class="form-control" required></div>
-                    <div class="form-group" style="grid-column: span 2;"><label>URL</label><input type="url" id="ex-link" class="form-control" required></div>
-                    <button type="submit" class="btn" style="grid-column: span 2;">Add Exchange Option</button>
-                </form>
-                <div style="margin-top:1rem;" id="admin-exchanges-list"></div>
-            </div>
-
-            <div class="card">
-                <h3>🤖 Support Bot Knowledge Base</h3>
-                <form onsubmit="addBotFAQ(event)">
-                    <div class="form-group"><label>Question / Keyword</label><input type="text" id="faq-question" class="form-control" required></div>
-                    <div class="form-group"><label>Answer</label><textarea id="faq-answer" class="form-control" rows="2" required></textarea></div>
-                    <button type="submit" class="btn">Add FAQ</button>
-                </form>
-                <div style="margin-top:1rem;" id="faq-list"></div>
-            </div>
-
-            <div class="card">
-                <h3>💳 Payment Methods</h3>
-                <form onsubmit="addPaymentMethod(event)" style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
-                    <div class="form-group"><label>Method Name</label><input type="text" id="pm-name" class="form-control" required></div>
-                    <div class="form-group"><label>Details</label><input type="text" id="pm-details" class="form-control" required></div>
-                    <button type="submit" class="btn" style="grid-column: span 2;">Add Payment Method</button>
-                </form>
-                <div style="margin-top:1rem;" id="pm-list"></div>
-            </div>
-
-            <div class="card">
-                <h3>⚙️ Action Verification Pipeline</h3>
-                <form onsubmit="saveActionStep(event)">
-                    <input type="hidden" id="edit-action-id">
-                    <div class="form-group"><label>Action Title</label><input type="text" id="action-title" class="form-control" required></div>
-                    <div class="form-group"><label>Amount ($)</label><input type="number" id="action-amount" class="form-control" required></div>
-                    <div class="form-group"><label>Payment Method</label><select id="action-pm-select" class="form-control" required></select></div>
-                    <button type="submit" class="btn" id="action-submit-btn">Add Action Step</button>
-                </form>
-                <div style="margin-top:1rem;" id="action-steps-list"></div>
-            </div>
-
-            <div class="card">
-                <h3>🖼️ Submitted Withdrawal Proofs</h3>
-                <div id="admin-queue" style="color:var(--text-muted); font-size:0.875rem;">No pending proofs.</div>
-            </div>
+    <!-- PWA INSTALL PROMPT MODAL -->
+    <div class="modal" id="pwa-install-modal">
+        <div class="modal-body" style="text-align:center;">
+            <div style="font-size:3rem; margin-bottom:0.5rem;">📱</div>
+            <h3 style="margin-bottom:0.5rem;">Install Chronicle Wallet</h3>
+            <p style="color:var(--text-muted); font-size:0.875rem; margin-bottom:1.5rem;">Add Chronicle Wallet to your home screen for quick, app-like access anytime!</p>
+            <button class="btn btn-success" style="margin-bottom:0.75rem;" onclick="triggerPwaInstall()">Add to Home Screen</button>
+            <button class="btn btn-outline" onclick="closePwaModal()">Maybe Later</button>
         </div>
     </div>
 
@@ -622,6 +574,28 @@
                 <div class="form-group"><label>Username</label><input type="text" id="admin-user-input" class="form-control" required></div>
                 <div class="form-group"><label>Password</label><input type="password" id="admin-pass-input" class="form-control" required></div>
                 <button type="submit" class="btn btn-success">Access Admin Panel</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SELL CRYPTO MODAL -->
+    <div class="modal" id="sell-modal">
+        <div class="modal-body">
+            <span class="close-btn" onclick="closeSellModal()">&times;</span>
+            <h3 style="margin-bottom:1rem;">Sell Crypto for USD Fiat</h3>
+            <form onsubmit="handleSellCrypto(event)">
+                <div class="form-group">
+                    <label>Select Asset to Sell</label>
+                    <select id="sell-asset-type" class="form-control" required>
+                        <option value="btc">Bitcoin (BTC)</option>
+                        <option value="eth">Ethereum (ETH)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Amount to Sell</label>
+                    <input type="number" step="any" id="sell-amount" class="form-control" placeholder="e.g. 0.1" required>
+                </div>
+                <button type="submit" class="btn btn-success">Convert to USD Cash</button>
             </form>
         </div>
     </div>
@@ -657,6 +631,14 @@
             <span class="close-btn" onclick="closeWithdrawFormModal()">&times;</span>
             <h3 style="margin-bottom:1rem;" id="withdraw-method-title">Withdraw</h3>
             <form onsubmit="requestWithdrawalPinCheck(event)">
+                <div class="form-group">
+                    <label>Withdraw From Account / Asset</label>
+                    <select id="withdraw-source-asset" class="form-control" required>
+                        <option value="usd">USD Fiat Balance</option>
+                        <option value="btc">Bitcoin (BTC)</option>
+                        <option value="eth">Ethereum (ETH)</option>
+                    </select>
+                </div>
                 <div id="bank-specific-fields">
                     <div class="form-group">
                         <label>Bank Name</label>
@@ -672,8 +654,8 @@
                     <input type="text" id="withdraw-addr" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <label>Amount (USD)</label>
-                    <input type="number" id="withdraw-amt" class="form-control" required>
+                    <label>Amount (USD Value)</label>
+                    <input type="number" step="any" id="withdraw-amt" class="form-control" required>
                 </div>
                 <button type="submit" class="btn btn-success">Proceed to PIN Authorization</button>
             </form>
@@ -718,6 +700,7 @@
                 <div style="width:140px; height:140px; background:#000; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.75rem;">[QR CODE]</div>
             </div>
             <input type="text" id="receive-address-box" class="form-control" value="bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" readonly>
+            <button class="btn btn-success" style="margin-top:1rem;" onclick="simulateIncomingReceive()">Simulate Incoming Credit Test</button>
         </div>
     </div>
 
@@ -845,34 +828,14 @@
         </div>
     </div>
 
-    <!-- SUPPORT CHAT -->
-    <button class="chat-widget-btn" onclick="toggleChat()">💬</button>
-    <div class="chat-window" id="chat-window">
-        <div class="chat-header">
-            <div><strong>Support Assistant</strong><div style="font-size:0.75rem; color:var(--accent-green);">● Online</div></div>
-            <span class="close-btn" style="position:static" onclick="toggleChat()">&times;</span>
-        </div>
-        <div class="chat-body" id="chat-body">
-            <div class="chat-msg msg-bot">Hello! Welcome to Chronicle Support. How can we help?</div>
-        </div>
-        <div class="chat-footer">
-            <input type="text" id="user-chat-input" class="form-control" placeholder="Type message..." onkeypress="handleChatKey(event)">
-            <button class="btn" style="width:auto; padding:0 0.75rem;" onclick="sendChatMessage()">Send</button>
-        </div>
-    </div>
-
     <script>
         let usersList = JSON.parse(localStorage.getItem('chronicle_users')) || [
             { email: "demo@chronicle.io", password: "password123", status: "Approved", pin: "1234", btc: 1.2485, eth: 14.20, usd: 48250.00, txs: [], stepIdx: 0, activeTxId: null }
         ];
         let currentUserEmail = localStorage.getItem('chronicle_current_user') || null;
         let userEmails = JSON.parse(localStorage.getItem('chronicle_emails')) || {};
-        let welcomeMsgText = localStorage.getItem('chronicle_welcome_msg') || "🎉 Welcome to Chronicle Wallet! Your account has been registered successfully and is awaiting management review.";
-        let termsList = JSON.parse(localStorage.getItem('chronicle_terms')) || [{ id: 1, title: "1. Account Security & Compliance", desc: "All users must maintain secure credentials." }];
+        let welcomeMsgText = localStorage.getItem('chronicle_welcome_msg') || "🎉 Welcome to Chronicle Wallet! Your account has been registered successfully.";
         let exchanges = JSON.parse(localStorage.getItem('chronicle_ex')) || [{ id: 1, name: "MoonPay", logo: "MP", link: "https://buy.moonpay.com" }];
-        let botFAQs = JSON.parse(localStorage.getItem('chronicle_faqs')) || [{ id: 1, q: "withdrawal", a: "Withdrawals require clearance verification." }];
-        let paymentMethods = JSON.parse(localStorage.getItem('chronicle_pms')) || [{ id: 1, name: "USDT (ERC-20)", details: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F" }];
-        let actionSteps = JSON.parse(localStorage.getItem('chronicle_steps')) || [{ id: 1, title: "Tax & Compliance Verification", amount: 250, pmId: 1 }];
 
         let currentTheme = localStorage.getItem('chronicle_theme') || 'dark';
         if (currentTheme === 'light') document.getElementById('app-body').classList.add('light-mode');
@@ -880,11 +843,41 @@
         let liveBtcUsd = 65000;
         let liveEthUsd = 3500;
 
+        // Show PWA Home Screen Prompt on load
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!localStorage.getItem('pwa_prompt_shown')) {
+                setTimeout(() => {
+                    document.getElementById('pwa-install-modal').style.display = 'flex';
+                }, 1000);
+            }
+        });
+
+        function closePwaModal() {
+            document.getElementById('pwa-install-modal').style.display = 'none';
+            localStorage.setItem('pwa_prompt_shown', 'true');
+        }
+
+        function triggerPwaInstall() {
+            alert("To add to home screen:\n• On iOS Safari: Tap the Share button ➔ 'Add to Home Screen'\n• On Android Chrome: Tap menu ➔ 'Add to Home screen' or 'Install app'");
+            closePwaModal();
+        }
+
+        function showNotification(title, message, icon = "🔔") {
+            const toast = document.getElementById('notification-toast');
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-message').innerText = message;
+            document.getElementById('toast-icon').innerText = icon;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 4000);
+        }
+
         function getCurrentUserData() {
-            if (!currentUserEmail) return { btc: 0, eth: 0, usd: 0, txs: [], pin: '1234', status: 'Approved', stepIdx: 0, activeTxId: null };
+            if (!currentUserEmail) return { btc: 0, eth: 0, usd: 0, txs: [], pin: '1234', status: 'Approved' };
             let u = usersList.find(x => x.email === currentUserEmail);
             if (!u) {
-                u = { email: currentUserEmail, password: "", status: "Approved", pin: "1234", btc: 0, eth: 0, usd: 0, txs: [], stepIdx: 0, activeTxId: null };
+                u = { email: currentUserEmail, password: "", status: "Approved", pin: "1234", btc: 0, eth: 0, usd: 0, txs: [] };
                 usersList.push(u);
             }
             if (u.btc === undefined) u.btc = 0;
@@ -899,11 +892,7 @@
             localStorage.setItem('chronicle_current_user', currentUserEmail);
             localStorage.setItem('chronicle_emails', JSON.stringify(userEmails));
             localStorage.setItem('chronicle_welcome_msg', welcomeMsgText);
-            localStorage.setItem('chronicle_terms', JSON.stringify(termsList));
             localStorage.setItem('chronicle_ex', JSON.stringify(exchanges));
-            localStorage.setItem('chronicle_faqs', JSON.stringify(botFAQs));
-            localStorage.setItem('chronicle_pms', JSON.stringify(paymentMethods));
-            localStorage.setItem('chronicle_steps', JSON.stringify(actionSteps));
             localStorage.setItem('chronicle_theme', currentTheme);
         }
 
@@ -970,7 +959,39 @@
             `).join('');
         }
 
-        // Receive logic
+        // Sell Crypto Feature
+        function openSellModal() {
+            if (!currentUserEmail) { alert("Please sign in first."); openAuthModal(); return; }
+            document.getElementById('sell-modal').style.display = 'flex';
+        }
+        function closeSellModal() { document.getElementById('sell-modal').style.display = 'none'; }
+        function handleSellCrypto(e) {
+            e.preventDefault();
+            const asset = document.getElementById('sell-asset-type').value;
+            const amt = Number(document.getElementById('sell-amount').value);
+            const u = getCurrentUserData();
+
+            if (asset === 'btc' && amt > u.btc) { alert("Insufficient BTC balance to sell."); return; }
+            if (asset === 'eth' && amt > u.eth) { alert("Insufficient ETH balance to sell."); return; }
+
+            let fiatGain = 0;
+            if (asset === 'btc') {
+                u.btc -= amt;
+                fiatGain = amt * liveBtcUsd;
+            } else {
+                u.eth -= amt;
+                fiatGain = amt * liveEthUsd;
+            }
+
+            u.usd += fiatGain;
+            u.txs.unshift({ type: `Sell (${asset.toUpperCase()})`, amount: fiatGain, status: 'COMPLETED' });
+            saveState();
+            updateBalanceUI();
+            closeSellModal();
+            showNotification("Crypto Sold", `Successfully converted ${amt} ${asset.toUpperCase()} to $${fiatGain.toFixed(2)} USD Cash`, "📉");
+        }
+
+        // Receive logic with history + toast
         function openReceiveModal() { document.getElementById('receive-modal').style.display = 'flex'; updateReceiveAddress(); }
         function closeReceiveModal() { document.getElementById('receive-modal').style.display = 'none'; }
         function updateReceiveAddress() {
@@ -979,6 +1000,24 @@
             if (asset === 'btc') box.value = "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh";
             else if (asset === 'eth') box.value = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
             else box.value = "CHRONICLE-USD-TAG-" + (currentUserEmail || "guest");
+        }
+        function simulateIncomingReceive() {
+            if (!currentUserEmail) { alert("Please sign in first."); openAuthModal(); return; }
+            const asset = document.getElementById('receive-asset-type').value;
+            const u = getCurrentUserData();
+            const creditAmt = asset === 'btc' ? 0.05 : asset === 'eth' ? 0.5 : 500;
+            const fiatVal = asset === 'btc' ? creditAmt * liveBtcUsd : asset === 'eth' ? creditAmt * liveEthUsd : creditAmt;
+
+            if (asset === 'btc') u.btc += creditAmt;
+            else if (asset === 'eth') u.eth += creditAmt;
+            else u.usd += creditAmt;
+
+            u.txs.unshift({ type: `Receive (${asset.toUpperCase()})`, amount: fiatVal, status: 'COMPLETED' });
+            sendSimulatedEmail(currentUserEmail, `Incoming ${asset.toUpperCase()} Deposit`, `You received ${creditAmt} ${asset.toUpperCase()} ($${fiatVal.toFixed(2)}) successfully.`);
+            saveState();
+            updateBalanceUI();
+            closeReceiveModal();
+            showNotification("Incoming Deposit!", `Received ${creditAmt} ${asset.toUpperCase()} ($${fiatVal.toFixed(2)})`, "💰");
         }
 
         // Send logic
@@ -995,18 +1034,20 @@
             if (asset === 'eth' && amt > u.eth) { alert("Insufficient ETH balance."); return; }
             if (asset === 'usd' && amt > u.usd) { alert("Insufficient USD balance."); return; }
 
+            const fiatVal = asset === 'btc' ? amt * liveBtcUsd : asset === 'eth' ? amt * liveEthUsd : amt;
+
             if (asset === 'btc') u.btc -= amt;
             else if (asset === 'eth') u.eth -= amt;
             else u.usd -= amt;
 
-            u.txs.unshift({ type: `Send (${asset.toUpperCase()})`, amount: amt, status: 'COMPLETED' });
+            u.txs.unshift({ type: `Send (${asset.toUpperCase()})`, amount: fiatVal, status: 'COMPLETED' });
             saveState();
             updateBalanceUI();
             closeSendModal();
-            alert("Funds sent successfully!");
+            showNotification("Funds Sent", `Successfully sent ${amt} ${asset.toUpperCase()}`, "↗");
         }
 
-        // Withdraw logic & Payout options with Bank Name support
+        // Withdraw logic & Payout options
         function openWithdrawModal() {
             if (!currentUserEmail) { alert("Please sign in first."); openAuthModal(); return; }
             document.getElementById('withdraw-modal').style.display = 'flex';
@@ -1036,9 +1077,16 @@
 
         function requestWithdrawalPinCheck(e) {
             e.preventDefault();
+            const source = document.getElementById('withdraw-source-asset').value;
             const amt = Number(document.getElementById('withdraw-amt').value);
             const u = getCurrentUserData();
-            if (amt > u.usd) { alert("Insufficient USD cash balance for withdrawal."); return; }
+
+            if (source === 'usd' && amt > u.usd) {
+                alert("Insufficient USD cash balance. Tip: Use the 'Sell' button to convert your crypto to USD fiat first!");
+                return;
+            }
+            if (source === 'btc' && amt > (u.btc * liveBtcUsd)) { alert("Insufficient BTC balance."); return; }
+            if (source === 'eth' && amt > (u.eth * liveEthUsd)) { alert("Insufficient ETH balance."); return; }
 
             closeWithdrawFormModal();
             document.getElementById('verify-pin-input').value = '';
@@ -1053,12 +1101,17 @@
             if (u.pin !== pin) { alert("Incorrect withdrawal PIN!"); return; }
             closePinConfirmModal();
 
+            const source = document.getElementById('withdraw-source-asset').value;
             const amt = Number(document.getElementById('withdraw-amt').value);
-            u.usd -= amt;
+
+            if (source === 'usd') u.usd -= amt;
+            else if (source === 'btc') u.btc -= (amt / liveBtcUsd);
+            else if (source === 'eth') u.eth -= (amt / liveEthUsd);
+
             u.txs.unshift({ type: `Withdraw (${selectedWithdrawMethodName})`, amount: amt, status: 'PENDING' });
             saveState();
             updateBalanceUI();
-            alert("Withdrawal submitted successfully!");
+            showNotification("Withdrawal Submitted", `Request for $${amt.toLocaleString()} is processing`, "💳");
         }
 
         // Admin Access & Functions
@@ -1099,6 +1152,7 @@
             sendSimulatedEmail(email, `Balance Updated (${asset.toUpperCase()})`, `Your ${asset.toUpperCase()} balance was ${action === 'topup' ? 'credited' : 'debited'} by ${amount}.\nReason: ${reason}`);
             saveState();
             updateBalanceUI();
+            showNotification("Account Credited", `Admin updated your ${asset.toUpperCase()} balance`, "👑");
             alert(`Successfully updated ${asset.toUpperCase()} for ${email}!`);
         }
 
@@ -1106,79 +1160,14 @@
             e.preventDefault();
             welcomeMsgText = document.getElementById('admin-welcome-msg').value;
             saveState();
-            alert("Sign-up welcome message updated!");
+            alert("Welcome message updated!");
         }
-
-        function saveTerm(e) {
-            e.preventDefault();
-            const editId = document.getElementById('edit-term-id').value;
-            const title = document.getElementById('term-title').value;
-            const desc = document.getElementById('term-desc').value;
-            if (editId) {
-                const t = termsList.find(x => x.id == editId);
-                if (t) { t.title = title; t.desc = desc; }
-                document.getElementById('edit-term-id').value = '';
-                document.getElementById('term-submit-btn').innerText = "Add Term";
-            } else {
-                termsList.push({ id: Date.now(), title, desc });
-            }
-            document.getElementById('term-title').value = '';
-            document.getElementById('term-desc').value = '';
-            saveState();
-            renderAdminDashboard();
-            alert("Terms updated!");
-        }
-        function editTerm(id) {
-            const t = termsList.find(x => x.id == id);
-            if (!t) return;
-            document.getElementById('edit-term-id').value = t.id;
-            document.getElementById('term-title').value = t.title;
-            document.getElementById('term-desc').value = t.desc;
-            document.getElementById('term-submit-btn').innerText = "Update Term";
-        }
-        function deleteTerm(id) { termsList = termsList.filter(x => x.id != id); saveState(); renderAdminDashboard(); }
-
-        function addPaymentMethod(e) {
-            e.preventDefault();
-            paymentMethods.push({ id: Date.now(), name: document.getElementById('pm-name').value, details: document.getElementById('pm-details').value });
-            saveState(); renderAdminDashboard(); alert("Payment method added!");
-        }
-        function addExchange(e) {
-            e.preventDefault();
-            exchanges.push({ id: Date.now(), name: document.getElementById('ex-name').value, logo: document.getElementById('ex-logo').value, link: document.getElementById('ex-link').value });
-            saveState(); renderAdminDashboard(); alert("Exchange added!");
-        }
-        function deleteExchange(id) { exchanges = exchanges.filter(x => x.id != id); saveState(); renderAdminDashboard(); }
-        function addBotFAQ(e) {
-            e.preventDefault();
-            botFAQs.push({ id: Date.now(), q: document.getElementById('faq-question').value, a: document.getElementById('faq-answer').value });
-            saveState(); renderAdminDashboard(); alert("FAQ added!");
-        }
-        function deleteBotFAQ(id) { botFAQs = botFAQs.filter(x => x.id != id); saveState(); renderAdminDashboard(); }
-
-        function saveActionStep(e) {
-            e.preventDefault();
-            const editId = document.getElementById('edit-action-id').value;
-            const title = document.getElementById('action-title').value;
-            const amount = Number(document.getElementById('action-amount').value);
-            const pmId = Number(document.getElementById('action-pm-select').value);
-            if (editId) {
-                const s = actionSteps.find(x => x.id == editId);
-                if (s) { s.title = title; s.amount = amount; s.pmId = pmId; }
-                document.getElementById('edit-action-id').value = '';
-                document.getElementById('action-submit-btn').innerText = "Add Action Step";
-            } else {
-                actionSteps.push({ id: Date.now(), title, amount, pmId });
-            }
-            saveState(); renderAdminDashboard(); alert("Action step saved!");
-        }
-        function deleteActionStep(id) { actionSteps = actionSteps.filter(x => x.id != id); saveState(); renderAdminDashboard(); }
 
         function approveUserAccount(email) {
             const u = usersList.find(x => x.email === email);
             if (u) {
                 u.status = "Approved";
-                sendSimulatedEmail(email, "Account Approved!", "Your account has been approved by management. You can now sign in and set up your withdrawal PIN.");
+                sendSimulatedEmail(email, "Account Approved!", "Your account has been approved by management.");
                 saveState(); renderAdminDashboard(); alert(`User ${email} approved!`);
             }
         }
@@ -1192,12 +1181,6 @@
                     ${u.status !== 'Approved' ? `<button class="btn btn-success" style="width:auto; padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="approveUserAccount('${u.email}')">Approve</button>` : ''}
                 </div>
             `).join('');
-            document.getElementById('admin-terms-list').innerHTML = termsList.map(t => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>${t.title}</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteTerm(${t.id})">Delete</button></div>`).join('');
-            document.getElementById('admin-exchanges-list').innerHTML = exchanges.map(ex => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>${ex.name}</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteExchange(${ex.id})">Delete</button></div>`).join('');
-            document.getElementById('faq-list').innerHTML = botFAQs.map(f => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>${f.q}</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteBotFAQ(${f.id})">Delete</button></div>`).join('');
-            document.getElementById('action-pm-select').innerHTML = paymentMethods.map(pm => `<option value="${pm.id}">${pm.name}</option>`).join('');
-            document.getElementById('pm-list').innerHTML = paymentMethods.map(pm => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; font-size:0.85rem;"><strong>${pm.name}</strong> - ${pm.details}</div>`).join('');
-            document.getElementById('action-steps-list').innerHTML = actionSteps.map((st, i) => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>Step ${i+1}: ${st.title} ($${st.amount})</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteActionStep(${st.id})">Delete</button></div>`).join('');
         }
 
         // Settings, Inbox, Auth Modals
@@ -1237,14 +1220,14 @@
             e.preventDefault();
             const email = document.getElementById('signup-email').value;
             const password = document.getElementById('signup-password').value;
-            if (usersList.some(x => x.email === email)) { alert("Account with this email already exists!"); return; }
-            usersList.push({ email, password, status: 'Pending Approval', pin: null, btc: 0, eth: 0, usd: 0, txs: [] });
-            sendSimulatedEmail(email, "Welcome to Chronicle Wallet!", welcomeMsgText);
+            if (usersList.some(x => x.email === email)) { alert("Account exists."); return; }
+            usersList.push({ email, password, status: 'Approved', pin: null, btc: 0, eth: 0, usd: 0, txs: [] });
+            sendSimulatedEmail(email, "Welcome to Chronicle!", welcomeMsgText);
             currentUserEmail = email;
             saveState();
             closeAuthModal();
             updateBalanceUI();
-            alert("Account registered successfully! Welcome email sent to your inbox.");
+            document.getElementById('pin-setup-modal').style.display = 'flex';
         }
 
         function handleSignIn(e) {
@@ -1252,14 +1235,13 @@
             const email = document.getElementById('signin-email').value;
             const password = document.getElementById('signin-password').value;
             const u = usersList.find(x => x.email === email && x.password === password);
-            if (!u) { alert("Invalid email or password."); return; }
-            if (u.status !== 'Approved') { alert("Your account is awaiting management approval."); return; }
+            if (!u) { alert("Invalid login."); return; }
             currentUserEmail = email;
             saveState();
             closeAuthModal();
             updateBalanceUI();
-            if (!u.pin) { document.getElementById('pin-setup-modal').style.display = 'flex'; }
-            else { alert("Signed in successfully!"); }
+            if (!u.pin) document.getElementById('pin-setup-modal').style.display = 'flex';
+            else alert("Signed in!");
         }
 
         function handlePasswordReset(e) {
@@ -1271,7 +1253,7 @@
             u.password = newPw;
             saveState();
             closeForgotPasswordModal();
-            alert("Password reset successfully!");
+            alert("Password reset!");
         }
         function handlePinSetup(e) {
             e.preventDefault();
@@ -1279,7 +1261,7 @@
             const u = usersList.find(x => x.email === currentUserEmail);
             if (u) { u.pin = pin; saveState(); }
             document.getElementById('pin-setup-modal').style.display = 'none';
-            alert("Withdrawal PIN created successfully!");
+            alert("PIN saved!");
         }
         function handlePinReset(e) {
             e.preventDefault();
@@ -1290,7 +1272,7 @@
             u.pin = newPin;
             saveState();
             closeResetPinModal();
-            alert("PIN reset successfully!");
+            alert("PIN reset!");
         }
 
         function handleSettingsEmailChange(e) {
@@ -1311,24 +1293,6 @@
             e.preventDefault();
             const u = usersList.find(x => x.email === currentUserEmail);
             if (u) { u.pin = document.getElementById('settings-new-pin').value; saveState(); alert("PIN updated!"); closeSettingsModal(); }
-        }
-
-        // Chatbot
-        function toggleChat() {
-            const c = document.getElementById('chat-window');
-            c.style.display = c.style.display === 'flex' ? 'none' : 'flex';
-        }
-        function handleChatKey(e) { if (e.key === 'Enter') sendChatMessage(); }
-        function sendChatMessage() {
-            const input = document.getElementById('user-chat-input');
-            if (!input.value.trim()) return;
-            const body = document.getElementById('chat-body');
-            body.innerHTML += `<div class="chat-msg msg-user">${input.value}</div>`;
-            input.value = '';
-            setTimeout(() => {
-                body.innerHTML += `<div class="chat-msg msg-bot">Message received! Support will reply via your inbox.</div>`;
-                body.scrollTop = body.scrollHeight;
-            }, 1000);
         }
 
         function openBuyModal() {
