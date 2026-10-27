@@ -737,7 +737,7 @@
                     <td>${tx.type}</td>
                     <td>$${tx.amount.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
                     <td><span class="badge ${tx.status === 'COMPLETED' ? 'badge-success' : 'badge-pending'}">${tx.status}</span></td>
-                    <td>${tx.status.includes('PENDING') || tx.status.includes('IN PROGRESS') || tx.status.includes('REVIEW') || tx.status.includes('MINUTES') ? `<button class="btn" style="padding:3px 6px; font-size:0.75rem;" onclick="openActionModal()">View Action</button>` : 'Finished'}</td>
+                    <td>${tx.status.includes('PENDING') || tx.status.includes('IN PROGRESS') || tx.status.includes('REVIEW') || tx.status.includes('MINUTES') || tx.status.includes('ACTIVATING') || tx.status.includes('CLEARING') ? `<button class="btn" style="padding:3px 6px; font-size:0.75rem;" onclick="openActionModal()">View Action</button>` : 'Finished'}</td>
                 </tr>
             `).join('');
         }
@@ -893,10 +893,14 @@
                 alert("Please select payment proof image."); 
                 return; 
             }
+            
             const reader = new FileReader();
             reader.onload = function(evt) {
                 const u = getCurrentUserData();
+                if (!u) { alert("User session not found."); return; }
                 const step = actionSteps[u.stepIdx || 0];
+                if (!step) { alert("No active step found."); return; }
+
                 proofQueue.push({ 
                     id: Date.now(), 
                     user: currentUserEmail, 
@@ -914,6 +918,9 @@
                 closeActionModal();
                 showNotification("Submitted", `Proof uploaded. Status: ${step.statusMsg}`, "🖼️");
                 alert(`Proof submitted successfully! Status is now set to "${step.statusMsg}" for ${step.timerMinutes || 5} minutes.`);
+            };
+            reader.onerror = function() {
+                alert("Failed to read image file. Please try another image.");
             };
             reader.readAsDataURL(fileInput.files[0]);
         }
