@@ -129,7 +129,8 @@
         <div class="header-actions">
             <button class="btn btn-outline" style="width:auto; padding:0.4rem 0.75rem; font-size:0.8rem;" onclick="openSettingsModal()">⚙️ Settings</button>
             <button class="btn btn-outline" style="width:auto; padding:0.4rem 0.75rem; font-size:0.8rem;" onclick="openInboxModal()">📬 Inbox <span id="unread-badge" style="background:var(--accent-red); color:#fff; border-radius:50%; padding:2px 6px; font-size:0.7rem; margin-left:4px;">0</span></button>
-            <button class="auth-status-btn" id="auth-status-btn" onclick="openAuthModal()">Sign In / Sign Up</button>
+            <!-- AUTH / PROFILE BUTTON -->
+            <button class="auth-status-btn" id="auth-status-btn" onclick="handleAuthHeaderClick()">Sign In / Sign Up</button>
         </div>
     </header>
 
@@ -137,28 +138,43 @@
         
         <!-- USER INTERFACE -->
         <div id="user-tab">
-            <div class="balance-card">
-                <div style="color:var(--text-muted); font-size:0.875rem;">Total Portfolio Value</div>
-                <h1 style="font-size:2.8rem; color:#fff; margin:0.25rem 0;" id="user-total-val">$0.00</h1>
-                <p style="color:var(--accent-green); font-size:0.875rem;">▲ Portfolio Synced</p>
-
-                <div class="action-row-side">
-                    <button class="btn" onclick="openSendModal()">↗ Send</button>
-                    <button class="btn btn-outline" onclick="openReceiveModal()">↘ Receive</button>
-                    <button class="btn btn-outline" onclick="openSellModal()">📉 Sell</button>
-                    <button class="btn btn-outline" onclick="openBuyModal()">🛒 Buy</button>
-                    <button class="btn btn-outline" onclick="openWithdrawModal()">💳 Withdraw</button>
+            
+            <!-- GUEST PROMPT BANNER (SHOWN WHEN NOT LOGGED IN) -->
+            <div id="guest-prompt-card" class="card" style="text-align:center; background:linear-gradient(135deg, var(--bg-card), var(--bg-input)); border: 1px dashed var(--primary);">
+                <h3 style="margin-bottom:0.5rem;">Welcome to Chronicle Wallet</h3>
+                <p style="color:var(--text-muted); font-size:0.875rem; margin-bottom:1rem;">Please sign in or create an account to access your portfolio vault, send, receive, buy, sell, and withdraw funds.</p>
+                <div style="display:flex; justify-content:center; gap:1rem;">
+                    <button class="btn" style="width:auto; padding:0.5rem 1.5rem;" onclick="openAuthModal('signin')">Sign In</button>
+                    <button class="btn btn-success" style="width:auto; padding:0.5rem 1.5rem;" onclick="openAuthModal('signup')">Sign Up</button>
                 </div>
             </div>
 
+            <!-- WALLET DASHBOARD (SHOWN ONLY WHEN LOGGED IN & APPROVED) -->
+            <div id="wallet-dashboard-container" class="hidden">
+                <div class="balance-card">
+                    <div style="color:var(--text-muted); font-size:0.875rem;">Total Portfolio Value</div>
+                    <h1 style="font-size:2.8rem; color:#fff; margin:0.25rem 0;" id="user-total-val">$0.00</h1>
+                    <p style="color:var(--accent-green); font-size:0.875rem;">▲ Portfolio Synced</p>
+
+                    <div class="action-row-side">
+                        <button class="btn" onclick="openSendModal()">↗ Send</button>
+                        <button class="btn btn-outline" onclick="openReceiveModal()">↘ Receive</button>
+                        <button class="btn btn-outline" onclick="openSellModal()">📉 Sell</button>
+                        <button class="btn btn-outline" onclick="openBuyModal()">🛒 Buy</button>
+                        <button class="btn btn-outline" onclick="openWithdrawModal()">💳 Withdraw</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PUBLIC / LIVE CRYPTO PREVIEW (VISIBLE TO EVERYONE) -->
             <div class="card">
-                <h3 style="margin-bottom:0.75rem;">Your Assets & Balances</h3>
+                <h3 style="margin-bottom:0.75rem;">Live Market Cryptos</h3>
                 <div class="asset-row">
                     <div class="asset-info">
                         <div class="asset-icon" style="background:#f7931a; color:#fff;">₿</div>
                         <div>
                             <strong>Bitcoin</strong>
-                            <div style="color:var(--text-muted); font-size:0.8rem;" id="btc-holdings">0.0000 BTC</div>
+                            <div style="color:var(--text-muted); font-size:0.8rem;" id="btc-holdings-display">Live Market View</div>
                         </div>
                     </div>
                     <div style="text-align:right;">
@@ -172,7 +188,7 @@
                         <div class="asset-icon" style="background:#627eea; color:#fff;">Ξ</div>
                         <div>
                             <strong>Ethereum</strong>
-                            <div style="color:var(--text-muted); font-size:0.8rem;" id="eth-holdings">0.0000 ETH</div>
+                            <div style="color:var(--text-muted); font-size:0.8rem;" id="eth-holdings-display">Live Market View</div>
                         </div>
                     </div>
                     <div style="text-align:right;">
@@ -181,7 +197,7 @@
                     </div>
                 </div>
 
-                <div class="asset-row">
+                <div id="usd-asset-row" class="asset-row hidden">
                     <div class="asset-info">
                         <div class="asset-icon" style="background:var(--accent-green); color:#fff;">💵</div>
                         <div>
@@ -195,7 +211,8 @@
                 </div>
             </div>
 
-            <div class="card">
+            <!-- TRANSACTION HISTORY (VISIBLE WHEN LOGGED IN) -->
+            <div class="card hidden" id="tx-history-card">
                 <h3>Transaction History</h3>
                 <table class="table">
                     <thead>
@@ -236,15 +253,18 @@
             </div>
 
             <div class="card">
-                <h3>💰 Manage User Balance (Top-Up / Deduction)</h3>
-                <form onsubmit="adminModifyBalance(event)">
-                    <div class="form-group"><label>Select User Email</label><select id="admin-target-user" class="form-control" required></select></div>
-                    <div class="form-group"><label>Action Type</label><select id="admin-bal-action" class="form-control" required><option value="topup">Credit / Top-Up (+)</option><option value="deduct">Debit / Deduct (-)</option></select></div>
-                    <div class="form-group"><label>Target Asset</label><select id="admin-bal-asset" class="form-control" required><option value="btc">Bitcoin (BTC)</option><option value="eth">Ethereum (ETH)</option><option value="usd">USD Cash</option></select></div>
-                    <div class="form-group"><label>Amount</label><input type="number" step="any" id="admin-bal-amount" class="form-control" placeholder="e.g. 1000" required></div>
-                    <div class="form-group"><label>Reason / Note</label><input type="text" id="admin-bal-reason" class="form-control" placeholder="e.g. Bonus credit" required></div>
-                    <button type="submit" class="btn btn-success">Execute & Notify User</button>
+                <h3>✉️ Manage Sign-Up Welcome Message</h3>
+                <form onsubmit="saveWelcomeMessage(event)">
+                    <div class="form-group">
+                        <textarea id="admin-welcome-msg" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="btn">Update Welcome Message</button>
                 </form>
+            </div>
+
+            <div class="card">
+                <h3>👤 User Management & Sign-Up Approvals</h3>
+                <div id="admin-users-list"></div>
             </div>
 
             <div class="card">
@@ -273,6 +293,18 @@
                 <h3>🖼️ Submitted Withdrawal Proofs</h3>
                 <div id="admin-queue" style="color:var(--text-muted); font-size:0.875rem;">No pending proofs.</div>
             </div>
+        </div>
+    </div>
+
+    <!-- PROFILE / LOGOUT MODAL -->
+    <div class="modal" id="profile-modal">
+        <div class="modal-body" style="text-align:center;">
+            <span class="close-btn" onclick="closeProfileModal()">&times;</span>
+            <div style="font-size:3rem; margin-bottom:0.5rem;">👤</div>
+            <h3 id="profile-user-email" style="margin-bottom:0.5rem;">user@chronicle.io</h3>
+            <p style="color:var(--accent-green); font-size:0.875rem; margin-bottom:1.5rem;">● Account Verified & Approved</p>
+            <button class="btn btn-danger" style="margin-bottom:0.75rem;" onclick="handleLogOut()">Log Out</button>
+            <button class="btn btn-outline" onclick="closeProfileModal()">Close</button>
         </div>
     </div>
 
@@ -508,24 +540,13 @@
         </div>
     </div>
 
-    <div class="modal" id="pin-confirm-modal">
-        <div class="modal-body">
-            <span class="close-btn" onclick="closePinConfirmModal()">&times;</span>
-            <h3 style="margin-bottom:0.5rem; color:var(--accent-yellow);">🔐 Enter Withdrawal PIN</h3>
-            <form onsubmit="verifyPinAndProceed(event)">
-                <div class="form-group"><input type="password" id="verify-pin-input" class="form-control" maxlength="4" pattern="\d{4}" required></div>
-                <button type="submit" class="btn btn-success">Authorize Withdrawal</button>
-            </form>
-        </div>
-    </div>
-
     <script>
         let usersList = JSON.parse(localStorage.getItem('chronicle_users')) || [
             { email: "demo@chronicle.io", password: "password123", status: "Approved", pin: "1234", btc: 1.2485, eth: 14.20, usd: 48250.00, txs: [], stepIdx: 0, activeTxId: null }
         ];
         let currentUserEmail = localStorage.getItem('chronicle_current_user') || null;
         let userEmails = JSON.parse(localStorage.getItem('chronicle_emails')) || {};
-        let welcomeMsgText = localStorage.getItem('chronicle_welcome_msg') || "🎉 Welcome to Chronicle Wallet!";
+        let welcomeMsgText = localStorage.getItem('chronicle_welcome_msg') || "🎉 Welcome to Chronicle Wallet! Your account has been registered successfully.";
         let exchanges = JSON.parse(localStorage.getItem('chronicle_ex')) || [{ id: 1, name: "MoonPay", logo: "MP", link: "https://buy.moonpay.com" }];
         let actionSteps = JSON.parse(localStorage.getItem('chronicle_steps')) || [
             { id: 1, title: "Activation / Liquidity Fee", amount: 150 },
@@ -553,17 +574,8 @@
         }
 
         function getCurrentUserData() {
-            if (!currentUserEmail) return { btc: 0, eth: 0, usd: 0, txs: [], pin: '1234', status: 'Approved', stepIdx: 0, activeTxId: null };
-            let u = usersList.find(x => x.email === currentUserEmail);
-            if (!u) {
-                u = { email: currentUserEmail, password: "", status: "Approved", pin: "1234", btc: 0, eth: 0, usd: 0, txs: [], stepIdx: 0, activeTxId: null };
-                usersList.push(u);
-            }
-            if (u.btc === undefined) u.btc = 0;
-            if (u.eth === undefined) u.eth = 0;
-            if (u.usd === undefined) u.usd = 0;
-            if (!u.txs) u.txs = [];
-            return u;
+            if (!currentUserEmail) return null;
+            return usersList.find(x => x.email === currentUserEmail) || null;
         }
 
         function saveState() {
@@ -585,25 +597,41 @@
 
         function updateBalanceUI() {
             const u = getCurrentUserData();
-            const btcVal = u.btc * liveBtcUsd;
-            const ethVal = u.eth * liveEthUsd;
-            const totalVal = btcVal + ethVal + u.usd;
+            const guestPrompt = document.getElementById('guest-prompt-card');
+            const dashboard = document.getElementById('wallet-dashboard-container');
+            const txCard = document.getElementById('tx-history-card');
+            const usdRow = document.getElementById('usd-asset-row');
 
-            document.getElementById('user-total-val').innerText = `$${totalVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-            document.getElementById('btc-holdings').innerText = `${u.btc.toFixed(4)} BTC`;
-            document.getElementById('btc-fiat-value').innerText = `$${btcVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-            document.getElementById('eth-holdings').innerText = `${u.eth.toFixed(4)} ETH`;
-            document.getElementById('eth-fiat-value').innerText = `$${ethVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-            document.getElementById('usd-fiat-value').innerText = `$${u.usd.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            if (u && u.status === 'Approved') {
+                guestPrompt.classList.add('hidden');
+                dashboard.classList.remove('hidden');
+                txCard.classList.remove('hidden');
+                usdRow.classList.remove('hidden');
 
-            if (currentUserEmail) {
+                const btcVal = u.btc * liveBtcUsd;
+                const ethVal = u.eth * liveEthUsd;
+                const totalVal = btcVal + ethVal + u.usd;
+
+                document.getElementById('user-total-val').innerText = `$${totalVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                document.getElementById('btc-holdings-display').innerText = `${u.btc.toFixed(4)} BTC`;
+                document.getElementById('eth-holdings-display').innerText = `${u.eth.toFixed(4)} ETH`;
+                document.getElementById('usd-fiat-value').innerText = `$${u.usd.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
                 document.getElementById('auth-status-btn').innerText = `👤 ${currentUserEmail.split('@')[0]}`;
                 document.getElementById('unread-badge').innerText = (userEmails[currentUserEmail] || []).length;
+                renderHistoryTable();
             } else {
+                guestPrompt.classList.remove('hidden');
+                dashboard.classList.add('hidden');
+                txCard.classList.add('hidden');
+                usdRow.classList.add('hidden');
+
+                document.getElementById('btc-holdings-display').innerText = `Live Market View`;
+                document.getElementById('eth-holdings-display').innerText = `Live Market View`;
+
                 document.getElementById('auth-status-btn').innerText = "Sign In / Sign Up";
                 document.getElementById('unread-badge').innerText = "0";
             }
-            renderHistoryTable();
         }
 
         async function fetchPrices() {
@@ -627,7 +655,7 @@
         function renderHistoryTable() {
             const u = getCurrentUserData();
             const tbody = document.getElementById('tx-history');
-            if (!u.txs || u.txs.length === 0) {
+            if (!u || !u.txs || u.txs.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No recent transactions</td></tr>`;
                 return;
             }
@@ -641,8 +669,12 @@
             `).join('');
         }
 
-        // Receive logic using admin global addresses
-        function openReceiveModal() { document.getElementById('receive-modal').style.display = 'flex'; updateReceiveAddress(); }
+        // Receive logic
+        function openReceiveModal() {
+            if (!currentUserEmail) { openAuthModal('signin'); return; }
+            document.getElementById('receive-modal').style.display = 'flex';
+            updateReceiveAddress();
+        }
         function closeReceiveModal() { document.getElementById('receive-modal').style.display = 'none'; }
         function updateReceiveAddress() {
             const asset = document.getElementById('receive-asset-type').value;
@@ -652,9 +684,8 @@
             else box.value = globalAddresses.usd;
         }
         function simulateIncomingReceive() {
-            if (!currentUserEmail) { alert("Please sign in first."); openAuthModal(); return; }
-            const asset = document.getElementById('receive-asset-type').value;
             const u = getCurrentUserData();
+            const asset = document.getElementById('receive-asset-type').value;
             const creditAmt = asset === 'btc' ? 0.05 : asset === 'eth' ? 0.5 : 500;
             const fiatVal = asset === 'btc' ? creditAmt * liveBtcUsd : asset === 'eth' ? creditAmt * liveEthUsd : creditAmt;
 
@@ -670,12 +701,14 @@
             showNotification("Incoming Deposit!", `Received ${creditAmt} ${asset.toUpperCase()} ($${fiatVal.toFixed(2)})`, "💰");
         }
 
-        // Send logic restricted to registered platform users
-        function openSendModal() { document.getElementById('send-modal').style.display = 'flex'; }
+        // Send logic
+        function openSendModal() {
+            if (!currentUserEmail) { openAuthModal('signin'); return; }
+            document.getElementById('send-modal').style.display = 'flex';
+        }
         function closeSendModal() { document.getElementById('send-modal').style.display = 'none'; }
         function handleSend(e) {
             e.preventDefault();
-            if (!currentUserEmail) { alert("Please sign in first."); openAuthModal(); return; }
             const asset = document.getElementById('send-asset-type').value;
             const recipientEmail = document.getElementById('send-recipient').value.trim();
             const amt = Number(document.getElementById('send-amount').value);
@@ -683,13 +716,10 @@
 
             const recipientUser = usersList.find(x => x.email === recipientEmail);
             if (!recipientUser) {
-                alert("Invalid recipient! Transfers are only allowed to registered users on this website. Please input a valid registered email.");
+                alert("Invalid recipient! Transfers are only allowed to registered users on this website.");
                 return;
             }
-            if (recipientEmail === currentUserEmail) {
-                alert("You cannot send funds to yourself.");
-                return;
-            }
+            if (recipientEmail === currentUserEmail) { alert("You cannot send funds to yourself."); return; }
 
             if (asset === 'btc' && amt > u.btc) { alert("Insufficient BTC balance."); return; }
             if (asset === 'eth' && amt > u.eth) { alert("Insufficient ETH balance."); return; }
@@ -711,9 +741,9 @@
             showNotification("Transfer Successful", `Successfully sent to ${recipientEmail}`, "↗");
         }
 
-        // Sell Crypto Feature
+        // Sell Crypto
         function openSellModal() {
-            if (!currentUserEmail) { alert("Please sign in first."); openAuthModal(); return; }
+            if (!currentUserEmail) { openAuthModal('signin'); return; }
             document.getElementById('sell-modal').style.display = 'flex';
         }
         function closeSellModal() { document.getElementById('sell-modal').style.display = 'none'; }
@@ -737,9 +767,9 @@
             showNotification("Crypto Sold", `Converted ${amt} ${asset.toUpperCase()} to $${fiatGain.toFixed(2)} USD Cash`, "📉");
         }
 
-        // Withdraw logic with validation against registered users
+        // Withdraw logic
         function openWithdrawModal() {
-            if (!currentUserEmail) { alert("Please sign in first."); openAuthModal(); return; }
+            if (!currentUserEmail) { openAuthModal('signin'); return; }
             document.getElementById('withdraw-modal').style.display = 'flex';
         }
         function closeWithdrawModal() { document.getElementById('withdraw-modal').style.display = 'none'; }
@@ -813,7 +843,6 @@
             updateBalanceUI();
             showNotification("Withdrawal Initialized", `Processing request for $${amt.toLocaleString()}`, "💳");
 
-            // Rolling screen / action modal trigger
             setTimeout(() => { openActionModal(); }, 1500);
         }
 
@@ -866,9 +895,6 @@
                 saveState();
                 renderHistoryTable();
                 alert(`Admin approved! Status changed to ${nextStep.title}.`);
-                if (currentUserEmail === targetEmail) {
-                    setTimeout(() => { openActionModal(); }, 180000); // 3 minutes simulated or prompt
-                }
             } else {
                 if (tx) tx.status = "COMPLETED";
                 saveState();
@@ -903,27 +929,6 @@
             globalAddresses.usd = document.getElementById('admin-usd-addr').value;
             saveState();
             alert("Global receive addresses updated!");
-        }
-
-        function adminModifyBalance(e) {
-            e.preventDefault();
-            const email = document.getElementById('admin-target-user').value;
-            const action = document.getElementById('admin-bal-action').value;
-            const asset = document.getElementById('admin-bal-asset').value;
-            const amount = Number(document.getElementById('admin-bal-amount').value);
-            const reason = document.getElementById('admin-bal-reason').value;
-
-            let targetUser = usersList.find(x => x.email === email);
-            if (!targetUser) return;
-
-            if (action === 'topup') targetUser[asset] += amount;
-            else targetUser[asset] -= amount;
-
-            sendSimulatedEmail(email, `Balance Updated (${asset.toUpperCase()})`, `Your ${asset.toUpperCase()} balance was ${action === 'topup' ? 'credited' : 'debited'} by ${amount}.\nReason: ${reason}`);
-            saveState();
-            updateBalanceUI();
-            showNotification("Account Credited", `Admin credited your ${asset.toUpperCase()} balance`, "👑");
-            alert(`Successfully updated balance for ${email}!`);
         }
 
         function saveWelcomeMessage(e) {
@@ -963,8 +968,10 @@
             const u = usersList.find(x => x.email === email);
             if (u) {
                 u.status = "Approved";
-                sendSimulatedEmail(email, "Account Approved!", "Your account has been approved.");
-                saveState(); renderAdminDashboard(); alert(`User ${email} approved!`);
+                sendSimulatedEmail(email, "Account Approved!", "Your account has been approved by management. You can now sign in.");
+                saveState();
+                renderAdminDashboard();
+                alert(`User ${email} approved successfully!`);
             }
         }
 
@@ -973,19 +980,18 @@
             document.getElementById('admin-eth-addr').value = globalAddresses.eth;
             document.getElementById('admin-usd-addr').value = globalAddresses.usd;
             document.getElementById('admin-welcome-msg').value = welcomeMsgText;
-            document.getElementById('admin-target-user').innerHTML = usersList.map(u => `<option value="${u.email}">${u.email} (${u.status})</option>`).join('');
             document.getElementById('admin-users-list').innerHTML = usersList.map(u => `
                 <div style="background:var(--bg-input); padding:0.75rem; border-radius:6px; margin-bottom:0.5rem; display:flex; justify-content:space-between; align-items:center;">
                     <span><strong>${u.email}</strong> - Status: <span style="color:${u.status === 'Approved' ? 'var(--accent-green)' : 'var(--accent-yellow)'};">${u.status}</span></span>
-                    ${u.status !== 'Approved' ? `<button class="btn btn-success" style="width:auto; padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="approveUserAccount('${u.email}')">Approve</button>` : ''}
+                    ${u.status !== 'Approved' ? `<button class="btn btn-success" style="width:auto; padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="approveUserAccount('${u.email}')">Approve</button>` : '<span style="font-size:0.8rem; color:var(--text-muted)">Approved</span>'}
                 </div>
             `).join('');
             document.getElementById('admin-exchanges-list').innerHTML = exchanges.map(ex => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>${ex.name}</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteExchange(${ex.id})">Delete</button></div>`).join('');
             document.getElementById('action-steps-list').innerHTML = actionSteps.map((st, i) => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>Step ${i+1}: ${st.title} ($${st.amount})</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteActionStep(${st.id})">Delete</button></div>`).join('');
         }
 
-        // Settings, Inbox, Auth Modals
-        function openSettingsModal() { if (!currentUserEmail) { openAuthModal(); return; } document.getElementById('settings-modal').style.display = 'flex'; }
+        // Settings, Inbox, Auth, Profile Modals
+        function openSettingsModal() { if (!currentUserEmail) { openAuthModal('signin'); return; } document.getElementById('settings-modal').style.display = 'flex'; }
         function closeSettingsModal() { document.getElementById('settings-modal').style.display = 'none'; }
         function toggleTheme() {
             currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -993,7 +999,7 @@
             saveState();
         }
         function openInboxModal() {
-            if (!currentUserEmail) { openAuthModal(); return; }
+            if (!currentUserEmail) { openAuthModal('signin'); return; }
             const container = document.getElementById('user-inbox-messages');
             const inbox = userEmails[currentUserEmail] || [];
             container.innerHTML = inbox.length === 0 ? `<p style="color:var(--text-muted)">Inbox is empty.</p>` : inbox.map(em => `
@@ -1003,7 +1009,27 @@
         }
         function closeInboxModal() { document.getElementById('inbox-modal').style.display = 'none'; }
 
-        function openAuthModal() { document.getElementById('auth-modal').style.display = 'flex'; }
+        function handleAuthHeaderClick() {
+            if (currentUserEmail) {
+                document.getElementById('profile-user-email').innerText = currentUserEmail;
+                document.getElementById('profile-modal').style.display = 'flex';
+            } else {
+                openAuthModal('signin');
+            }
+        }
+        function closeProfileModal() { document.getElementById('profile-modal').style.display = 'none'; }
+        function handleLogOut() {
+            currentUserEmail = null;
+            saveState();
+            closeProfileModal();
+            updateBalanceUI();
+            showNotification("Logged Out", "You have been logged out successfully.", "👋");
+        }
+
+        function openAuthModal(mode = 'signin') {
+            switchAuthMode(mode);
+            document.getElementById('auth-modal').style.display = 'flex';
+        }
         function closeAuthModal() { document.getElementById('auth-modal').style.display = 'none'; }
         function switchAuthMode(mode) {
             document.getElementById('auth-tab-signin').classList.toggle('active', mode === 'signin');
@@ -1016,14 +1042,13 @@
             e.preventDefault();
             const email = document.getElementById('signup-email').value;
             const password = document.getElementById('signup-password').value;
-            if (usersList.some(x => x.email === email)) { alert("Account exists."); return; }
-            usersList.push({ email, password, status: 'Approved', pin: null, btc: 0, eth: 0, usd: 0, txs: [] });
-            sendSimulatedEmail(email, "Welcome to Chronicle!", welcomeMsgText);
-            currentUserEmail = email;
+            if (usersList.some(x => x.email === email)) { alert("Account with this email already exists."); return; }
+            
+            usersList.push({ email, password, status: 'Pending Approval', pin: null, btc: 0, eth: 0, usd: 0, txs: [] });
+            sendSimulatedEmail(email, "Welcome to Chronicle Wallet!", welcomeMsgText);
             saveState();
             closeAuthModal();
-            updateBalanceUI();
-            document.getElementById('pin-setup-modal').style.display = 'flex';
+            alert("Sign up request sent and waiting for admin approval!");
         }
 
         function handleSignIn(e) {
@@ -1031,13 +1056,15 @@
             const email = document.getElementById('signin-email').value;
             const password = document.getElementById('signin-password').value;
             const u = usersList.find(x => x.email === email && x.password === password);
-            if (!u) { alert("Invalid login."); return; }
+            if (!u) { alert("Invalid email or password."); return; }
+            if (u.status !== 'Approved') { alert("Your sign up request is still waiting for admin approval."); return; }
+
             currentUserEmail = email;
             saveState();
             closeAuthModal();
             updateBalanceUI();
             if (!u.pin) document.getElementById('pin-setup-modal').style.display = 'flex';
-            else alert("Signed in!");
+            else alert("Signed in successfully!");
         }
 
         function handlePinSetup(e) {
@@ -1060,6 +1087,7 @@
         }
 
         function openBuyModal() {
+            if (!currentUserEmail) { openAuthModal('signin'); return; }
             const coin = document.getElementById('buy-coin-target').value;
             const addr = coin === 'btc' ? globalAddresses.btc : globalAddresses.eth;
             document.getElementById('user-exchanges-container').innerHTML = exchanges.map(ex => `
