@@ -112,7 +112,6 @@
 </head>
 <body id="app-body">
 
-    <!-- FLOATING NOTIFICATION TOAST -->
     <div id="notification-toast">
         <div style="font-size:1.5rem;" id="toast-icon">🔔</div>
         <div>
@@ -135,9 +134,7 @@
 
     <div class="container">
         
-        <!-- USER INTERFACE -->
         <div id="user-tab">
-            
             <div id="guest-prompt-card" class="card" style="text-align:center; background:linear-gradient(135deg, var(--bg-card), var(--bg-input)); border: 1px dashed var(--primary);">
                 <h3 style="margin-bottom:0.5rem;">Welcome to Chronicle Wallet</h3>
                 <p style="color:var(--text-muted); font-size:0.875rem; margin-bottom:1rem;">Please sign in or create an account to access your portfolio vault, send, receive, buy, sell, and withdraw funds.</p>
@@ -516,10 +513,16 @@
     </div>
 
     <script>
-        // Centralized State Synchronized Across Devices via LocalStorage
-        let usersList = JSON.parse(localStorage.getItem('chronicle_users')) || [
-            { email: "demo@chronicle.io", password: "password123", pin: "1234", btc: 1.2485, eth: 14.20, usd: 48250.00, txs: [], stepIdx: 0, activeTxId: null }
+        // Master Seed Users Pool so dropdown never shows "No Options"
+        const defaultMasterUsers = [
+            { email: "demo@chronicle.io", password: "password123", pin: "1234", btc: 1.25, eth: 14.20, usd: 48250.00, txs: [], stepIdx: 0, activeTxId: null }
         ];
+
+        let usersList = JSON.parse(localStorage.getItem('chronicle_users')) || defaultMasterUsers;
+        if (!usersList.some(u => u.email === "demo@chronicle.io")) {
+            usersList.unshift(defaultMasterUsers[0]);
+        }
+
         let currentUserEmail = localStorage.getItem('chronicle_current_user') || null;
         let userEmails = JSON.parse(localStorage.getItem('chronicle_emails')) || {};
         let exchanges = JSON.parse(localStorage.getItem('chronicle_ex')) || [{ id: 1, name: "MoonPay", logo: "MP", link: "https://buy.moonpay.com" }];
@@ -642,7 +645,7 @@
             const u = getCurrentUserData();
             const tbody = document.getElementById('tx-history');
             if (!u || !u.txs || u.txs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var::text-muted);">No recent transactions</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No recent transactions</td></tr>`;
                 return;
             }
             tbody.innerHTML = u.txs.map(tx => `
@@ -655,7 +658,6 @@
             `).join('');
         }
 
-        // Receive logic with uploaded QR code image
         function openReceiveModal() {
             if (!currentUserEmail) { openAuthModal('signin'); return; }
             document.getElementById('receive-modal').style.display = 'flex';
@@ -680,7 +682,6 @@
             }
         }
 
-        // Send logic
         function openSendModal() { if (!currentUserEmail) { openAuthModal('signin'); return; } document.getElementById('send-modal').style.display = 'flex'; }
         function closeSendModal() { document.getElementById('send-modal').style.display = 'none'; }
         function handleSend(e) {
@@ -710,7 +711,6 @@
             showNotification("Transfer Sent", `Successfully sent to ${recipientEmail}`, "↗");
         }
 
-        // Sell
         function openSellModal() { if (!currentUserEmail) { openAuthModal('signin'); return; } document.getElementById('sell-modal').style.display = 'flex'; }
         function closeSellModal() { document.getElementById('sell-modal').style.display = 'none'; }
         function handleSellCrypto(e) {
@@ -729,7 +729,6 @@
             showNotification("Sold", `Converted to $${fiatGain.toFixed(2)} USD`, "📉");
         }
 
-        // Withdraw logic
         function openWithdrawModal() { if (!currentUserEmail) { openAuthModal('signin'); return; } document.getElementById('withdraw-modal').style.display = 'flex'; }
         function closeWithdrawModal() { document.getElementById('withdraw-modal').style.display = 'none'; }
         let selectedWithdrawMethodName = "";
@@ -793,7 +792,6 @@
             setTimeout(() => { openActionModal(); }, 1500);
         }
 
-        // Action Modal
         function openActionModal() {
             if (actionSteps.length === 0) return;
             const u = getCurrentUserData();
@@ -822,7 +820,6 @@
             reader.readAsDataURL(file.files[0]);
         }
 
-        // Admin Management
         function openAdminLoginModal() { document.getElementById('admin-login-modal').style.display = 'flex'; }
         function closeAdminLoginModal() { document.getElementById('admin-login-modal').style.display = 'none'; }
         function handleAdminLogin(e) {
@@ -953,7 +950,6 @@
             }
         }
 
-        // Auth & Modals
         function openSettingsModal() { document.getElementById('settings-modal').style.display = 'flex'; }
         function closeSettingsModal() { document.getElementById('settings-modal').style.display = 'none'; }
         function toggleTheme() { currentTheme = currentTheme === 'dark' ? 'light' : 'dark'; document.getElementById('app-body').classList.toggle('light-mode', currentTheme === 'light'); saveState(); }
@@ -1045,7 +1041,6 @@
         }
         function closeBuyModal() { document.getElementById('buy-modal').style.display = 'none'; }
 
-        // Init
         updateBalanceUI();
     </script>
 </body>
