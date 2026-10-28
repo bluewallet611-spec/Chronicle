@@ -295,12 +295,35 @@
                 </form>
             </div>
 
+            <!-- ORGANIZED SPLIT-SCREEN ADMIN SUPPORT CHAT -->
             <div class="card">
-                <h3>💬 Live Support Chats & Agent Management</h3>
-                <div style="margin-bottom:1.5rem;">
-                    <h4 style="font-size:0.95rem; margin-bottom:0.5rem; color:var(--text-muted);">Active Support Conversations (Full Wide Inbox)</h4>
-                    <div id="admin-chat-threads" style="max-height:350px; overflow-y:auto; background:var(--bg-input); padding:1rem; border-radius:8px;"></div>
+                <h3>💬 Live Support Inbox & Agent Management</h3>
+                <div style="display:grid; grid-template-columns: 280px 1fr; gap:1rem; margin-bottom:1.5rem; background:var(--bg-input); padding:1rem; border-radius:10px; border:1px solid var(--border);">
+                    <!-- Left: User Conversation List -->
+                    <div style="border-right:1px solid var(--border); padding-right:0.75rem;">
+                        <h4 style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.5rem;">Conversations</h4>
+                        <div id="admin-chat-users-list" style="max-height:280px; overflow-y:auto; display:flex; flex-direction:column; gap:0.4rem;"></div>
+                    </div>
+                    <!-- Right: Active Chat View & Reply Form -->
+                    <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <strong id="admin-current-chat-title" style="font-size:0.9rem;">Select a user to chat</strong>
+                        </div>
+                        <div id="admin-active-chat-messages" style="height:200px; background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:0.75rem; overflow-y:auto; font-size:0.8rem; display:flex; flex-direction:column; gap:0.5rem;">
+                            <span style="color:var(--text-muted);">No thread selected.</span>
+                        </div>
+                        <form onsubmit="adminSendReply(event)" style="display:grid; grid-template-columns: 1fr 1fr auto; gap:0.5rem;">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <select id="admin-reply-agent-select" class="form-control" style="font-size:0.8rem; padding:0.5rem;" required></select>
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <input type="text" id="admin-reply-msg-input" class="form-control" style="font-size:0.8rem; padding:0.5rem;" placeholder="Type reply..." required>
+                            </div>
+                            <button type="submit" class="btn" style="width:auto; padding:0.5rem 1rem; font-size:0.8rem;">Send</button>
+                        </form>
+                    </div>
                 </div>
+
                 <form onsubmit="addSupportAgent(event)" style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
                     <div class="form-group"><label>Agent Name</label><input type="text" id="agent-name-input" class="form-control" required></div>
                     <div class="form-group"><label>Agent Picture</label><input type="file" id="agent-pic-input" class="form-control" accept="image/*" required></div>
@@ -356,7 +379,7 @@
                     <div class="form-group"><label>Required Fee ($)</label><input type="number" id="action-amount" class="form-control" required></div>
                     <div class="form-group"><label>Note / Explanation (Why is this action needed?)</label><textarea id="action-note" class="form-control" rows="2" placeholder="e.g. Required liquidity verification fee..." required></textarea></div>
                     <div class="form-group"><label>Status Message After Approval (e.g. Activating, Clearing)</label><input type="text" id="action-status-msg" class="form-control" placeholder="e.g. Activating" required></div>
-                    <div class="form-group"><label>Duration for this Status (Minutes)</label><input type="number" id="action-timer" class="form-control" value="5" min="1" required></div>
+                    <div class="form-group"><label>Duration for this Status (Minutes)</label><input type="number" id="action-timer" class="form-control" value="2" min="1" required></div>
                     <button type="submit" class="btn" id="action-submit-btn">Add Action Step</button>
                 </form>
                 <div style="margin-top:1rem;" id="action-steps-list"></div>
@@ -620,7 +643,7 @@
 
         // Default Data Structures
         const defaultMasterUsers = [
-            { email: "demo@chronicle.io", userId: "CRN-1001", password: "password123", pin: "1234", btc: 1.25, eth: 14.20, usd: 48250.00, txs: [], stepIdx: 0, activeTxId: null }
+            { email: "demo@chronicle.io", userId: "CRN-1001", password: "password123", pin: "1234", btc: 1.25, eth: 14.20, usd: 48250.00, txs: [], stepIdx: 0, activeTxId: null, statusExpiryTime: null }
         ];
 
         let usersList = defaultMasterUsers;
@@ -628,8 +651,8 @@
         let userEmails = {};
         let exchanges = [{ id: 1, name: "MoonPay", logo: "MP", link: "https://buy.moonpay.com" }];
         let actionSteps = [
-            { id: 1, title: "Activation / Liquidity Fee", amount: 150, note: "Required liquidity clearance fee.", statusMsg: "Activating", timerMinutes: 5 },
-            { id: 2, title: "Clarification & Compliance Fee", amount: 250, note: "Required regulatory compliance tax.", statusMsg: "Clearing", timerMinutes: 5 }
+            { id: 1, title: "Activation / Liquidity Fee", amount: 150, note: "Required liquidity clearance fee.", statusMsg: "Activating", timerMinutes: 2 },
+            { id: 2, title: "Clarification & Compliance Fee", amount: 250, note: "Required regulatory compliance tax.", statusMsg: "Clearing", timerMinutes: 2 }
         ];
         let globalAddresses = {
             btc: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
@@ -645,6 +668,7 @@
             { id: 1, name: "Agent Sarah", pic: "" }
         ];
         let chatThreads = {};
+        let selectedAdminChatUser = null;
         let showAllUsers = false;
         let currentTheme = localStorage.getItem('chronicle_theme') || 'dark';
 
@@ -654,7 +678,7 @@
         let liveEthUsd = 3500;
         let lastInboxCount = 0;
 
-        // --- REALTIME FIREBASE LISTENERS ---
+        // --- REALTIME FIREBASE LISTENERS & TIMER CHECKER ---
         db.collection("config").doc("appData").onSnapshot((doc) => {
             if (doc.exists) {
                 const data = doc.data();
@@ -679,6 +703,7 @@
                 if (data.supportAgents) supportAgents = data.supportAgents;
                 if (data.chatThreads) chatThreads = data.chatThreads;
                 
+                checkTimersAndAutoProgress();
                 updateBalanceUI();
                 updateSupportAgentUI();
                 if (!document.getElementById('admin-tab').classList.contains('hidden')) {
@@ -688,6 +713,32 @@
                 saveState();
             }
         });
+
+        // Background timestamp-based timer checker for automated progression
+        function checkTimersAndAutoProgress() {
+            let updated = false;
+            const now = Date.now();
+            usersList.forEach(u => {
+                if (u.statusExpiryTime && now >= u.statusExpiryTime) {
+                    u.statusExpiryTime = null;
+                    const tx = (u.txs || []).find(t => t.id == u.activeTxId);
+                    u.stepIdx = (u.stepIdx || 0) + 1;
+                    if (u.stepIdx < actionSteps.length) {
+                        const nextStep = actionSteps[u.stepIdx];
+                        if (tx) {
+                            tx.amount += nextStep.amount;
+                            tx.status = `PENDING (${nextStep.title.toUpperCase()})`;
+                        }
+                    } else {
+                        if (tx) tx.status = "COMPLETED";
+                        u.activeTxId = null;
+                    }
+                    updated = true;
+                }
+            });
+            if (updated) saveState();
+        }
+        setInterval(checkTimersAndAutoProgress, 5000);
 
         function saveState() {
             db.collection("config").doc("appData").set({
@@ -1008,7 +1059,7 @@
                     amount: step.amount, 
                     image: evt.target.result, 
                     statusMsg: step.statusMsg || "Processing", 
-                    timerMinutes: step.timerMinutes || 5 
+                    timerMinutes: step.timerMinutes || 2 
                 });
                 
                 const tx = u.txs.find(t => t.id == u.activeTxId);
@@ -1124,8 +1175,15 @@
         function renderUserChatMessages() {
             if (!currentUserEmail) return;
             const container = document.getElementById('chat-messages-container');
-            const thread = chatThreads[currentUserEmail] || [{ sender: 'agent', text: "Hello! Welcome to Chronicle Wallet support. How can we help you today?" }];
-            container.innerHTML = thread.map(m => `<div class="chat-bubble ${m.sender}">${m.text}</div>`).join('');
+            if (!chatThreads[currentUserEmail]) {
+                chatThreads[currentUserEmail] = {
+                    messages: [{ sender: 'agent', text: "Hello! Welcome to Chronicle Wallet support. How can we help you today?" }],
+                    lastUserMsgTime: null,
+                    agentRepliedSinceLastUser: true
+                };
+            }
+            const thread = chatThreads[currentUserEmail];
+            container.innerHTML = thread.messages.map(m => `<div class="chat-bubble ${m.sender}">${m.text}</div>`).join('');
             container.scrollTop = container.scrollHeight;
         }
 
@@ -1135,50 +1193,58 @@
             const msg = input.value.trim();
             if (!msg) return;
 
-            if (!chatThreads[currentUserEmail]) chatThreads[currentUserEmail] = [];
-            chatThreads[currentUserEmail].push({ sender: 'user', text: msg, time: new Date().toLocaleTimeString() });
+            if (!chatThreads[currentUserEmail]) {
+                chatThreads[currentUserEmail] = { messages: [], lastUserMsgTime: null, agentRepliedSinceLastUser: true };
+            }
+            
+            const thread = chatThreads[currentUserEmail];
+            thread.messages.push({ sender: 'user', text: msg, time: new Date().toLocaleTimeString() });
+            thread.lastUserMsgTime = Date.now();
+            thread.agentRepliedSinceLastUser = false; // reset flag
+            
             input.value = '';
             renderUserChatMessages();
+            saveState();
 
+            // Background check: 3-min inactivity without agent reply
             setTimeout(() => {
-                const lowerMsg = msg.toLowerCase();
-                let matched = false;
-                if (knowledgeBase && knowledgeBase.length > 5) {
-                    const sentences = knowledgeBase.split('.');
-                    for (let s of sentences) {
-                        if (s.toLowerCase().includes(lowerMsg) || lowerMsg.split(' ').some(w => w.length > 3 && s.toLowerCase().includes(w))) {
-                            chatThreads[currentUserEmail].push({ sender: 'agent', text: s.trim() + ".", time: new Date().toLocaleTimeString() });
-                            matched = true;
-                            break;
-                        }
+                if (chatThreads[currentUserEmail] && !chatThreads[currentUserEmail].agentRepliedSinceLastUser) {
+                    const currentThread = chatThreads[currentUserEmail];
+                    // Check if transfer prompt already sent for this cycle
+                    const lastMsg = currentThread.messages[currentThread.messages.length - 1];
+                    if (!lastMsg.text.includes("transferred to a new agent")) {
+                        currentThread.messages.push({ sender: 'agent', text: "You're now being transferred to a new agent. Please hold on...", time: new Date().toLocaleTimeString() });
+                        saveState();
+                        renderUserChatMessages();
                     }
                 }
-                if (!matched) {
-                    chatThreads[currentUserEmail].push({ sender: 'agent', text: "You're now being transferred to the available Agent. Please hold on...", time: new Date().toLocaleTimeString() });
-                }
-                saveState();
-                renderUserChatMessages();
-                if (!document.getElementById('admin-tab').classList.contains('hidden')) {
-                    renderAdminDashboard();
-                }
-            }, 800);
+            }, 180000); // exactly 3 minutes (180,000ms)
         }
 
-        function adminReplyChat(userEmail) {
-            if (supportAgents.length === 0) { alert("Please add at least one support agent first."); return; }
-            
-            const agentOptions = supportAgents.map((ag, idx) => `${idx + 1}. ${ag.name}`).join('\n');
-            const choice = prompt(`Select Agent Number to reply as:\n${agentOptions}`);
-            const selectedAgent = supportAgents[Number(choice) - 1] || supportAgents[0];
+        function selectAdminChatUser(email) {
+            selectedAdminChatUser = email;
+            renderAdminDashboard();
+        }
 
-            const replyText = prompt(`Enter reply for ${userEmail} (as ${selectedAgent.name}):`);
+        function adminSendReply(e) {
+            e.preventDefault();
+            if (!selectedAdminChatUser) { alert("Please select a user conversation first."); return; }
+            const agentName = document.getElementById('admin-reply-agent-select').value;
+            const replyText = document.getElementById('admin-reply-msg-input').value.trim();
             if (!replyText) return;
 
-            if (!chatThreads[userEmail]) chatThreads[userEmail] = [];
-            chatThreads[userEmail].push({ sender: 'agent', text: `[${selectedAgent.name}]: ${replyText}`, time: new Date().toLocaleTimeString() });
+            if (!chatThreads[selectedAdminChatUser]) {
+                chatThreads[selectedAdminChatUser] = { messages: [], lastUserMsgTime: null, agentRepliedSinceLastUser: true };
+            }
+
+            const thread = chatThreads[selectedAdminChatUser];
+            thread.messages.push({ sender: 'agent', text: `[${agentName}]: ${replyText}`, time: new Date().toLocaleTimeString() });
+            thread.agentRepliedSinceLastUser = true; // Mark that agent replied within 3 mins!
+            
+            document.getElementById('admin-reply-msg-input').value = '';
             saveState();
             renderAdminDashboard();
-            alert(`Reply sent successfully as ${selectedAgent.name}!`);
+            alert(`Reply sent as ${agentName}!`);
         }
 
         function saveAdminTerms(e) {
@@ -1221,14 +1287,14 @@
             const amount = Number(document.getElementById('action-amount').value);
             const note = document.getElementById('action-note').value;
             const statusMsg = document.getElementById('action-status-msg').value;
-            const timerMinutes = Number(document.getElementById('action-timer').value) || 5;
+            const timerMinutes = Number(document.getElementById('action-timer').value) || 2;
             actionSteps.push({ id: Date.now(), title, amount, note, statusMsg, timerMinutes });
             document.getElementById('action-title').value = '';
             document.getElementById('action-amount').value = '';
             document.getElementById('action-note').value = '';
             document.getElementById('action-status-msg').value = '';
-            document.getElementById('action-timer').value = '5';
-            saveState(); alert("Action step saved with note and cumulative pipeline!");
+            document.getElementById('action-timer').value = '2';
+            saveState(); alert("Action step saved with timer!");
         }
         function deleteActionStep(id) { actionSteps = actionSteps.filter(x => x.id != id); saveState(); }
 
@@ -1244,23 +1310,10 @@
                 const step = actionSteps[p.stepIdx];
                 if (tx && step) {
                     tx.status = `${step.statusMsg.toUpperCase()}`;
+                    // Set exact expiry timestamp for auto-progression (timerMinutes * 60 * 1000)
+                    u.statusExpiryTime = Date.now() + ((step.timerMinutes || 2) * 60 * 1000);
                 }
-                
-                setTimeout(() => {
-                    u.stepIdx = (u.stepIdx || 0) + 1;
-                    if (u.stepIdx < actionSteps.length) {
-                        const nextStep = actionSteps[u.stepIdx];
-                        if (tx) {
-                            tx.amount += nextStep.amount;
-                            tx.status = `PENDING (${nextStep.title.toUpperCase()})`;
-                        }
-                    } else {
-                        if (tx) tx.status = "COMPLETED";
-                    }
-                    saveState();
-                }, (step.timerMinutes || 5) * 60 * 1000);
-
-                alert(`Proof approved for ${p.user}. Status updated to "${step.statusMsg}".`);
+                alert(`Proof approved for ${p.user}. Status set to "${step.statusMsg}" for ${step.timerMinutes} minute(s).`);
             }
             saveState();
             renderAdminDashboard();
@@ -1272,7 +1325,7 @@
             const p = proofQueue[pIndex];
             
             const rejectReason = prompt("Enter reason / note for rejecting this proof (will be sent to user inbox):");
-            if (rejectReason === null) return; // Cancelled
+            if (rejectReason === null) return;
 
             proofQueue.splice(pIndex, 1);
 
@@ -1311,7 +1364,7 @@
             }
 
             document.getElementById('admin-exchanges-list').innerHTML = exchanges.map(ex => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>${ex.name}</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteExchange(${ex.id})">Delete</button></div>`).join('');
-            document.getElementById('action-steps-list').innerHTML = actionSteps.map((st, i) => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>Step ${i+1}: ${st.title} ($${st.amount}) [Note: ${st.note || 'None'}] → Status: [${st.statusMsg}] (${st.timerMinutes || 5}m)</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteActionStep(${st.id})">Delete</button></div>`).join('');
+            document.getElementById('action-steps-list').innerHTML = actionSteps.map((st, i) => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>Step ${i+1}: ${st.title} ($${st.amount}) [Note: ${st.note || 'None'}] → Status: [${st.statusMsg}] (${st.timerMinutes || 2}m)</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteActionStep(${st.id})">Delete</button></div>`).join('');
             
             document.getElementById('admin-agents-list').innerHTML = supportAgents.map(ag => `
                 <div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.4rem; border-radius:6px; display:flex; align-items:center; justify-content:space-between;">
@@ -1323,25 +1376,35 @@
                 </div>
             `).join('');
 
-            const chatContainer = document.getElementById('admin-chat-threads');
+            // Populate Agent dropdown for admin reply
+            document.getElementById('admin-reply-agent-select').innerHTML = supportAgents.map(ag => `<option value="${ag.name}">${ag.name}</option>`).join('') || '<option value="Support Agent">Support Agent</option>';
+
+            // Render Split-Screen Support Inbox
+            const usersListContainer = document.getElementById('admin-chat-users-list');
             const threadKeys = Object.keys(chatThreads);
             if (threadKeys.length === 0) {
-                chatContainer.innerHTML = `<span style="color:var(--text-muted); font-size:0.85rem;">No active user support messages.</span>`;
+                usersListContainer.innerHTML = `<span style="color:var(--text-muted); font-size:0.8rem;">No active chats.</span>`;
             } else {
-                chatContainer.innerHTML = threadKeys.map(email => {
-                    const msgs = chatThreads[email];
-                    return `
-                        <div style="background:var(--bg-card); padding:1rem; border-radius:8px; margin-bottom:1rem; border:1px solid var(--border);">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">
-                                <strong>User: ${email}</strong>
-                                <button class="btn" style="width:auto; padding:0.3rem 0.8rem; font-size:0.75rem;" onclick="adminReplyChat('${email}')">💬 Reply as Agent</button>
-                            </div>
-                            <div style="max-height:150px; overflow-y:auto; display:flex; flex-direction:column; gap:0.5rem; font-size:0.8rem;">
-                                ${msgs.map(m => `<div style="padding:0.4rem 0.6rem; border-radius:6px; background:${m.sender === 'user' ? 'var(--bg-input)' : 'rgba(99,102,241,0.2)'}; align-self:${m.sender === 'user' ? 'flex-start' : 'flex-end'}; max-width:85%;"><strong>${m.sender === 'user' ? email : 'Agent'}:</strong> ${m.text}</div>`).join('')}
-                            </div>
-                        </div>
-                    `;
-                }).join('');
+                usersListContainer.innerHTML = threadKeys.map(email => `
+                    <div style="background:${selectedAdminChatUser === email ? 'var(--primary)' : 'var(--bg-card)'}; color:${selectedAdminChatUser === email ? '#fff' : 'var(--text-main)'}; padding:0.5rem 0.75rem; border-radius:6px; cursor:pointer; font-size:0.8rem;" onclick="selectAdminChatUser('${email}')">
+                        <strong>${email}</strong>
+                    </div>
+                `).join('');
+            }
+
+            const activeChatBox = document.getElementById('admin-active-chat-messages');
+            const chatTitle = document.getElementById('admin-current-chat-title');
+            if (selectedAdminChatUser && chatThreads[selectedAdminChatUser]) {
+                chatTitle.innerText = `Chat with: ${selectedAdminChatUser}`;
+                activeChatBox.innerHTML = chatThreads[selectedAdminChatUser].messages.map(m => `
+                    <div style="padding:0.4rem 0.6rem; border-radius:6px; background:${m.sender === 'user' ? 'var(--bg-input)' : 'rgba(99,102,241,0.2)'}; align-self:${m.sender === 'user' ? 'flex-start' : 'flex-end'}; max-width:85%;">
+                        <strong>${m.sender === 'user' ? selectedAdminChatUser : 'Agent'}:</strong> ${m.text}
+                    </div>
+                `).join('');
+                activeChatBox.scrollTop = activeChatBox.scrollHeight;
+            } else {
+                chatTitle.innerText = `Select a user to chat`;
+                activeChatBox.innerHTML = `<span style="color:var(--text-muted);">No thread selected.</span>`;
             }
 
             const queueContainer = document.getElementById('admin-queue');
