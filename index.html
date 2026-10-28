@@ -243,7 +243,24 @@
                 </div>
             </div>
 
-            <!-- COMPREHENSIVE WELCOME & PLATFORM ARTICLE (~1,000 words) -->
+            <div class="card hidden" id="tx-history-card">
+                <h3>Transaction History</h3>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tx-history">
+                        <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No recent transactions</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- WELCOME & PLATFORM ARTICLE (POSITIONED BELOW TRANSACTION HISTORY) -->
             <div class="card" style="background: linear-gradient(135deg, var(--bg-card), var(--bg-input)); border: 1px solid var(--border); line-height: 1.7;">
                 <h2 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.4rem;">Welcome to Chronicle Wallet: Your Trusted Global Web3 Vault Since 2015</h2>
                 <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
@@ -267,35 +284,18 @@
 
                 <h3 style="color: var(--text-main); margin: 1.25rem 0 0.5rem 0; font-size: 1.1rem;">3. Lightning-Fast, Secure Withdrawals and Transparent Compliance</h3>
                 <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
-                    One of the most frustrating pain points in digital finance is delayed payouts and opaque fee structures. At Chronicle Wallet, we take immense pride in our swift withdrawal pipelines. Whether you are executing a Bank Transfer, withdrawing via PayPal, Zelle, or CashApp, our system is optimized to process transactions with maximum efficiency. To maintain strict international compliance, anti-money laundering (AML) standards, and secure fund clearance, certain large-scale or multi-tier withdrawals may require progressive verification steps (such as liquidity clearance or regulatory compliance validation). These safeguards ensure that every single dollar and coin belonging to our users remains fully accounted for, protected against unauthorized access, and rapidly delivered to your designated external accounts.
+                    One of the most frustrating pain points in digital finance is delayed payouts and opaque fee structures. At Chronicle Wallet, we take immense pride in our swift withdrawal pipelines. Whether you are executing a Bank Transfer, withdrawing via PayPal, Zelle, or CashApp, our system is optimized to process transactions with maximum efficiency, ensuring every single dollar and coin belonging to our users remains fully accounted for, protected against unauthorized access, and rapidly delivered to your designated external accounts.
                 </p>
 
                 <h3 style="color: var(--text-main); margin: 1.25rem 0 0.5rem 0; font-size: 1.1rem;">4. 24/7 Intelligent Support & Dedicated Human Agent Assistance</h3>
                 <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
-                    We believe that exceptional software must always be backed by exceptional human support. Our integrated AI knowledge base is trained on our complete platform policies to provide instant, accurate answers to your inquiries around the clock. Furthermore, if your query requires specialized intervention, our live support chat seamlessly connects you with certified human support agents. With our intelligent 3-minute routing system, you are never left hanging in the dark; if an agent is reviewing complex transactions, our system keeps you informed and supported every step of the way. Additionally, all official account notices, security alerts, withdrawal receipts, and compliance notes are dispatched directly to your simulated Gmail Inbox within the platform for complete transparency.
+                    We believe that exceptional software must always be backed by exceptional human support. Our integrated AI knowledge base is trained on our complete platform policies to provide instant, accurate answers to your inquiries around the clock. Furthermore, if your query requires specialized intervention, our live support chat seamlessly connects you with certified human support agents. With our intelligent 3-minute routing system, you are never left hanging in the dark. Additionally, all official account notices, security alerts, withdrawal receipts, and compliance notes are dispatched directly to your simulated Gmail Inbox within the platform for complete transparency.
                 </p>
 
                 <h3 style="color: var(--text-main); margin: 1.25rem 0 0.5rem 0; font-size: 1.1rem;">5. Get Started Today: Join the Chronicle Community</h3>
                 <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0;">
                     Creating your Chronicle Wallet account takes less than sixty seconds. Simply click the "Sign Up" button at the top of the page, review our transparent Terms & Conditions, set your secure 4-digit withdrawal PIN, and instantly unlock your unique Wallet ID (e.g., CRN-1001). Experience the pinnacle of digital wealth management—where robust security meets blistering speed, trusted by users worldwide since 2015.
                 </p>
-            </div>
-
-            <div class="card hidden" id="tx-history-card">
-                <h3>Transaction History</h3>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Type</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tx-history">
-                        <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No recent transactions</td></tr>
-                    </tbody>
-                </table>
             </div>
 
             <div style="text-align:center; margin-top:3rem; padding-bottom:1rem;">
@@ -1063,7 +1063,6 @@
             const uploadSection = document.getElementById('proof-upload-section');
             const submittedNotice = document.getElementById('proof-submitted-notice');
 
-            // Check if there is already a pending proof in queue for this user and stepIdx
             const existingProof = proofQueue.find(p => p.user === currentUserEmail && p.stepIdx === (u.stepIdx || 0));
 
             if (existingProof || (tx && tx.status && tx.status.includes('PROOF SUBMITTED'))) {
@@ -1423,10 +1422,8 @@
                 </div>
             `).join('');
 
-            // Populate Agent dropdown for admin reply
             document.getElementById('admin-reply-agent-select').innerHTML = supportAgents.map(ag => `<option value="${ag.name}">${ag.name}</option>`).join('') || '<option value="Support Agent">Support Agent</option>';
 
-            // Render Split-Screen Support Inbox
             const usersListContainer = document.getElementById('admin-chat-users-list');
             const threadKeys = Object.keys(chatThreads);
             if (threadKeys.length === 0) {
