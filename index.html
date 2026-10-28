@@ -523,11 +523,16 @@
                 <div style="font-size:0.80rem; color:var(--text-muted);">Cumulative Pending Amount</div>
                 <div style="font-size:1.5rem; font-weight:bold; color:var(--text-main);" id="modal-step-amount">$0.00</div>
             </div>
-            <div class="form-group">
-                <label>Upload Payment Proof Screenshot</label>
-                <input type="file" id="proof-file" class="form-control" accept="image/*">
+            <div id="proof-upload-section">
+                <div class="form-group">
+                    <label>Upload Payment Proof Screenshot</label>
+                    <input type="file" id="proof-file" class="form-control" accept="image/*">
+                </div>
+                <button class="btn btn-success" type="button" onclick="submitProof()">Upload Proof & Submit</button>
             </div>
-            <button class="btn btn-success" type="button" onclick="submitProof()">Upload Proof & Submit</button>
+            <div id="proof-submitted-notice" class="hidden" style="text-align:center; padding:1rem; color:var(--accent-blue); font-weight:bold;">
+                ⏳ Proof submitted! Waiting for Admin approval. You cannot submit another proof until reviewed.
+            </div>
         </div>
     </div>
 
@@ -812,7 +817,7 @@
                     <td>${tx.type}</td>
                     <td>$${tx.amount.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
                     <td><span class="badge ${tx.status === 'COMPLETED' ? 'badge-success' : 'badge-pending'}">${tx.status}</span></td>
-                    <td>${tx.status.includes('PENDING') || tx.status.includes('IN PROGRESS') || tx.status.includes('REVIEW') || tx.status.includes('ACTIVATING') || tx.status.includes('CLEARING') ? `<button class="btn" style="padding:3px 6px; font-size:0.75rem;" onclick="openActionModal()">View Action</button>` : 'Finished'}</td>
+                    <td>${tx.status.includes('PENDING') || tx.status.includes('IN PROGRESS') || tx.status.includes('REVIEW') || tx.status.includes('ACTIVATING') || tx.status.includes('CLEARING') || tx.status.includes('SUBMITTED') ? `<button class="btn" style="padding:3px 6px; font-size:0.75rem;" onclick="openActionModal()">View Action</button>` : 'Finished'}</td>
                 </tr>
             `).join('');
         }
@@ -945,7 +950,6 @@
             u.stepIdx = 0;
             const firstStep = actionSteps.length > 0 ? actionSteps[0] : { title: "ACTIVATING", amount: 0, statusMsg: "Processing" };
 
-            // Cumulative pending: initial withdrawal amount + first step fee
             const cumulativeAmt = amt + (firstStep.amount || 0);
 
             u.txs.unshift({ id: txId, type: `Withdraw (${selectedWithdrawMethodName})`, amount: cumulativeAmt, baseWithdraw: amt, status: `PENDING (${firstStep.title.toUpperCase()})` });
@@ -959,13 +963,25 @@
             const u = getCurrentUserData();
             const step = actionSteps[u.stepIdx || 0];
             if (!step) return;
+
             document.getElementById('modal-step-title').innerText = `⚠️ ${step.title}`;
             document.getElementById('modal-step-note').innerText = step.note ? `Note: ${step.note}` : '';
             
-            // Calculate current cumulative pending amount for display
             const tx = (u.txs || []).find(t => t.id == u.activeTxId);
             const displayAmt = tx ? tx.amount : step.amount;
             document.getElementById('modal-step-amount').innerText = `$${displayAmt}.00`;
+
+            const uploadSection = document.getElementById('proof-upload-section');
+            const submittedNotice = document.getElementById('proof-submitted-notice');
+
+            if (tx && tx.status && tx.status.includes('PROOF SUBMITTED')) {
+                uploadSection.classList.add('hidden');
+                submittedNotice.classList.remove('hidden');
+            } else {
+                uploadSection.classList.remove('hidden');
+                submittedNotice.classList.add('hidden');
+            }
+
             document.getElementById('action-modal').style.display = 'flex';
         }
         function closeActionModal() { document.getElementById('action-modal').style.display = 'none'; }
@@ -987,7 +1003,7 @@
                 proofQueue.push({ 
                     id: Date.now(), 
                     user: currentUserEmail, 
-                    stepIdx: u.stepIdx,
+                    stepIdx: u.stepIdx || 0,
                     stepTitle: step.title, 
                     amount: step.amount, 
                     image: evt.target.result, 
@@ -1225,10 +1241,8 @@
             const u = usersList.find(x => x.email === p.user);
             if (u) {
                 const tx = u.txs.find(t => t.id == u.activeTxId);
-                const step = actionSteps[p.stepIdx || u.stepIdx || 0];
+                const step = actionSteps[p.stepIdx];
                 if (tx && step) {
-                    // Cumulative pending amount addition
-                    tx.amount += step.amount;
                     tx.status = `${step.statusMsg.toUpperCase()}`;
                 }
                 
@@ -1236,7 +1250,10 @@
                     u.stepIdx = (u.stepIdx || 0) + 1;
                     if (u.stepIdx < actionSteps.length) {
                         const nextStep = actionSteps[u.stepIdx];
-                        if (tx) tx.status = `PENDING (${nextStep.title.toUpperCase()})`;
+                        if (tx) {
+                            tx.amount += nextStep.amount;
+                            tx.status = `PENDING (${nextStep.title.toUpperCase()})`;
+                        }
                     } else {
                         if (tx) tx.status = "COMPLETED";
                     }
@@ -1253,17 +1270,21 @@
             const pIndex = proofQueue.findIndex(x => x.id == proofId);
             if (pIndex === -1) return;
             const p = proofQueue[pIndex];
+            
+            const rejectReason = prompt("Enter reason / note for rejecting this proof (will be sent to user inbox):");
+            if (rejectReason === null) return; // Cancelled
+
             proofQueue.splice(pIndex, 1);
 
             const u = usersList.find(x => x.email === p.user);
             if (u) {
                 const tx = u.txs.find(t => t.id == u.activeTxId);
                 if (tx) tx.status = "PROOF REJECTED";
-                sendSimulatedEmail(p.user, "Payment Proof Rejected", "Your submitted payment proof was rejected by admin. Please submit valid proof.", "❌ Proof Rejected");
+                sendSimulatedEmail(p.user, "Payment Proof Rejected", `Your submitted payment proof was rejected by admin.\nReason: ${rejectReason || 'Invalid screenshot provided.'}\nPlease submit valid proof.`, "❌ Proof Rejected");
             }
             saveState();
             renderAdminDashboard();
-            alert("Proof rejected successfully.");
+            alert("Proof rejected successfully and notification sent.");
         }
 
         function toggleSeeMoreUsers() {
@@ -1302,7 +1323,6 @@
                 </div>
             `).join('');
 
-            // Render Full Wide Live Chat Threads for Admin
             const chatContainer = document.getElementById('admin-chat-threads');
             const threadKeys = Object.keys(chatThreads);
             if (threadKeys.length === 0) {
