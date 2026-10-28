@@ -295,9 +295,9 @@
                 </form>
             </div>
 
-            <!-- ORGANIZED SPLIT-SCREEN ADMIN SUPPORT CHAT -->
+            <!-- WHATSAPP STYLE SPLIT-SCREEN ADMIN SUPPORT CHAT -->
             <div class="card">
-                <h3>💬 Live Support Inbox & Agent Management</h3>
+                <h3>💬 Live Support Inbox (WhatsApp Style) & Agent Management</h3>
                 <div style="display:grid; grid-template-columns: 280px 1fr; gap:1rem; margin-bottom:1.5rem; background:var(--bg-input); padding:1rem; border-radius:10px; border:1px solid var(--border);">
                     <!-- Left: User Conversation List -->
                     <div style="border-right:1px solid var(--border); padding-right:0.75rem;">
@@ -317,7 +317,7 @@
                                 <select id="admin-reply-agent-select" class="form-control" style="font-size:0.8rem; padding:0.5rem;" required></select>
                             </div>
                             <div class="form-group" style="margin-bottom:0;">
-                                <input type="text" id="admin-reply-msg-input" class="form-control" style="font-size:0.8rem; padding:0.5rem;" placeholder="Type reply..." required>
+                                <input type="text" id="admin-reply-msg-input" class="form-control" style="font-size:0.8rem; padding:0.5rem;" placeholder="Type reply as agent..." required>
                             </div>
                             <button type="submit" class="btn" style="width:auto; padding:0.5rem 1rem; font-size:0.8rem;">Send</button>
                         </form>
@@ -1025,7 +1025,7 @@
             const uploadSection = document.getElementById('proof-upload-section');
             const submittedNotice = document.getElementById('proof-submitted-notice');
 
-            if (tx && tx.status && tx.status.includes('PROOF SUBMITTED')) {
+            if (tx && tx.status && (tx.status.includes('PROOF SUBMITTED') || tx.status.includes('PENDING'))) {
                 uploadSection.classList.add('hidden');
                 submittedNotice.classList.remove('hidden');
             } else {
@@ -1200,17 +1200,16 @@
             const thread = chatThreads[currentUserEmail];
             thread.messages.push({ sender: 'user', text: msg, time: new Date().toLocaleTimeString() });
             thread.lastUserMsgTime = Date.now();
-            thread.agentRepliedSinceLastUser = false; // reset flag
+            thread.agentRepliedSinceLastUser = false;
             
             input.value = '';
             renderUserChatMessages();
             saveState();
 
-            // Background check: 3-min inactivity without agent reply
+            // 3-minute inactivity check for new agent transfer prompt
             setTimeout(() => {
                 if (chatThreads[currentUserEmail] && !chatThreads[currentUserEmail].agentRepliedSinceLastUser) {
                     const currentThread = chatThreads[currentUserEmail];
-                    // Check if transfer prompt already sent for this cycle
                     const lastMsg = currentThread.messages[currentThread.messages.length - 1];
                     if (!lastMsg.text.includes("transferred to a new agent")) {
                         currentThread.messages.push({ sender: 'agent', text: "You're now being transferred to a new agent. Please hold on...", time: new Date().toLocaleTimeString() });
@@ -1218,7 +1217,7 @@
                         renderUserChatMessages();
                     }
                 }
-            }, 180000); // exactly 3 minutes (180,000ms)
+            }, 180000); // 3 minutes
         }
 
         function selectAdminChatUser(email) {
@@ -1239,7 +1238,7 @@
 
             const thread = chatThreads[selectedAdminChatUser];
             thread.messages.push({ sender: 'agent', text: `[${agentName}]: ${replyText}`, time: new Date().toLocaleTimeString() });
-            thread.agentRepliedSinceLastUser = true; // Mark that agent replied within 3 mins!
+            thread.agentRepliedSinceLastUser = true; // Agent replied, clear inactivity timer
             
             document.getElementById('admin-reply-msg-input').value = '';
             saveState();
@@ -1310,7 +1309,6 @@
                 const step = actionSteps[p.stepIdx];
                 if (tx && step) {
                     tx.status = `${step.statusMsg.toUpperCase()}`;
-                    // Set exact expiry timestamp for auto-progression (timerMinutes * 60 * 1000)
                     u.statusExpiryTime = Date.now() + ((step.timerMinutes || 2) * 60 * 1000);
                 }
                 alert(`Proof approved for ${p.user}. Status set to "${step.statusMsg}" for ${step.timerMinutes} minute(s).`);
