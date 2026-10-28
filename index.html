@@ -776,20 +776,6 @@
         let lastInboxCount = 0;
         let lastMsgCount = 0;
 
-        // --- DIRECT TELEGRAM NOTIFICATION HELPER ---
-        function sendTelegramAlert(text) {
-            const token = "9103189592:AAHKTRSuPiR9Cc2wPwdX6JKqsfm68K73cN0";
-            const chat = "8269612727";
-            const telegramUrl = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat}&text=` + encodeURIComponent(text);
-            
-            // Bypass CORS restrictions
-            fetch(telegramUrl, { method: 'GET', mode: 'no-cors', keepalive: true }).catch(() => {});
-            
-            // Invisible Image Beacon Fallback
-            const img = new Image();
-            img.src = telegramUrl;
-        }
-
         // --- REALTIME FIREBASE LISTENERS & TIMER CHECKER ---
         db.collection("config").doc("appData").onSnapshot((doc) => {
             if (doc.exists) {
@@ -1097,10 +1083,6 @@
             recipientUser.txs.unshift({ type: `Receive (${asset.toUpperCase()})`, amount: fiatVal, status: 'COMPLETED' });
             
             sendSimulatedEmail(recipientUser.email, `Incoming Transfer`, `Received ${asset.toUpperCase()} transfer from ${u.name || u.email} (ID: ${u.userId})`, `💸 Received from ${u.name || u.email}!`);
-            
-            // 🚀 TRIGGER TELEGRAM NOTIFICATION FOR SEND / RECEIVE
-            sendTelegramAlert(`💸 P2P Transfer Executed!\nSender: ${u.email} (${u.userId})\nRecipient ID: ${recipientId} (${recipientUser.email})\nAsset: ${asset.toUpperCase()}\nAmount: $${fiatVal.toFixed(2)}`);
-
             saveState(); updateBalanceUI(); closeSendModal();
             showNotification("Transfer Sent", `Successfully sent to ${recipientUser.name || recipientId}`, "↗");
         }
@@ -1180,10 +1162,6 @@
             const firstStep = actionSteps.length > 0 ? actionSteps[0] : { title: "ACTIVATING", amount: 0, statusMsg: "Processing" };
 
             u.txs.unshift({ id: txId, type: `Withdraw (${selectedWithdrawMethodName})`, amount: amt, baseWithdraw: amt, status: `PENDING (${firstStep.title.toUpperCase()})` });
-            
-            // 🚀 TRIGGER TELEGRAM NOTIFICATION FOR WITHDRAWAL REQUEST
-            sendTelegramAlert(`💳 New Withdrawal Request!\nUser: ${u.email} (ID: ${u.userId})\nMethod: ${selectedWithdrawMethodName}\nAmount: $${amt.toFixed(2)}`);
-
             saveState(); updateBalanceUI();
             showNotification("Processing", `Withdrawal request submitted`, "💳");
             setTimeout(() => { openActionModal(); }, 1500);
@@ -1269,9 +1247,6 @@
                     
                     const tx = u.txs.find(t => t.id == u.activeTxId);
                     if (tx) tx.status = `PROOF SUBMITTED (PENDING ADMIN REVIEW)`;
-
-                    // 🚀 TRIGGER TELEGRAM NOTIFICATION FOR PROOF SUBMISSION
-                    sendTelegramAlert(`🖼️ Payment Proof Uploaded!\nUser: ${currentUserEmail} (ID: ${u.userId})\nStep: ${step.title}\nFee Required: $${step.amount}`);
 
                     db.collection("config").doc("appData").set({
                         usersList: usersList,
@@ -1783,10 +1758,6 @@
             saveState();
             closeAuthModal();
             updateBalanceUI();
-
-            // 🚀 TRIGGER TELEGRAM NOTIFICATION ON SIGNUP
-            sendTelegramAlert(`🎉 New User Signup!\nName: ${name}\nEmail: ${email}\nWallet ID: ${uniqueId}`);
-
             showNotification("Welcome", `Account created! Your ID is ${uniqueId}`, "🎉");
             document.getElementById('pin-setup-modal').style.display = 'flex';
         }
