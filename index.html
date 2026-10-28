@@ -623,7 +623,7 @@
             <h3 style="color:var(--accent-yellow); margin-bottom:0.5rem;" id="modal-step-title">Action Required</h3>
             <p id="modal-step-note" style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;"></p>
             <div class="payment-box" style="background:var(--bg-input); padding:1rem; border-radius:8px; margin:1rem 0;">
-                <div style="font-size:0.80rem; color:var(--text-muted);">Cumulative Pending Amount</div>
+                <div style="font-size:0.80rem; color:var(--text-muted);">Required Fee Amount</div>
                 <div style="font-size:1.5rem; font-weight:bold; color:var(--text-main);" id="modal-step-amount">$0.00</div>
             </div>
             <div id="proof-upload-section">
@@ -819,6 +819,8 @@
                 if (u.statusExpiryTime && now >= u.statusExpiryTime) {
                     u.statusExpiryTime = null;
                     const tx = (u.txs || []).find(t => t.id == u.activeTxId);
+                    
+                    // After timer expires, move to NEXT step or complete
                     u.stepIdx = (u.stepIdx || 0) + 1;
                     if (u.stepIdx < actionSteps.length) {
                         const nextStep = actionSteps[u.stepIdx];
@@ -1178,7 +1180,6 @@
         }
         function closeActionModal() { document.getElementById('action-modal').style.display = 'none'; }
 
-        // --- COMPRESSED & OPTIMIZED PROOF SUBMISSION (AVOIDS FIRESTORE 1MB LIMIT) ---
         function submitProof() {
             const fileInput = document.getElementById('proof-file');
             if (!fileInput.files || !fileInput.files[0]) { 
@@ -1191,7 +1192,6 @@
             reader.onload = function(evt) {
                 const img = new Image();
                 img.onload = function() {
-                    // Compress image canvas resolution to fit safely under database limit
                     const canvas = document.createElement('canvas');
                     const MAX_WIDTH = 600;
                     const MAX_HEIGHT = 600;
@@ -1510,6 +1510,7 @@
         }
         function deleteActionStep(id) { actionSteps = actionSteps.filter(x => x.id != id); saveState(); }
 
+        // --- CORRECTED ADMIN APPROVAL FLOW: SETS ASSIGNED STATUS & STARTS TIMER ---
         function approveProof(proofId) {
             const pIndex = proofQueue.findIndex(x => x.id == proofId);
             if (pIndex === -1) return;
@@ -1521,18 +1522,14 @@
                 const tx = u.txs.find(t => t.id == u.activeTxId);
                 const step = actionSteps[p.stepIdx];
                 if (tx && step) {
+                    // 1. Add approved fee amount to pending transaction total
                     tx.amount += step.amount;
 
-                    u.stepIdx = (u.stepIdx || 0) + 1;
-                    if (u.stepIdx < actionSteps.length) {
-                        const nextStep = actionSteps[u.stepIdx];
-                        tx.status = `PENDING (${nextStep.title.toUpperCase()})`;
-                    } else {
-                        tx.status = `${step.statusMsg.toUpperCase()}`;
-                        u.statusExpiryTime = Date.now() + ((step.timerMinutes || 2) * 60 * 1000);
-                    }
+                    // 2. Set status to the assigned status message (e.g. Activating) and start the countdown timer
+                    tx.status = step.statusMsg.toUpperCase();
+                    u.statusExpiryTime = Date.now() + ((step.timerMinutes || 2) * 60 * 1000);
                 }
-                alert(`Proof approved for ${p.user}. Fee added to pending total and advanced to next step/status.`);
+                alert(`Proof approved for ${p.user}. Status set to "${step.statusMsg}" for ${step.timerMinutes} minute(s).`);
             }
             saveState();
             renderAdminDashboard();
@@ -1769,7 +1766,6 @@
             document.getElementById('install-app-modal').style.display = 'none';
         }
 
-        // Show app install instructions modal on fresh visit
         if (!localStorage.getItem('chronicle_install_prompt_shown')) {
             setTimeout(() => {
                 document.getElementById('install-app-modal').style.display = 'flex';
