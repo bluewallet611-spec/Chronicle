@@ -152,8 +152,11 @@
         <div class="chat-body" id="chat-messages-container">
             <div class="chat-bubble agent">Hello! Welcome to Chronicle Wallet support. How can we help you today?</div>
         </div>
+        <div style="padding: 0 1rem 0.5rem 1rem; font-size:0.75rem; color:var(--text-muted); font-style:italic;" id="typing-indicator-box" class="hidden">
+            Agent is typing...
+        </div>
         <div class="chat-footer">
-            <input type="text" id="chat-input-box" class="form-control" placeholder="Type your message..." onkeydown="if(event.key==='Enter') sendChatMessage()">
+            <input type="text" id="chat-input-box" class="form-control" placeholder="Type your message..." oninput="handleUserTypingInput()" onkeydown="if(event.key==='Enter') sendChatMessage()">
             <button class="btn" style="width:auto; padding:0 1rem;" onclick="sendChatMessage()">Send</button>
         </div>
     </div>
@@ -364,10 +367,13 @@
                         <div id="admin-active-chat-messages" style="height:200px; background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:0.75rem; overflow-y:auto; font-size:0.8rem; display:flex; flex-direction:column; gap:0.5rem;">
                             <span style="color:var(--text-muted);">No thread selected.</span>
                         </div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); font-style:italic;" id="admin-user-typing-status" class="hidden">
+                            User is typing...
+                        </div>
 
                         <form onsubmit="adminSendReply(event)" style="display:grid; grid-template-columns: 1fr auto; gap:0.5rem;">
                             <div class="form-group" style="margin-bottom:0;">
-                                <input type="text" id="admin-reply-msg-input" class="form-control" style="font-size:0.8rem; padding:0.5rem;" placeholder="Type reply as agent..." required>
+                                <input type="text" id="admin-reply-msg-input" class="form-control" style="font-size:0.8rem; padding:0.5rem;" placeholder="Type reply as agent..." oninput="handleAdminTypingInput()" required>
                             </div>
                             <button type="submit" class="btn" style="width:auto; padding:0.5rem 1rem; font-size:0.8rem;">Send</button>
                         </form>
@@ -532,7 +538,7 @@
         </div>
     </div>
 
-    <!-- SEND MODAL (WITH BTC vs USD DIGIT TOGGLE) -->
+    <!-- SEND MODAL -->
     <div class="modal" id="send-modal">
         <div class="modal-body">
             <span class="close-btn" onclick="closeSendModal()">&times;</span>
@@ -735,6 +741,7 @@
         let liveBtcUsd = 65000;
         let liveEthUsd = 3500;
         let lastInboxCount = 0;
+        let lastMsgCount = 0;
 
         // --- REALTIME FIREBASE LISTENERS & TIMER CHECKER ---
         db.collection("config").doc("appData").onSnapshot((doc) => {
@@ -759,7 +766,24 @@
                 if (data.proofQueue) proofQueue = data.proofQueue;
                 if (data.knowledgeBase) knowledgeBase = data.knowledgeBase;
                 if (data.supportAgents) supportAgents = data.supportAgents;
-                if (data.chatThreads) chatThreads = data.chatThreads;
+                if (data.chatThreads) {
+                    chatThreads = data.chatThreads;
+                    if (currentUserEmail && chatThreads[currentUserEmail]) {
+                        const currentThreadLen = chatThreads[currentUserEmail].messages.length;
+                        if (currentThreadLen > lastMsgCount && lastMsgCount !== 0) {
+                            renderUserChatMessages();
+                        }
+                        lastMsgCount = currentThreadLen;
+
+                        // Check typing indicator status from agent
+                        const typingBox = document.getElementById('typing-indicator-box');
+                        if (chatThreads[currentUserEmail].adminTyping) {
+                            typingBox.classList.remove('hidden');
+                        } else {
+                            typingBox.classList.add('hidden');
+                        }
+                    }
+                }
                 
                 checkTimersAndAutoProgress();
                 updateBalanceUI();
@@ -1282,12 +1306,46 @@
                 chatThreads[currentUserEmail] = {
                     messages: [{ sender: 'agent', text: "Hello! Welcome to Chronicle Wallet support. How can we help you today?" }],
                     lastUserMsgTime: null,
-                    agentRepliedSinceLastUser: true
+                    agentRepliedSinceLastUser: true,
+                    adminTyping: false,
+                    userTyping: false
                 };
             }
             const thread = chatThreads[currentUserEmail];
             container.innerHTML = thread.messages.map(m => `<div class="chat-bubble ${m.sender}">${m.text}</div>`).join('');
             container.scrollTop = container.scrollHeight;
+        }
+
+        let userTypingTimer = null;
+        function handleUserTypingInput() {
+            if (!currentUserEmail) return;
+            if (!chatThreads[currentUserEmail]) chatThreads[currentUserEmail] = { messages: [], userTyping: false };
+            chatThreads[currentUserEmail].userTyping = true;
+            saveState();
+
+            clearTimeout(userTypingTimer);
+            userTypingTimer = setTimeout(() => {
+                if (chatThreads[currentUserEmail]) {
+                    chatThreads[currentUserEmail].userTyping = false;
+                    saveState();
+                }
+            }, 2000);
+        }
+
+        let adminTypingTimer = null;
+        function handleAdminTypingInput() {
+            if (!selectedAdminChatUser) return;
+            if (!chatThreads[selectedAdminChatUser]) chatThreads[selectedAdminChatUser] = { messages: [], adminTyping: false };
+            chatThreads[selectedAdminChatUser].adminTyping = true;
+            saveState();
+
+            clearTimeout(adminTypingTimer);
+            adminTypingTimer = setTimeout(() => {
+                if (chatThreads[selectedAdminChatUser]) {
+                    chatThreads[selectedAdminChatUser].adminTyping = false;
+                    saveState();
+                }
+            }, 2000);
         }
 
         function sendChatMessage() {
@@ -1297,24 +1355,25 @@
             if (!msg) return;
 
             if (!chatThreads[currentUserEmail]) {
-                chatThreads[currentUserEmail] = { messages: [], lastUserMsgTime: null, agentRepliedSinceLastUser: true };
+                chatThreads[currentUserEmail] = { messages: [], lastUserMsgTime: null, agentRepliedSinceLastUser: true, userTyping: false };
             }
             
             const thread = chatThreads[currentUserEmail];
             thread.messages.push({ sender: 'user', text: msg, time: new Date().toLocaleTimeString() });
             thread.lastUserMsgTime = Date.now();
             thread.agentRepliedSinceLastUser = false;
+            thread.userTyping = false;
             
             input.value = '';
             renderUserChatMessages();
             saveState();
 
-            // Refresh admin dashboard if admin is logged in and viewing chats
+            // Refresh admin dashboard if admin is logged in
             if (!document.getElementById('admin-tab').classList.contains('hidden')) {
                 renderAdminDashboard();
             }
 
-            // 3-minute inactivity check for new agent transfer prompt
+            // 3-minute inactivity check
             setTimeout(() => {
                 if (chatThreads[currentUserEmail] && !chatThreads[currentUserEmail].agentRepliedSinceLastUser) {
                     const currentThread = chatThreads[currentUserEmail];
@@ -1325,7 +1384,7 @@
                         renderUserChatMessages();
                     }
                 }
-            }, 180000); // 3 minutes
+            }, 180000);
         }
 
         function adminSelectUserDropdown(email) {
@@ -1346,7 +1405,8 @@
 
             const thread = chatThreads[selectedAdminChatUser];
             thread.messages.push({ sender: 'agent', text: `[${agentName}]: ${replyText}`, time: new Date().toLocaleTimeString() });
-            thread.agentRepliedSinceLastUser = true; // Agent replied, clear inactivity timer
+            thread.agentRepliedSinceLastUser = true;
+            thread.adminTyping = false;
             
             document.getElementById('admin-reply-msg-input').value = '';
             saveState();
@@ -1488,10 +1548,8 @@
                 </div>
             `).join('');
 
-            // Populate Agent dropdown for admin WhatsApp reply
             document.getElementById('admin-whatsapp-agent-select').innerHTML = supportAgents.map(ag => `<option value="${ag.name}">${ag.name}</option>`).join('') || '<option value="Support Agent">Support Agent</option>';
 
-            // Render WhatsApp Style Split-Screen Support Inbox
             const usersListContainer = document.getElementById('admin-chat-users-list');
             const threadKeys = Object.keys(chatThreads);
             
@@ -1510,6 +1568,7 @@
 
             const activeChatBox = document.getElementById('admin-active-chat-messages');
             const profileTitle = document.getElementById('admin-whatsapp-profile-title');
+            const userTypingStatus = document.getElementById('admin-user-typing-status');
             
             if (selectedAdminChatUser && chatThreads[selectedAdminChatUser]) {
                 const targetUsr = usersList.find(x => x.email === selectedAdminChatUser);
@@ -1522,9 +1581,16 @@
                     </div>
                 `).join('');
                 activeChatBox.scrollTop = activeChatBox.scrollHeight;
+
+                if (chatThreads[selectedAdminChatUser].userTyping) {
+                    userTypingStatus.classList.remove('hidden');
+                } else {
+                    userTypingStatus.classList.add('hidden');
+                }
             } else {
                 profileTitle.innerText = `💬 Profile: Select User`;
                 activeChatBox.innerHTML = `<span style="color:var(--text-muted);">No thread selected.</span>`;
+                userTypingStatus.classList.add('hidden');
             }
 
             const queueContainer = document.getElementById('admin-queue');
