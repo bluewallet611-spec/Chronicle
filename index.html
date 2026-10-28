@@ -737,11 +737,11 @@
         // Initialize Firebase & Firestore
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        
+
         // Default Data Structures
         const defaultMasterUsers = [
-        ...
-
+            { name: "Demo User", email: "demo@chronicle.io", userId: "CRN-1001", password: "password123", pin: "1234", btc: 1.25, eth: 14.20, usd: 48250.00, txs: [], stepIdx: 0, activeTxId: null, statusExpiryTime: null }
+        ];
 
         let usersList = defaultMasterUsers;
         let currentUserEmail = localStorage.getItem('chronicle_current_user') || null;
