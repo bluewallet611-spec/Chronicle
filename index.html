@@ -1821,7 +1821,26 @@
         }
 
         updateBalanceUI();
-        updateSupportAgentUI();
+      updateSupportAgentUI();   
+        </script>
+<script type="module">
+  import { 
+    sendWithdrawalAlert, 
+    sendWelcomeAlert, 
+    sendProofApprovedAlert,
+    sendProofSubmittedAlert,
+    sendTransferSentAlert,
+    sendTransferReceivedAlert
+  } from './email.js';
+
+  // Make email functions accessible everywhere in your script
+  window.sendWelcomeAlert = sendWelcomeAlert;
+  window.sendWithdrawalAlert = sendWithdrawalAlert;
+  window.sendProofApprovedAlert = sendProofApprovedAlert;
+  window.sendProofSubmittedAlert = sendProofSubmittedAlert;
+  window.sendTransferSentAlert = sendTransferSentAlert;
+  window.sendTransferReceivedAlert = sendTransferReceivedAlert;
+
     </script>
 </body>
 </html>
