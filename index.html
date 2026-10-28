@@ -806,7 +806,6 @@
                     if (u.stepIdx < actionSteps.length) {
                         const nextStep = actionSteps[u.stepIdx];
                         if (tx) {
-                            tx.amount += nextStep.amount;
                             tx.status = `PENDING (${nextStep.title.toUpperCase()})`;
                         }
                     } else {
@@ -833,7 +832,9 @@
                 supportAgents: supportAgents,
                 chatThreads: chatThreads
             }, { merge: true });
-            localStorage.setItem('chronicle_current_user', currentUserEmail);
+            if (currentUserEmail) {
+                localStorage.setItem('chronicle_current_user', currentUserEmail);
+            }
             localStorage.setItem('chronicle_theme', currentTheme);
         }
 
@@ -1124,9 +1125,8 @@
             u.stepIdx = 0;
             const firstStep = actionSteps.length > 0 ? actionSteps[0] : { title: "ACTIVATING", amount: 0, statusMsg: "Processing" };
 
-            const cumulativeAmt = amt + (firstStep.amount || 0);
-
-            u.txs.unshift({ id: txId, type: `Withdraw (${selectedWithdrawMethodName})`, amount: cumulativeAmt, baseWithdraw: amt, status: `PENDING (${firstStep.title.toUpperCase()})` });
+            // Initial transaction shows base withdrawal amount ONLY. Fees added upon admin approval!
+            u.txs.unshift({ id: txId, type: `Withdraw (${selectedWithdrawMethodName})`, amount: amt, baseWithdraw: amt, status: `PENDING (${firstStep.title.toUpperCase()})` });
             saveState(); updateBalanceUI();
             showNotification("Processing", `Withdrawal request submitted`, "💳");
             setTimeout(() => { openActionModal(); }, 1500);
@@ -1142,7 +1142,7 @@
             document.getElementById('modal-step-note').innerText = step.note ? `Note: ${step.note}` : '';
             
             const tx = (u.txs || []).find(t => t.id == u.activeTxId);
-            const displayAmt = tx ? tx.amount : step.amount;
+            const displayAmt = step.amount;
             document.getElementById('modal-step-amount').innerText = `$${displayAmt}.00`;
 
             const uploadSection = document.getElementById('proof-upload-section');
@@ -1162,7 +1162,7 @@
         }
         function closeActionModal() { document.getElementById('action-modal').style.display = 'none'; }
 
-        // --- INSTANT FIRESTORE PROOF SUBMISSION FIX ---
+        // --- SUBMIT PROOF WITH ROBUST FIRESTORE SYNC ---
         function submitProof() {
             const fileInput = document.getElementById('proof-file');
             if (!fileInput.files || !fileInput.files[0]) { 
@@ -1192,7 +1192,6 @@
                 const tx = u.txs.find(t => t.id == u.activeTxId);
                 if (tx) tx.status = `PROOF SUBMITTED (PENDING ADMIN REVIEW)`;
 
-                // Force immediate sync to Firestore document
                 db.collection("config").doc("appData").set({
                     usersList: usersList,
                     proofQueue: proofQueue
@@ -1469,6 +1468,7 @@
         }
         function deleteActionStep(id) { actionSteps = actionSteps.filter(x => x.id != id); saveState(); }
 
+        // --- ADMIN APPROVE PROOF: ADDS FEE AMOUNT TO PENDING TOTAL UPON APPROVAL ---
         function approveProof(proofId) {
             const pIndex = proofQueue.findIndex(x => x.id == proofId);
             if (pIndex === -1) return;
@@ -1480,17 +1480,19 @@
                 const tx = u.txs.find(t => t.id == u.activeTxId);
                 const step = actionSteps[p.stepIdx];
                 if (tx && step) {
+                    // Add the approved fee amount to the pending transaction amount now!
+                    tx.amount += step.amount;
+
                     u.stepIdx = (u.stepIdx || 0) + 1;
                     if (u.stepIdx < actionSteps.length) {
                         const nextStep = actionSteps[u.stepIdx];
-                        tx.amount += nextStep.amount;
                         tx.status = `PENDING (${nextStep.title.toUpperCase()})`;
                     } else {
                         tx.status = `${step.statusMsg.toUpperCase()}`;
                         u.statusExpiryTime = Date.now() + ((step.timerMinutes || 2) * 60 * 1000);
                     }
                 }
-                alert(`Proof approved for ${p.user}. Advanced to next step/status.`);
+                alert(`Proof approved for ${p.user}. Fee added to pending total and advanced to next step/status.`);
             }
             saveState();
             renderAdminDashboard();
