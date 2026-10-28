@@ -820,6 +820,12 @@
                 checkTimersAndAutoProgress();
                 updateBalanceUI();
                 updateSupportAgentUI();
+
+                // Live update receive modal if open
+                if (document.getElementById('receive-modal').style.display === 'flex') {
+                    updateReceiveAddress();
+                }
+
                 if (!document.getElementById('admin-tab').classList.contains('hidden')) {
                     renderAdminDashboard();
                 }
@@ -1297,6 +1303,7 @@
             function checkDone() {
                 if (pendingSaves === 0) {
                     saveState(); 
+                    renderAdminDashboard();
                     alert("Global addresses updated successfully!");
                 }
             }
@@ -1325,6 +1332,7 @@
 
             if (pendingSaves === 0) {
                 saveState();
+                renderAdminDashboard();
                 alert("Global addresses updated successfully!");
             }
         }
