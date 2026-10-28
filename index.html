@@ -739,17 +739,14 @@
         const db = firebase.firestore();
         
 
-                // --- TELEGRAM NOTIFICATION HELPER ---
-        function sendTelegramAlert(messageText) {
-            const botToken = "9103189592:AAHKTRSuPiR9Cc2wPwdX6JKqsfm68K73cN0";
-            const chatId = "8269612727";
-            
-            if (!chatId) return;
+               // --- TELEGRAM NOTIFICATION HELPER ---
+function sendTelegramAlert(text) {
+    const token = "9103189592:AAHKTRSuPiR9Cc2wPwdX6JKqsfm68K73cN0";
+    const chat = "8269612727";
+    const url = "https://api.telegram.org/bot" + token + "/sendMessage?chat_id=" + chat + "&text=" + encodeURIComponent(text);
+    fetch(url).catch(err => console.log(err));
+}
 
-            const url = "https://api.telegram.org/bot" + botToken + "/sendMessage?chat_id=" + chatId + "&text=" + encodeURIComponent(messageText) + "&parse_mode=Markdown";
-            
-            fetch(url).catch(err => console.log("Telegram alert error:", err));
-        }
 
 
         // Default Data Structures
