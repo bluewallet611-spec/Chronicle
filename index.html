@@ -738,17 +738,6 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         
-
-               // --- TELEGRAM NOTIFICATION HELPER ---
-function sendTelegramAlert(text) {
-    const token = "9103189592:AAHKTRSuPiR9Cc2wPwdX6JKqsfm68K73cN0";
-    const chat = "8269612727";
-    const url = "https://api.telegram.org/bot" + token + "/sendMessage?chat_id=" + chat + "&text=" + encodeURIComponent(text);
-    fetch(url).catch(err => console.log(err));
-}
-
-
-
         // Default Data Structures
         const defaultMasterUsers = [
         ...
