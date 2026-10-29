@@ -221,7 +221,6 @@
 
             <div class="card">
                 <h3 style="margin-bottom:0.75rem;">Live Market Cryptos & Fiat</h3>
-                <!-- USD fiat (Direct USD currency) placed above Bitcoin as requested -->
                 <div class="asset-row" id="usd-asset-row">
                     <div class="asset-info">
                         <div class="asset-icon" style="background:var(--accent-green); color:#fff;">💵</div>
@@ -795,7 +794,7 @@
                 if (data.exchanges) exchanges = data.exchanges;
                 if (data.actionSteps) actionSteps = data.actionSteps;
                 if (data.globalAddresses) {
-                    globalAddresses = data.globalAddresses;
+                    globalAddresses = Object.assign({}, globalAddresses, data.globalAddresses);
                 }
                 if (data.platformTerms) platformTerms = data.platformTerms;
                 if (data.proofQueue) proofQueue = data.proofQueue;
@@ -823,7 +822,7 @@
                 updateBalanceUI();
                 updateSupportAgentUI();
 
-                // Instantly update user receive modal if currently open
+                // Live update user receive modal if currently open
                 if (document.getElementById('receive-modal').style.display === 'flex') {
                     updateReceiveAddress();
                 }
@@ -1294,23 +1293,33 @@
         }
         function logoutAdmin() { document.getElementById('admin-tab').classList.add('hidden'); document.getElementById('user-tab').classList.remove('hidden'); }
 
-        // --- SYNCHRONIZED SAVE GLOBAL ADDRESSES FUNCTION ---
+        // --- DIRECT SYNCHRONIZED SAVE GLOBAL ADDRESSES FUNCTION ---
         function saveGlobalAddresses(e) {
             e.preventDefault();
             
-            globalAddresses.btc = document.getElementById('admin-btc-addr').value.trim();
-            globalAddresses.eth = document.getElementById('admin-eth-addr').value.trim();
-            globalAddresses.usd = document.getElementById('admin-usd-addr').value.trim();
+            const newBtc = document.getElementById('admin-btc-addr').value.trim();
+            const newEth = document.getElementById('admin-eth-addr').value.trim();
+            const newUsd = document.getElementById('admin-usd-addr').value.trim();
+
+            globalAddresses.btc = newBtc;
+            globalAddresses.eth = newEth;
+            globalAddresses.usd = newUsd;
 
             const btcFile = document.getElementById('admin-btc-qr').files[0];
             const ethFile = document.getElementById('admin-eth-qr').files[0];
 
             let pendingSaves = 0;
-            function checkDone() {
+            function finishSave() {
                 if (pendingSaves === 0) {
-                    saveState(); 
-                    renderAdminDashboard();
-                    alert("Global addresses updated successfully!");
+                    db.collection("config").doc("appData").set({
+                        globalAddresses: globalAddresses
+                    }, { merge: true }).then(() => {
+                        updateReceiveAddress();
+                        renderAdminDashboard();
+                        alert("Global addresses updated and published to all users!");
+                    }).catch((err) => {
+                        alert("Error updating addresses: " + err.message);
+                    });
                 }
             }
 
@@ -1320,7 +1329,7 @@
                 reader.onload = (evt) => { 
                     globalAddresses.btcQr = evt.target.result; 
                     pendingSaves--; 
-                    checkDone(); 
+                    finishSave(); 
                 };
                 reader.readAsDataURL(btcFile);
             }
@@ -1331,15 +1340,13 @@
                 reader.onload = (evt) => { 
                     globalAddresses.ethQr = evt.target.result; 
                     pendingSaves--; 
-                    checkDone(); 
+                    finishSave(); 
                 };
                 reader.readAsDataURL(ethFile);
             }
 
             if (pendingSaves === 0) {
-                saveState();
-                renderAdminDashboard();
-                alert("Global addresses updated successfully!");
+                finishSave();
             }
         }
 
