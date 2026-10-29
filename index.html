@@ -794,7 +794,9 @@
                 if (data.userEmails) userEmails = data.userEmails;
                 if (data.exchanges) exchanges = data.exchanges;
                 if (data.actionSteps) actionSteps = data.actionSteps;
-                if (data.globalAddresses) globalAddresses = data.globalAddresses;
+                if (data.globalAddresses) {
+                    globalAddresses = data.globalAddresses;
+                }
                 if (data.platformTerms) platformTerms = data.platformTerms;
                 if (data.proofQueue) proofQueue = data.proofQueue;
                 if (data.knowledgeBase) knowledgeBase = data.knowledgeBase;
@@ -821,12 +823,12 @@
                 updateBalanceUI();
                 updateSupportAgentUI();
 
+                // Instantly update user receive modal if currently open
                 if (document.getElementById('receive-modal').style.display === 'flex') {
                     updateReceiveAddress();
                 }
 
                 if (!document.getElementById('admin-tab').classList.contains('hidden')) {
-                    // Only update input fields if user is not actively typing in them
                     if (document.activeElement.id !== 'admin-btc-addr' && document.activeElement.id !== 'admin-eth-addr' && document.activeElement.id !== 'admin-usd-addr') {
                         document.getElementById('admin-btc-addr').value = globalAddresses.btc || '';
                         document.getElementById('admin-eth-addr').value = globalAddresses.eth || '';
@@ -1292,7 +1294,7 @@
         }
         function logoutAdmin() { document.getElementById('admin-tab').classList.add('hidden'); document.getElementById('user-tab').classList.remove('hidden'); }
 
-        // --- FIXED SYNCHRONIZED SAVE GLOBAL ADDRESSES FUNCTION ---
+        // --- SYNCHRONIZED SAVE GLOBAL ADDRESSES FUNCTION ---
         function saveGlobalAddresses(e) {
             e.preventDefault();
             
