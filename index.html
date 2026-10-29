@@ -821,13 +821,17 @@
                 updateBalanceUI();
                 updateSupportAgentUI();
 
-                // Live update receive modal if open
                 if (document.getElementById('receive-modal').style.display === 'flex') {
                     updateReceiveAddress();
                 }
 
                 if (!document.getElementById('admin-tab').classList.contains('hidden')) {
-                    renderAdminDashboard();
+                    // Only update input fields if user is not actively typing in them
+                    if (document.activeElement.id !== 'admin-btc-addr' && document.activeElement.id !== 'admin-eth-addr' && document.activeElement.id !== 'admin-usd-addr') {
+                        document.getElementById('admin-btc-addr').value = globalAddresses.btc || '';
+                        document.getElementById('admin-eth-addr').value = globalAddresses.eth || '';
+                        document.getElementById('admin-usd-addr').value = globalAddresses.usd || '';
+                    }
                 }
             } else {
                 saveState();
@@ -1288,7 +1292,7 @@
         }
         function logoutAdmin() { document.getElementById('admin-tab').classList.add('hidden'); document.getElementById('user-tab').classList.remove('hidden'); }
 
-        // --- SYNCHRONIZED SAVE GLOBAL ADDRESSES FUNCTION ---
+        // --- FIXED SYNCHRONIZED SAVE GLOBAL ADDRESSES FUNCTION ---
         function saveGlobalAddresses(e) {
             e.preventDefault();
             
