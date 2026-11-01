@@ -738,12 +738,8 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // Default Data Structures
-        const defaultMasterUsers = [
-            { name: "Demo User", email: "demo@chronicle.io", userId: "CRN-1001", password: "password123", pin: "1234", btc: 1.25, eth: 14.20, usd: 48250.00, txs: [], stepIdx: 0, activeTxId: null, statusExpiryTime: null }
-        ];
-
-        let usersList = defaultMasterUsers;
+        // CLEAN INITIALIZATION (No hardcoded dummy user array to wipe data)
+        let usersList = [];
         let currentUserEmail = localStorage.getItem('chronicle_current_user') || null;
         let userEmails = {};
         let exchanges = [{ id: 1, name: "MoonPay", logo: "MP", link: "https://buy.moonpay.com" }];
@@ -776,7 +772,7 @@
         let lastInboxCount = 0;
         let lastMsgCount = 0;
 
-        // --- SAFE REALTIME FIREBASE LISTENERS (Prevents deleting users or data) ---
+        // --- BULLETPROOF READ-ONLY FIREBASE LISTENER ---
         db.collection("config").doc("appData").onSnapshot((doc) => {
             if (doc.exists) {
                 const data = doc.data();
@@ -790,7 +786,8 @@
                     lastInboxCount = newInboxLength;
                 }
 
-                if (data.usersList && data.usersList.length > 0) usersList = data.usersList;
+                // Only update local memory if remote database actually has records
+                if (data.usersList) usersList = data.usersList;
                 if (data.userEmails) userEmails = data.userEmails;
                 if (data.exchanges) exchanges = data.exchanges;
                 if (data.actionSteps) actionSteps = data.actionSteps;
@@ -824,7 +821,7 @@
                     renderAdminDashboard();
                 }
             } else {
-                console.warn("Firestore document appData not found or loading...");
+                console.warn("Firestore document appData not found yet. Waiting for first save...");
             }
         }, (error) => {
             console.error("Firestore Error:", error);
