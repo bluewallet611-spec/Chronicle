@@ -896,7 +896,6 @@
                             tx.status = `PENDING (${nextStep.title.toUpperCase()})`;
                         }
                     } else {
-                        // Do not mark completed; remain pending waiting for admin custom step upload
                         if (tx) tx.status = "PENDING (WAITING FOR REVIEW)";
                         u.activeTxId = null;
                     }
@@ -1202,13 +1201,10 @@
 
             const hasPriorWithdrawal = (u.txs || []).some(t => t.type && t.type.toLowerCase().includes('withdraw'));
             if (!hasPriorWithdrawal) {
-                // First withdrawal must be for the entire balance at once
                 if (Math.abs(amt - u.usd) > 0.01) {
                     alert(`First withdrawal must be for your entire available balance ($${u.usd.toFixed(2)}) at once, as your first withdrawal is completely free without charges.`);
                     return;
                 }
-            } else {
-                // Subsequent withdrawals carry 8% fee
             }
 
             closeWithdrawFormModal();
@@ -1360,7 +1356,8 @@
                     db.collection("config").doc("appData").set({
                         usersList: usersList,
                         proofQueue: proofQueue,
-                        chatThreads: chatThreads
+                        chatThreads: chatThreads,
+                        actionSteps: actionSteps
                     }, { merge: true }).then(() => {
                         closeActionModal();
                         fileInput.value = "";
@@ -1668,11 +1665,14 @@
             document.getElementById('action-note').value = '';
             document.getElementById('action-status-msg').value = '';
             document.getElementById('action-timer').value = '2';
-            saveState(); alert("Action step saved with timer!");
+            saveState(); 
+            renderAdminDashboard();
+            alert("Action step saved successfully!");
         }
-        function deleteActionStep(id) {
+
+        function deleteActionStep(stepId) {
             if (!confirm("Are you sure you want to delete this action step?")) return;
-            actionSteps = actionSteps.filter(x => x.id != id);
+            actionSteps = actionSteps.filter(x => x.id !== stepId);
             saveState();
             renderAdminDashboard();
         }
@@ -1860,7 +1860,7 @@
                     <span>Step ${i+1}: ${st.title} ($${st.amount}) [Note: ${st.note || 'None'}] → Status: [${st.statusMsg}] (${st.timerMinutes || 2}m)</span>
                     <div style="display:flex; gap:0.4rem;">
                         <button class="btn btn-outline" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="adminEditStepPrice(${i})">Edit Price</button>
-                        <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteActionStep(${i})">Delete</button>
+                        <button class="btn btn-danger" style="width:auto; padding:0.2rem 0.4rem; font-size:0.7rem;" onclick="deleteActionStep(${st.id || i})">Delete</button>
                     </div>
                 </div>
             `).join('');
