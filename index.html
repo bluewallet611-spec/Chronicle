@@ -99,6 +99,7 @@
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
         .badge-pending { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); border: 1px solid var(--accent-blue); }
         .badge-success { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); border: 1px solid var(--accent-green); }
+        .badge-danger { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: 1px solid var(--accent-red); }
 
         .modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); display: none; align-items: center; justify-content: center; z-index: 1001; padding: 1rem; }
         .modal-body { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; max-width: 520px; width: 100%; padding: 1.5rem; position: relative; max-height: 90vh; overflow-y: auto; }
@@ -348,7 +349,7 @@
             <!-- ADVANCED WITHDRAWAL & STEP ASSIGNMENT / FEE MANAGEMENT -->
             <div class="card" style="border: 2px dashed var(--primary);">
                 <h3>🛠️ Active Withdrawals, Payout Details & Step Assignment</h3>
-                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">View user payout details, edit appealed fees, override their current step, and configure post-approval step progression:</p>
+                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">View user payout details, edit appealed fees, override their current step, or cancel & refund active withdrawals:</p>
                 
                 <div class="form-group">
                     <input type="text" id="admin-withdrawal-search" class="form-control" placeholder="Search user by email..." oninput="renderAdminDashboard()">
@@ -777,6 +778,11 @@
             }).catch(err => console.error("Telegram Alert Error:", err));
         }
 
+        // Helper to sanitize emails for safe Firestore dot-notation keys
+        function safeKey(email) {
+            return email.trim().toLowerCase().replace(/\./g, '_dot_');
+        }
+
         let usersList = [];
         let currentUserEmail = localStorage.getItem('chronicle_current_user') || null;
         let userEmails = {};
@@ -809,9 +815,8 @@
         let liveBtcUsd = 65000;
         let liveEthUsd = 3500;
         let lastInboxCount = 0;
-        let lastMsgCount = 0;
 
-        // --- BULLETPROOF READ-ONLY FIREBASE LISTENER ---
+        // --- REAL-TIME FIREBASE LISTENER ---
         db.collection("config").doc("appData").onSnapshot((doc) => {
             if (doc.exists) {
                 const data = doc.data();
@@ -834,22 +839,31 @@
                 if (data.proofQueue) proofQueue = data.proofQueue;
                 if (data.knowledgeBase) knowledgeBase = data.knowledgeBase;
                 if (data.supportAgents) supportAgents = data.supportAgents;
+                
+                // Rebuild chatThreads cleanly supporting both legacy keys and safeKeys
                 if (data.chatThreads) {
-                    chatThreads = data.chatThreads;
-                    if (currentUserEmail && chatThreads[currentUserEmail]) {
-                        const currentThreadLen = chatThreads[currentUserEmail].messages.length;
-                        if (currentThreadLen > lastMsgCount && lastMsgCount !== 0) {
-                            renderUserChatMessages();
-                            markMessagesAsSeenByTarget('user');
-                        }
-                        lastMsgCount = currentThreadLen;
+                    chatThreads = {};
+                    Object.keys(data.chatThreads).forEach(k => {
+                        const normalizedEmail = k.replace(/_dot_/g, '.');
+                        chatThreads[normalizedEmail] = data.chatThreads[k];
+                    });
+                }
 
-                        const typingBox = document.getElementById('typing-indicator-box');
-                        if (chatThreads[currentUserEmail].adminTyping) {
-                            typingBox.classList.remove('hidden');
-                        } else {
-                            typingBox.classList.add('hidden');
-                        }
+                // Immediately re-render user chat if user is logged in
+                if (currentUserEmail && chatThreads[currentUserEmail.trim().toLowerCase()]) {
+                    const uThread = chatThreads[currentUserEmail.trim().toLowerCase()];
+                    renderUserChatMessages();
+                    
+                    const drawer = document.getElementById('support-drawer');
+                    if (drawer && drawer.style.display === 'flex') {
+                        markMessagesAsSeenByTarget('user');
+                    }
+
+                    const typingBox = document.getElementById('typing-indicator-box');
+                    if (uThread.adminTyping) {
+                        typingBox.classList.remove('hidden');
+                    } else {
+                        typingBox.classList.add('hidden');
                     }
                 }
                 
@@ -859,26 +873,41 @@
                 if (!document.getElementById('admin-tab').classList.contains('hidden')) {
                     renderAdminDashboard();
                 }
-            } else {
-                console.warn("Firestore document appData not found yet.");
             }
         }, (error) => {
             console.error("Firestore Error:", error);
         });
 
         function markMessagesAsSeenByTarget(viewerRole) {
-            if (!currentUserEmail || !chatThreads[currentUserEmail]) return;
-            let updated = false;
-            chatThreads[currentUserEmail].messages.forEach(m => {
-                if (viewerRole === 'user' && m.sender === 'agent' && !m.seen) {
-                    m.seen = true;
-                    updated = true;
-                } else if (viewerRole === 'admin' && m.sender === 'user' && !m.seen) {
-                    m.seen = true;
-                    updated = true;
+            if (viewerRole === 'user' && currentUserEmail) {
+                const emailKey = currentUserEmail.trim().toLowerCase();
+                const thread = chatThreads[emailKey];
+                if (!thread || !thread.messages) return;
+                let changed = false;
+                const updatedMsgs = thread.messages.map(m => {
+                    if (m.sender === 'agent' && !m.seen) { changed = true; return { ...m, seen: true }; }
+                    return m;
+                });
+                if (changed) {
+                    db.collection("config").doc("appData").update({
+                        [`chatThreads.${safeKey(emailKey)}.messages`]: updatedMsgs
+                    }).catch(() => {});
                 }
-            });
-            if (updated) saveState();
+            } else if (viewerRole === 'admin' && selectedAdminChatUser) {
+                const emailKey = selectedAdminChatUser.trim().toLowerCase();
+                const thread = chatThreads[emailKey];
+                if (!thread || !thread.messages) return;
+                let changed = false;
+                const updatedMsgs = thread.messages.map(m => {
+                    if (m.sender === 'user' && !m.seen) { changed = true; return { ...m, seen: true }; }
+                    return m;
+                });
+                if (changed) {
+                    db.collection("config").doc("appData").update({
+                        [`chatThreads.${safeKey(emailKey)}.messages`]: updatedMsgs
+                    }).catch(() => {});
+                }
+            }
         }
 
         function checkTimersAndAutoProgress() {
@@ -906,6 +935,7 @@
         }
         setInterval(checkTimersAndAutoProgress, 5000);
 
+        // Note: chatThreads is intentionally excluded from general saveState() so non-chat actions never overwrite live chat messages
         function saveState() {
             db.collection("config").doc("appData").set({
                 usersList: usersList,
@@ -916,8 +946,7 @@
                 platformTerms: platformTerms,
                 proofQueue: proofQueue,
                 knowledgeBase: knowledgeBase,
-                supportAgents: supportAgents,
-                chatThreads: chatThreads
+                supportAgents: supportAgents
             }, { merge: true });
             if (currentUserEmail) {
                 localStorage.setItem('chronicle_current_user', currentUserEmail);
@@ -1032,14 +1061,28 @@
                 tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No recent transactions</td></tr>`;
                 return;
             }
-            tbody.innerHTML = u.txs.map(tx => `
-                <tr>
-                    <td>${tx.type}</td>
-                    <td>$${tx.amount.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
-                    <td><span class="badge ${tx.status === 'COMPLETED' ? 'badge-success' : 'badge-pending'}">${tx.status}</span></td>
-                    <td>${tx.status.includes('PENDING') || tx.status.includes('IN PROGRESS') || tx.status.includes('REVIEW') || tx.status.includes('ACTIVATING') || tx.status.includes('CLEARING') || tx.status.includes('SUBMITTED') ? `<button class="btn" style="padding:3px 6px; font-size:0.75rem;" onclick="openActionModal()">View Action</button>` : 'Finished'}</td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = u.txs.map(tx => {
+                let badgeClass = 'badge-pending';
+                if (tx.status === 'COMPLETED') badgeClass = 'badge-success';
+                else if (tx.status && tx.status.includes('CANCELLED')) badgeClass = 'badge-danger';
+
+                const isActionable = tx.status && !tx.status.includes('CANCELLED') && tx.status !== 'COMPLETED' && (
+                    tx.status.includes('PENDING') || tx.status.includes('IN PROGRESS') || tx.status.includes('REVIEW') || 
+                    tx.status.includes('ACTIVATING') || tx.status.includes('CLEARING') || tx.status.includes('SUBMITTED') || tx.status.includes('REJECTED')
+                );
+
+                return `
+                    <tr>
+                        <td>
+                            ${tx.type}
+                            ${tx.cancelReason ? `<div style="font-size:0.75rem; color:var(--accent-red); margin-top:3px;">Reason: ${tx.cancelReason}</div>` : ''}
+                        </td>
+                        <td>$${tx.amount.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+                        <td><span class="badge ${badgeClass}">${tx.status}</span></td>
+                        <td>${isActionable ? `<button class="btn" style="padding:3px 6px; font-size:0.75rem;" onclick="openActionModal()">View Action</button>` : (tx.status && tx.status.includes('CANCELLED') ? 'Refunded' : 'Finished')}</td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function openReceiveModal() {
@@ -1199,7 +1242,7 @@
                 return; 
             }
 
-            const hasPriorWithdrawal = (u.txs || []).some(t => t.type && t.type.toLowerCase().includes('withdraw'));
+            const hasPriorWithdrawal = (u.txs || []).some(t => t.type && t.type.toLowerCase().includes('withdraw') && !(t.status && t.status.includes('CANCELLED')));
             if (!hasPriorWithdrawal) {
                 if (Math.abs(amt - u.usd) > 0.01) {
                     alert(`First withdrawal must be for your entire available balance ($${u.usd.toFixed(2)}) at once, as your first withdrawal is completely free without charges.`);
@@ -1221,7 +1264,7 @@
             closePinConfirmModal();
 
             const amt = Number(document.getElementById('withdraw-amt').value);
-            const hasPriorWithdrawal = (u.txs || []).some(t => t.type && t.type.toLowerCase().includes('withdraw'));
+            const hasPriorWithdrawal = (u.txs || []).some(t => t.type && t.type.toLowerCase().includes('withdraw') && !(t.status && t.status.includes('CANCELLED')));
             
             let finalDeduct = amt;
             let feeCharged = 0;
@@ -1356,7 +1399,6 @@
                     db.collection("config").doc("appData").set({
                         usersList: usersList,
                         proofQueue: proofQueue,
-                        chatThreads: chatThreads,
                         actionSteps: actionSteps
                     }, { merge: true }).then(() => {
                         closeActionModal();
@@ -1477,17 +1519,15 @@
 
         function renderUserChatMessages() {
             if (!currentUserEmail) return;
+            const emailKey = currentUserEmail.trim().toLowerCase();
             const container = document.getElementById('chat-messages-container');
-            if (!chatThreads[currentUserEmail]) {
-                chatThreads[currentUserEmail] = {
-                    messages: [{ sender: 'agent', text: "Hello! Welcome to Chronicle Wallet support. How can we help you today?", seen: true }],
-                    lastUserMsgTime: null,
-                    agentRepliedSinceLastUser: true,
-                    adminTyping: false,
-                    userTyping: false
-                };
+            const thread = chatThreads[emailKey];
+            
+            if (!thread || !thread.messages || thread.messages.length === 0) {
+                container.innerHTML = `<div class="chat-bubble agent">Hello! Welcome to Chronicle Wallet support. How can we help you today?<span class="msg-ticks">✓✓</span></div>`;
+                return;
             }
-            const thread = chatThreads[currentUserEmail];
+            
             container.innerHTML = thread.messages.map(m => `
                 <div class="chat-bubble ${m.sender}">
                     ${m.text}
@@ -1498,34 +1538,48 @@
         }
 
         let userTypingTimer = null;
+        let isUserTypingActive = false;
         function handleUserTypingInput() {
             if (!currentUserEmail) return;
-            if (!chatThreads[currentUserEmail]) chatThreads[currentUserEmail] = { messages: [], userTyping: false };
-            chatThreads[currentUserEmail].userTyping = true;
-            saveState();
+            const emailKey = currentUserEmail.trim().toLowerCase();
+            const sKey = safeKey(emailKey);
+
+            if (!isUserTypingActive) {
+                isUserTypingActive = true;
+                db.collection("config").doc("appData").update({
+                    [`chatThreads.${sKey}.userTyping`]: true
+                }).catch(() => {});
+            }
 
             clearTimeout(userTypingTimer);
             userTypingTimer = setTimeout(() => {
-                if (chatThreads[currentUserEmail]) {
-                    chatThreads[currentUserEmail].userTyping = false;
-                    saveState();
-                }
+                isUserTypingActive = false;
+                db.collection("config").doc("appData").update({
+                    [`chatThreads.${sKey}.userTyping`]: false
+                }).catch(() => {});
             }, 2000);
         }
 
         let adminTypingTimer = null;
+        let isAdminTypingActive = false;
         function handleAdminTypingInput() {
             if (!selectedAdminChatUser) return;
-            if (!chatThreads[selectedAdminChatUser]) chatThreads[selectedAdminChatUser] = { messages: [], adminTyping: false };
-            chatThreads[selectedAdminChatUser].adminTyping = true;
-            saveState();
+            const emailKey = selectedAdminChatUser.trim().toLowerCase();
+            const sKey = safeKey(emailKey);
+
+            if (!isAdminTypingActive) {
+                isAdminTypingActive = true;
+                db.collection("config").doc("appData").update({
+                    [`chatThreads.${sKey}.adminTyping`]: true
+                }).catch(() => {});
+            }
 
             clearTimeout(adminTypingTimer);
             adminTypingTimer = setTimeout(() => {
-                if (chatThreads[selectedAdminChatUser]) {
-                    chatThreads[selectedAdminChatUser].adminTyping = false;
-                    saveState();
-                }
+                isAdminTypingActive = false;
+                db.collection("config").doc("appData").update({
+                    [`chatThreads.${sKey}.adminTyping`]: false
+                }).catch(() => {});
             }, 2000);
         }
 
@@ -1535,39 +1589,62 @@
             const msg = input.value.trim();
             if (!msg) return;
 
-            if (!chatThreads[currentUserEmail]) {
-                chatThreads[currentUserEmail] = { messages: [], lastUserMsgTime: null, agentRepliedSinceLastUser: true, userTyping: false };
+            const emailKey = currentUserEmail.trim().toLowerCase();
+            const sKey = safeKey(emailKey);
+            const newMsgObj = { id: Date.now(), sender: 'user', text: msg, time: new Date().toLocaleTimeString(), seen: false };
+
+            if (!chatThreads[emailKey]) {
+                chatThreads[emailKey] = { messages: [], lastUserMsgTime: null, agentRepliedSinceLastUser: false, userTyping: false };
             }
-            
-            const thread = chatThreads[currentUserEmail];
-            thread.messages.push({ sender: 'user', text: msg, time: new Date().toLocaleTimeString(), seen: false });
-            thread.lastUserMsgTime = Date.now();
-            thread.agentRepliedSinceLastUser = false;
-            thread.userTyping = false;
-            
+            chatThreads[emailKey].messages.push(newMsgObj);
+            chatThreads[emailKey].lastUserMsgTime = Date.now();
+            chatThreads[emailKey].agentRepliedSinceLastUser = false;
+            chatThreads[emailKey].userTyping = false;
+            isUserTypingActive = false;
+
             input.value = '';
             renderUserChatMessages();
-            saveState();
 
-            sendTelegramAlert(`💬 <b>NEW SUPPORT MESSAGE</b>\n\n👤 <b>User:</b> ${currentUserEmail}\n✉️ <b>Message:</b> ${msg}`);
+            // Atomic arrayUnion update prevents message deletion / overwrites
+            db.collection("config").doc("appData").update({
+                [`chatThreads.${sKey}.messages`]: firebase.firestore.FieldValue.arrayUnion(newMsgObj),
+                [`chatThreads.${sKey}.lastUserMsgTime`]: Date.now(),
+                [`chatThreads.${sKey}.agentRepliedSinceLastUser`]: false,
+                [`chatThreads.${sKey}.userTyping`]: false
+            }).catch(() => {
+                db.collection("config").doc("appData").set({
+                    chatThreads: {
+                        [sKey]: {
+                            messages: [newMsgObj],
+                            lastUserMsgTime: Date.now(),
+                            agentRepliedSinceLastUser: false,
+                            userTyping: false
+                        }
+                    }
+                }, { merge: true });
+            });
+
+            sendTelegramAlert(`💬 <b>NEW SUPPORT MESSAGE</b>\n\n👤 <b>User:</b> ${emailKey}\n✉️ <b>Message:</b> ${msg}`);
 
             if (!document.getElementById('admin-tab').classList.contains('hidden')) {
                 renderAdminDashboard();
             }
 
             setTimeout(() => {
-                if (chatThreads[currentUserEmail] && !chatThreads[currentUserEmail].agentRepliedSinceLastUser) {
-                    const currentThread = chatThreads[currentUserEmail];
+                if (chatThreads[emailKey] && !chatThreads[emailKey].agentRepliedSinceLastUser) {
+                    const currentThread = chatThreads[emailKey];
                     const lastMsg = currentThread.messages[currentThread.messages.length - 1];
                     if (!lastMsg || !lastMsg.text.includes("transferred to a new agent")) {
-                        currentThread.messages.push({ 
+                        const autoTransferMsg = { 
+                            id: Date.now(),
                             sender: 'agent', 
                             text: "You're now being transferred to a new agent. Please hold on... If you want a fast response, message support via email support@chroniclewallets.com", 
                             time: new Date().toLocaleTimeString(), 
                             seen: true 
-                        });
-                        saveState();
-                        renderUserChatMessages();
+                        };
+                        db.collection("config").doc("appData").update({
+                            [`chatThreads.${sKey}.messages`]: firebase.firestore.FieldValue.arrayUnion(autoTransferMsg)
+                        }).catch(() => {});
                     }
                 }
             }, 180000);
@@ -1586,18 +1663,37 @@
             const replyText = document.getElementById('admin-reply-msg-input').value.trim();
             if (!replyText) return;
 
-            if (!chatThreads[selectedAdminChatUser]) {
-                chatThreads[selectedAdminChatUser] = { messages: [], lastUserMsgTime: null, agentRepliedSinceLastUser: true };
-            }
+            const emailKey = selectedAdminChatUser.trim().toLowerCase();
+            const sKey = safeKey(emailKey);
+            const replyObj = { id: Date.now(), sender: 'agent', text: `[${agentName}]: ${replyText}`, time: new Date().toLocaleTimeString(), seen: false };
 
-            const thread = chatThreads[selectedAdminChatUser];
-            thread.messages.push({ sender: 'agent', text: `[${agentName}]: ${replyText}`, time: new Date().toLocaleTimeString(), seen: false });
-            thread.agentRepliedSinceLastUser = true;
-            thread.adminTyping = false;
-            
+            if (!chatThreads[emailKey]) {
+                chatThreads[emailKey] = { messages: [], lastUserMsgTime: null, agentRepliedSinceLastUser: true };
+            }
+            chatThreads[emailKey].messages.push(replyObj);
+            chatThreads[emailKey].agentRepliedSinceLastUser = true;
+            chatThreads[emailKey].adminTyping = false;
+            isAdminTypingActive = false;
+
             document.getElementById('admin-reply-msg-input').value = '';
-            saveState();
             renderAdminDashboard();
+
+            // Atomic arrayUnion update delivers immediately and never deletes sent messages
+            db.collection("config").doc("appData").update({
+                [`chatThreads.${sKey}.messages`]: firebase.firestore.FieldValue.arrayUnion(replyObj),
+                [`chatThreads.${sKey}.agentRepliedSinceLastUser`]: true,
+                [`chatThreads.${sKey}.adminTyping`]: false
+            }).catch(() => {
+                db.collection("config").doc("appData").set({
+                    chatThreads: {
+                        [sKey]: {
+                            messages: [replyObj],
+                            agentRepliedSinceLastUser: true,
+                            adminTyping: false
+                        }
+                    }
+                }, { merge: true });
+            });
         }
 
         function saveAdminTerms(e) {
@@ -1646,7 +1742,6 @@
             if (!confirm(`Are you SURE you want to delete user account "${email}"? This action cannot be undone.`)) return;
             usersList = usersList.filter(x => x.email.trim().toLowerCase() !== email.trim().toLowerCase());
             delete userEmails[email];
-            delete chatThreads[email];
             saveState();
             renderAdminDashboard();
             alert(`User account ${email} deleted successfully.`);
@@ -1729,6 +1824,53 @@
             alert(`Successfully assigned step "${actionSteps[stepIndex].title}" to ${userEmail}`);
         }
 
+        // --- CANCEL WITHDRAWAL, REFUND USER & SEND REASON NOTE ---
+        function adminCancelAndRefundWithdrawal(userEmail) {
+            const u = usersList.find(x => x.email.trim().toLowerCase() === userEmail.trim().toLowerCase());
+            if (!u) return;
+
+            const withdrawTx = (u.txs || []).find(t => 
+                (t.id == u.activeTxId) || 
+                (t.type && t.type.toLowerCase().includes('withdraw') && t.status !== 'COMPLETED' && !(t.status && t.status.includes('CANCELLED')))
+            );
+
+            if (!withdrawTx) {
+                alert("No active or pending withdrawal found to cancel for this user.");
+                return;
+            }
+
+            const reason = prompt(`Enter reason for cancelling ${userEmail}'s withdrawal of $${withdrawTx.amount.toFixed(2)} (this note will be sent to the user):`);
+            if (reason === null) return;
+            const cleanReason = reason.trim() || "Cancelled by administrator.";
+
+            const refundTotal = Number(withdrawTx.amount || 0) + Number(withdrawTx.fee || 0);
+            u.usd = Number(u.usd || 0) + refundTotal;
+
+            withdrawTx.status = "CANCELLED (REFUNDED)";
+            withdrawTx.cancelReason = cleanReason;
+
+            u.activeTxId = null;
+            u.stepIdx = 0;
+            u.statusExpiryTime = null;
+
+            // Remove any pending proofs from this user
+            proofQueue = proofQueue.filter(p => p.user.trim().toLowerCase() !== userEmail.trim().toLowerCase());
+
+            sendSimulatedEmail(
+                u.email,
+                "Withdrawal Cancelled & Refunded",
+                `Your withdrawal request of $${withdrawTx.amount.toFixed(2)} has been cancelled and $${refundTotal.toFixed(2)} has been refunded to your USD Fiat balance.\nReason: ${cleanReason}`,
+                "❌ Withdrawal Cancelled & Refunded"
+            );
+
+            saveState();
+            updateBalanceUI();
+            renderAdminDashboard();
+
+            sendTelegramAlert(`🚫 <b>WITHDRAWAL CANCELLED & REFUNDED</b>\n\n👤 <b>User:</b> ${u.email}\n💰 <b>Refunded:</b> $${refundTotal.toFixed(2)}\n📝 <b>Reason:</b> ${cleanReason}`);
+            alert(`Withdrawal cancelled! $${refundTotal.toFixed(2)} has been refunded to ${u.email}'s USD balance.`);
+        }
+
         function approveProof(proofId) {
             const pIndex = proofQueue.findIndex(x => x.id == proofId);
             if (pIndex === -1) return;
@@ -1808,6 +1950,7 @@
                     const accName = withdrawTx && withdrawTx.accName ? withdrawTx.accName : '';
                     const destAddr = withdrawTx && withdrawTx.destAddr ? withdrawTx.destAddr : 'N/A';
                     const stepName = actionSteps[u.stepIdx] ? actionSteps[u.stepIdx].title : 'All Steps Completed / Pending Custom Step';
+                    const isCancelled = withdrawTx && withdrawTx.status && withdrawTx.status.includes('CANCELLED');
                     
                     return `
                         <div style="background:var(--bg-input); padding:0.75rem; margin-bottom:0.6rem; border-radius:8px; border:1px solid var(--border);">
@@ -1816,11 +1959,15 @@
                                     <strong>${u.name || 'User'} (${u.email})</strong> [ID: ${u.userId}]<br>
                                     <span style="font-size:0.82rem; color:var(--accent-green);">Withdrawal Amount: $${amount.toFixed(2)}${fee > 0 ? ` (Fee: $${fee.toFixed(2)})` : ''}</span><br>
                                     <span style="font-size:0.82rem; color:var(--text-muted);">Destination: <strong>${destAddr}</strong> ${bankName ? `(${bankName} - ${accName})` : ''}</span><br>
-                                    <span style="font-size:0.82rem; color:var(--accent-yellow);">Current Step: <strong>${stepName}</strong> (Index: ${u.stepIdx || 0})</span>
+                                    <span style="font-size:0.82rem; color:${isCancelled ? 'var(--accent-red)' : 'var(--accent-yellow)'};">Status / Step: <strong>${isCancelled ? withdrawTx.status : stepName}</strong></span>
+                                    ${withdrawTx && withdrawTx.cancelReason ? `<br><span style="font-size:0.78rem; color:var(--accent-red);">Cancel Note: ${withdrawTx.cancelReason}</span>` : ''}
                                 </div>
                                 <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
-                                    <button class="btn btn-outline" style="width:auto; padding:0.25rem 0.5rem; font-size:0.75rem;" onclick="adminEditUserAppealedFee('${u.email}', ${u.stepIdx || 0})">Edit Appealed Fee</button>
-                                    <button class="btn" style="width:auto; padding:0.25rem 0.5rem; font-size:0.75rem;" onclick="adminOverrideUserStep('${u.email}')">Assign / Override Step</button>
+                                    ${!isCancelled ? `
+                                        <button class="btn btn-outline" style="width:auto; padding:0.25rem 0.5rem; font-size:0.75rem;" onclick="adminEditUserAppealedFee('${u.email}', ${u.stepIdx || 0})">Edit Appealed Fee</button>
+                                        <button class="btn" style="width:auto; padding:0.25rem 0.5rem; font-size:0.75rem;" onclick="adminOverrideUserStep('${u.email}')">Assign / Override Step</button>
+                                        <button class="btn btn-danger" style="width:auto; padding:0.25rem 0.5rem; font-size:0.75rem;" onclick="adminCancelAndRefundWithdrawal('${u.email}')">Cancel & Refund</button>
+                                    ` : `<span class="badge badge-danger">Refunded</span>`}
                                 </div>
                             </div>
                         </div>
@@ -1902,7 +2049,7 @@
                 const profileName = targetUsr ? (targetUsr.name || selectedAdminChatUser) : selectedAdminChatUser;
                 profileTitle.innerText = `💬 Profile: ${profileName} (${selectedAdminChatUser})`;
 
-                activeChatBox.innerHTML = chatThreads[selectedAdminChatUser].messages.map(m => `
+                activeChatBox.innerHTML = (chatThreads[selectedAdminChatUser].messages || []).map(m => `
                     <div style="padding:0.4rem 0.6rem; border-radius:6px; background:${m.sender === 'user' ? 'var(--bg-input)' : 'rgba(99,102,241,0.2)'}; align-self:${m.sender === 'user' ? 'flex-start' : 'flex-end'}; max-width:85%; position:relative; padding-bottom:1.1rem;">
                         <strong>${m.sender === 'user' ? profileName : 'Agent'}:</strong> ${m.text}
                         <span style="position:absolute; bottom:2px; right:6px; font-size:0.65rem; color:${m.seen ? '#3b82f6' : 'var(--text-muted)'};">${m.seen ? '✓✓' : '✓'}</span>
