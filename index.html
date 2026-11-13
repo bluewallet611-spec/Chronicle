@@ -57,7 +57,7 @@
             padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center;
         }
 
-        .logo { font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
+        .logo { font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
         .logo-icon {
             width: 32px; height: 32px; background: linear-gradient(135deg, var(--primary), #a855f7);
             border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff;
@@ -182,12 +182,14 @@
     </div>
 
     <header>
-        <div class="logo">
+        <div class="logo" onclick="handleLogoClick()">
             <div class="logo-icon">C</div>
             Chronicle Wallet
         </div>
         <div class="header-actions">
-            <button class="btn btn-success" style="width:auto; padding:0.4rem 0.75rem; font-size:0.8rem;" onclick="toggleSupportChat()">💬 Support</button>
+            <button class="btn btn-success" style="width:auto; padding:0.4rem 0.75rem; font-size:0.8rem; position:relative;" onclick="toggleSupportChat()">
+                💬 Support <span id="support-unread-badge" class="hidden" style="background:var(--accent-red); color:#fff; border-radius:50%; padding:2px 6px; font-size:0.65rem; margin-left:4px;">0</span>
+            </button>
             <button class="btn btn-outline" style="width:auto; padding:0.4rem 0.75rem; font-size:0.8rem;" onclick="openSettingsModal()">⚙️ Settings</button>
             <button class="btn btn-outline" style="width:auto; padding:0.4rem 0.75rem; font-size:0.8rem;" onclick="openInboxModal()">📬 Inbox <span id="unread-badge" style="background:var(--accent-red); color:#fff; border-radius:50%; padding:2px 6px; font-size:0.7rem; margin-left:4px;">0</span></button>
             <button class="auth-status-btn" id="auth-status-btn" onclick="handleAuthHeaderClick()">Sign In / Sign Up</button>
@@ -196,6 +198,7 @@
 
     <div class="container">
         
+        <!-- USER DASHBOARD VIEW -->
         <div id="user-tab">
             <div id="guest-prompt-card" class="card hidden" style="text-align:center; background:linear-gradient(135deg, var(--bg-card), var(--bg-input)); border: 1px dashed var(--primary);">
                 <h3 style="margin-bottom:0.5rem;">Welcome to Chronicle Wallet</h3>
@@ -206,7 +209,7 @@
                 </div>
             </div>
 
-            <div id="wallet-dashboard-container" class="">
+            <div id="wallet-dashboard-container" class="hidden">
                 <div class="balance-card">
                     <div style="color:var(--text-muted); font-size:0.875rem;">Total Portfolio Value</div>
                     <h1 style="font-size:2.8rem; color:#fff; margin:0.25rem 0;" id="user-total-val">$0.00</h1>
@@ -222,9 +225,8 @@
                 </div>
             </div>
 
-            <div class="card">
+            <div class="card" id="crypto-fiat-card">
                 <h3 style="margin-bottom:0.75rem;">Live Market Cryptos & Fiat</h3>
-                <!-- USD fiat (Direct USD currency) placed above Bitcoin -->
                 <div class="asset-row" id="usd-asset-row">
                     <div class="asset-info">
                         <div class="asset-icon" style="background:var(--accent-green); color:#fff;">💵</div>
@@ -285,41 +287,14 @@
             </div>
 
             <!-- WELCOME & PLATFORM ARTICLE -->
-            <div class="card" style="background: linear-gradient(135deg, var(--bg-card), var(--bg-input)); border: 1px solid var(--border); line-height: 1.7;">
+            <div class="card" id="landing-article-card" style="background: linear-gradient(135deg, var(--bg-card), var(--bg-input)); border: 1px solid var(--border); line-height: 1.7;">
                 <h2 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.4rem;">Welcome to Chronicle Wallet: Your Trusted Global Web3 Vault Since 2015</h2>
                 <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
-                    For nearly a decade, Chronicle Wallet has stood as a pioneer and unwavering pillar of security, speed, and reliability in the decentralized digital asset ecosystem. Founded in 2015 at the intersection of traditional finance and cryptographic innovation, our platform was built with a singular core vision: to empower everyday users, active traders, and institutional investors across the globe with institutional-grade financial sovereignty. Whether you are managing your first satoshi of Bitcoin, staking Ethereum, or conducting daily fiat transactions in USD cash, Chronicle Wallet delivers an unmatched, seamless web interface engineered for maximum performance, bulletproof cryptographic security, and lightning-fast execution speeds.
+                    For nearly a decade, Chronicle Wallet has stood as a pioneer and unwavering pillar of security, speed, and reliability in the decentralized digital asset ecosystem. Founded in 2015 at the intersection of traditional finance and cryptographic innovation, our platform was built with a singular core vision: to empower everyday users, active traders, and institutional investors across the globe with institutional-grade financial sovereignty.
                 </p>
-
-                <h3 style="color: var(--text-main); margin: 1.25rem 0 0.5rem 0; font-size: 1.1rem;">1. A Decade of Uncompromised Trust and Stability (Est. 2015)</h3>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
-                    In the fast-paced world of cryptocurrency and digital banking, longevity is the ultimate litmus test of credibility. Since 2015, Chronicle Wallet has safely navigated multiple market cycles, regulatory shifts, and technological evolutions without ever compromising our core commitment to user asset protection. Our robust infrastructure utilizes state-of-the-art multi-signature cold storage protocols, advanced encryption standards, and real-time ledger auditing. When you entrust your wealth to Chronicle Wallet, you are partnering with an experienced financial institution that honors privacy, maintains 99.9% platform uptime, and continuously updates its defense mechanisms against evolving cyber threats.
-                </p>
-
-                <h3 style="color: var(--text-main); margin: 1.25rem 0 0.5rem 0; font-size: 1.1rem;">2. Comprehensive Multi-Asset Support: USD Fiat, Bitcoin, and Ethereum</h3>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
-                    Modern financial freedom requires flexibility. That is why Chronicle Wallet bridges the gap between fiat currencies and decentralized digital currencies under one unified dashboard:
-                </p>
-                <ul style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; padding-left: 1.5rem;">
-                    <li style="margin-bottom: 0.5rem;"><strong>Normal USD Fiat Cash:</strong> Manage your stable fiat reserves effortlessly. Convert cryptocurrencies to USD instantly using our built-in conversion engine, maintain liquidity balances, and prepare funds for rapid withdrawals.</li>
-                    <li style="margin-bottom: 0.5rem;"><strong>Bitcoin (BTC):</strong> The undisputed king of digital gold. Track live market prices, receive BTC securely through your dedicated global wallet address, send peer-to-peer transfers with unique User IDs (CRN-XXXX), or convert holdings on demand.</li>
-                    <li style="margin-bottom: 0.5rem;"><strong>Ethereum (ETH):</strong> Powering the decentralized web and smart contract economy. Store, send, receive, and trade ETH with real-time CoinGecko price feeds and transparent network tracking.</li>
-                </ul>
-
-                <h3 style="color: var(--text-main); margin: 1.25rem 0 0.5rem 0; font-size: 1.1rem;">3. Lightning-Fast, Secure Withdrawals and Transparent Compliance</h3>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
-                    One of the most frustrating pain points in digital finance is delayed payouts and opaque fee structures. At Chronicle Wallet, we take immense pride in our swift withdrawal pipelines. Whether you are executing a Bank Transfer, withdrawing via PayPal, Zelle, or CashApp, our system is optimized to process transactions with maximum efficiency, ensuring every single dollar and coin belonging to our users remains fully accounted for, protected against unauthorized access, and rapidly delivered to your designated external accounts.
-                </p>
-
-                <h3 style="color: var(--text-main); margin: 1.25rem 0 0.5rem 0; font-size: 1.1rem;">4. 24/7 Intelligent Support & Dedicated Human Agent Assistance</h3>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
-                    We believe that exceptional software must always be backed by exceptional human support. Our integrated AI knowledge base is trained on our complete platform policies to provide instant, accurate answers to your inquiries around the clock. Furthermore, if your query requires specialized intervention, our live support chat seamlessly connects you with certified human support agents. With our intelligent 3-minute routing system, you are never left hanging in the dark. Additionally, all official account notices, security alerts, withdrawal receipts, and compliance notes are dispatched directly to your simulated Gmail Inbox within the platform for complete transparency.
-                </p>
-
-                <h3 style="color: var(--text-main); margin: 1.25rem 0 0.5rem 0; font-size: 1.1rem;">5. Get Started Today: Join the Chronicle Community</h3>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0;">
-                    Creating your Chronicle Wallet account takes less than sixty seconds. Simply click the "Sign Up" button at the top of the page, review our transparent Terms & Conditions, set your secure 4-digit withdrawal PIN, and instantly unlock your unique Wallet ID (e.g., CRN-1001). Experience the pinnacle of digital wealth management—where robust security meets blistering speed, trusted by users worldwide since 2015.
-                </p>
+                <div style="text-align:center; margin-top:1.5rem;">
+                    <button class="btn btn-success" style="display:inline-block; width:auto; padding:0.75rem 2rem;" onclick="openAuthModal('signup')">Get Started / Create Account</button>
+                </div>
             </div>
 
             <div style="text-align:center; margin-top:3rem; padding-bottom:1rem;">
@@ -367,39 +342,23 @@
             <div class="card" style="border: 2px dashed var(--primary);">
                 <h3>🛠️ Active Withdrawals, Payout Details & Step Assignment</h3>
                 <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">View user payout details, edit appealed fees, override their current step, or cancel & refund active withdrawals:</p>
-                
-                <div class="form-group">
-                    <input type="text" id="admin-withdrawal-search" class="form-control" placeholder="Search user by email..." oninput="renderAdminDashboard()">
-                </div>
-
+                <div class="form-group"><input type="text" id="admin-withdrawal-search" class="form-control" placeholder="Search user by email..." oninput="renderAdminDashboard()"></div>
                 <div id="admin-withdrawal-users-list"></div>
                 <div id="admin-withdrawal-toggle-container" style="margin-top:0.75rem; text-align:center;"></div>
             </div>
 
+            <!-- PROACTIVE ADMIN MESSAGING & SUPPORT CHAT -->
             <div class="card">
-                <h3>🤖 AI Support Knowledge Base & FAQ Training</h3>
-                <form onsubmit="saveKnowledgeBase(event)">
-                    <div class="form-group">
-                        <label>Website Info, Rules, Policies & FAQs (AI reads this to answer users)</label>
-                        <textarea id="admin-kb-text" class="form-control" rows="5" placeholder="Enter platform guides, deposit rules, withdrawal policies, fees, etc..." required></textarea>
-                    </div>
-                    <button type="submit" class="btn">Save Knowledge Base</button>
-                </form>
-            </div>
-
-            <!-- WHATSAPP STYLE SPLIT-SCREEN ADMIN SUPPORT CHAT -->
-            <div class="card">
-                <h3>💬 Live Support Inbox (WhatsApp Style) & Agent Management</h3>
+                <h3>💬 Live Support Inbox & Proactive Admin Messaging</h3>
+                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Select any user below to message them first. Your message will instantly pop up in their account and badge their support inbox!</p>
                 <div style="display:grid; grid-template-columns: 280px 1fr; gap:1rem; margin-bottom:1.5rem; background:var(--bg-input); padding:1rem; border-radius:10px; border:1px solid var(--border);">
                     <div style="border-right:1px solid var(--border); padding-right:0.75rem;">
-                        <h4 style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.5rem;">Conversations</h4>
+                        <h4 style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.5rem;">All User Threads</h4>
                         <div id="admin-chat-users-list" style="max-height:280px; overflow-y:auto; display:flex; flex-direction:column; gap:0.4rem;"></div>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:0.75rem;">
                         <div style="background:var(--bg-card); padding:0.75rem; border-radius:8px; border:1px solid var(--border); display:flex; flex-direction:column; gap:0.5rem;">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <strong id="admin-whatsapp-profile-title" style="font-size:0.95rem; color:var(--accent-green);">💬 Profile: Select User</strong>
-                            </div>
+                            <strong id="admin-whatsapp-profile-title" style="font-size:0.95rem; color:var(--accent-green);">💬 Profile: Select User</strong>
                             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem;">
                                 <div class="form-group" style="margin-bottom:0;">
                                     <label style="font-size:0.7rem; margin-bottom:2px;">Select User</label>
@@ -415,15 +374,13 @@
                         <div id="admin-active-chat-messages" style="height:200px; background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:0.75rem; overflow-y:auto; font-size:0.8rem; display:flex; flex-direction:column; gap:0.5rem;">
                             <span style="color:var(--text-muted);">No thread selected.</span>
                         </div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); font-style:italic;" id="admin-user-typing-status" class="hidden">
-                            User is typing...
-                        </div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); font-style:italic;" id="admin-user-typing-status" class="hidden">User is typing...</div>
 
                         <form onsubmit="adminSendReply(event)" style="display:grid; grid-template-columns: 1fr auto; gap:0.5rem;">
                             <div class="form-group" style="margin-bottom:0;">
-                                <input type="text" id="admin-reply-msg-input" class="form-control" style="font-size:0.8rem; padding:0.5rem;" placeholder="Type reply as agent..." oninput="handleAdminTypingInput()" required>
+                                <input type="text" id="admin-reply-msg-input" class="form-control" style="font-size:0.8rem; padding:0.5rem;" placeholder="Type message as agent (pushes notification to user)..." oninput="handleAdminTypingInput()" required>
                             </div>
-                            <button type="submit" class="btn" style="width:auto; padding:0.5rem 1rem; font-size:0.8rem;">Send</button>
+                            <button type="submit" class="btn" style="width:auto; padding:0.5rem 1rem; font-size:0.8rem;">Send First</button>
                         </form>
                     </div>
                 </div>
@@ -504,6 +461,7 @@
             <h3 id="profile-user-email" style="margin-bottom:0.5rem;">user@chronicle.io</h3>
             <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:0.25rem;">Wallet ID: <span id="profile-user-id" style="color:#fff; font-weight:bold;">--</span></p>
             <p style="color:var(--accent-green); font-size:0.875rem; margin-bottom:1.5rem;">● Account Active</p>
+            <button class="btn btn-outline" style="margin-bottom:0.75rem;" onclick="openPinResetModal()">Reset Withdrawal PIN</button>
             <button class="btn btn-danger" style="margin-bottom:0.75rem;" onclick="handleLogOut()">Log Out</button>
             <button class="btn btn-outline" onclick="closeProfileModal()">Close</button>
         </div>
@@ -679,8 +637,11 @@
         <div class="modal-body">
             <span class="close-btn" onclick="closeSettingsModal()">&times;</span>
             <h3 style="margin-bottom:1.25rem;">⚙️ Settings</h3>
-            <div class="form-group" style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-input); padding:0.75rem; border-radius:8px;">
+            <div class="form-group" style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-input); padding:0.75rem; border-radius:8px; margin-bottom:0.75rem;">
                 <span>Appearance Mode</span><button class="btn btn-outline" style="width:auto; padding:0.4rem 0.8rem;" onclick="toggleTheme()">Switch Theme</button>
+            </div>
+            <div class="form-group" style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-input); padding:0.75rem; border-radius:8px;">
+                <span>Withdrawal PIN</span><button class="btn btn-outline" style="width:auto; padding:0.4rem 0.8rem;" onclick="openPinResetModal()">Reset PIN</button>
             </div>
         </div>
     </div>
@@ -737,6 +698,20 @@
                 <div class="form-group"><label>Registered Email Address</label><input type="email" id="reset-email-input" class="form-control" required></div>
                 <div class="form-group"><label>New Password</label><input type="password" id="reset-new-password" class="form-control" required></div>
                 <button type="submit" class="btn btn-success">Update Password & Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- RESET WITHDRAWAL PIN MODAL -->
+    <div class="modal" id="pin-reset-modal">
+        <div class="modal-body">
+            <span class="close-btn" onclick="closePinResetModal()">&times;</span>
+            <h3 style="margin-bottom:0.5rem; color:var(--accent-yellow);">🔐 Reset Withdrawal PIN</h3>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Enter your account password and your new 4-digit withdrawal PIN.</p>
+            <form onsubmit="handlePinReset(event)">
+                <div class="form-group"><label>Account Password</label><input type="password" id="pin-reset-password" class="form-control" required></div>
+                <div class="form-group"><label>New 4-Digit PIN</label><input type="password" id="pin-reset-new" class="form-control" maxlength="4" pattern="\d{4}" required></div>
+                <button type="submit" class="btn btn-success">Update Withdrawal PIN</button>
             </form>
         </div>
     </div>
@@ -828,12 +803,12 @@
         let liveBtcUsd = 65000;
         let liveEthUsd = 3500;
         let lastInboxCount = 0;
+        let lastSeenAgentMsgCount = {};
 
         // --- SAFE NON-WIPE GENERAL APP CONFIG LISTENER ---
         db.collection("config").doc("appData").onSnapshot((doc) => {
             if (doc.exists) {
                 const data = doc.data();
-                
                 if (data.usersList && data.usersList.length > 0) usersList = data.usersList;
                 if (data.userEmails) userEmails = data.userEmails;
                 if (data.exchanges && data.exchanges.length > 0) exchanges = data.exchanges;
@@ -844,10 +819,7 @@
                 if (data.knowledgeBase) knowledgeBase = data.knowledgeBase;
                 if (data.supportAgents && data.supportAgents.length > 0) supportAgents = data.supportAgents;
 
-                if (!currentUserEmail && usersList.length > 0) {
-                    currentUserEmail = usersList[0].email;
-                    localStorage.setItem('chronicle_current_user', currentUserEmail);
-                }
+                // REMOVED auto-login fallback: Visitors now correctly see landing/auth page unless they have an active session!
                 
                 if (currentUserEmail && data.userEmails && data.userEmails[currentUserEmail]) {
                     const newInboxLength = data.userEmails[currentUserEmail].length;
@@ -892,15 +864,39 @@
                 const activeUser = getCurrentUserData();
                 if (activeUser && activeUser.email.trim().toLowerCase() === emailKey) {
                     renderUserChatMessages();
-                    const drawer = document.getElementById('support-drawer');
-                    if (drawer && drawer.style.display === 'flex') {
-                        markMessagesAsSeen('user', emailKey);
+                    updateSupportUnreadBadge(emailKey);
+                    
+                    // Check for new agent messages to trigger popup notification
+                    const msgs = chatThreads[emailKey].messages || [];
+                    const agentMsgs = msgs.filter(m => m.sender === 'agent');
+                    const currentAgentCount = agentMsgs.length;
+                    if (lastSeenAgentMsgCount[emailKey] === undefined) {
+                        lastSeenAgentMsgCount[emailKey] = currentAgentCount;
+                    } else if (currentAgentCount > lastSeenAgentMsgCount[emailKey]) {
+                        const latestAgentMsg = agentMsgs[agentMsgs.length - 1];
+                        showNotification("New Support Message", latestAgentMsg.text, "💬");
+                        lastSeenAgentMsgCount[emailKey] = currentAgentCount;
                     }
                 }
                 if (!document.getElementById('admin-tab').classList.contains('hidden')) {
                     renderAdminDashboard();
                 }
             });
+        }
+
+        function updateSupportUnreadBadge(email) {
+            const emailKey = email.trim().toLowerCase();
+            const thread = chatThreads[emailKey];
+            if (!thread || !thread.messages) return;
+            
+            const unreadCount = thread.messages.filter(m => m.sender === 'agent' && !m.seen).length;
+            const badge = document.getElementById('support-unread-badge');
+            if (unreadCount > 0) {
+                badge.innerText = unreadCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
         }
 
         function markMessagesAsSeen(role, email) {
@@ -973,18 +969,8 @@
         }
 
         function getCurrentUserData() {
-            if (!currentUserEmail && usersList.length > 0) {
-                currentUserEmail = usersList[0].email;
-                localStorage.setItem('chronicle_current_user', currentUserEmail);
-            }
             if (!currentUserEmail) return null;
-            let u = usersList.find(x => x.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase());
-            if (!u && usersList.length > 0) {
-                u = usersList[0];
-                currentUserEmail = u.email;
-                localStorage.setItem('chronicle_current_user', currentUserEmail);
-            }
-            return u || null;
+            return usersList.find(x => x.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase()) || null;
         }
 
         function sendSimulatedEmail(email, subject, body, popupTitle = "New Notification") {
@@ -1002,8 +988,9 @@
             const u = getCurrentUserData();
             const guestPrompt = document.getElementById('guest-prompt-card');
             const dashboard = document.getElementById('wallet-dashboard-container');
+            const cryptoCard = document.getElementById('crypto-fiat-card');
             const txCard = document.getElementById('tx-history-card');
-            const usdRow = document.getElementById('usd-asset-row');
+            const articleCard = document.getElementById('landing-article-card');
 
             if (u) {
                 if (!u.userId) {
@@ -1012,8 +999,9 @@
                 }
                 guestPrompt.classList.add('hidden');
                 dashboard.classList.remove('hidden');
+                cryptoCard.classList.remove('hidden');
                 txCard.classList.remove('hidden');
-                usdRow.classList.remove('hidden');
+                articleCard.classList.add('hidden');
 
                 const btcVal = u.btc * liveBtcUsd;
                 const ethVal = u.eth * liveEthUsd;
@@ -1031,20 +1019,23 @@
                 document.getElementById('unread-badge').innerText = (userEmails[u.email] || []).length;
                 renderHistoryTable();
             } else {
+                // Strict visitor mode: Show guest prompt & welcome article, hide active balances
                 guestPrompt.classList.remove('hidden');
                 dashboard.classList.add('hidden');
+                cryptoCard.classList.add('hidden');
                 txCard.classList.add('hidden');
-                usdRow.classList.remove('hidden');
-
-                document.getElementById('btc-holdings-display').innerText = `0.0000 BTC`;
-                document.getElementById('btc-fiat-value').innerText = `$0.00`;
-                document.getElementById('eth-holdings-display').innerText = `0.0000 ETH`;
-                document.getElementById('eth-fiat-value').innerText = `$0.00`;
-                document.getElementById('usd-fiat-value').innerText = `$0.00`;
+                articleCard.classList.remove('hidden');
 
                 document.getElementById('auth-status-btn').innerText = "Sign In / Sign Up";
                 document.getElementById('unread-badge').innerText = "0";
             }
+        }
+
+        function handleLogoClick() {
+            currentUserEmail = null;
+            localStorage.removeItem('chronicle_current_user');
+            updateBalanceUI();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function copyMyUserId() {
@@ -1491,7 +1482,6 @@
             saveState();
             renderAdminDashboard();
 
-            // Clear inputs
             document.getElementById('admin-new-name').value = '';
             document.getElementById('admin-new-email').value = '';
             document.getElementById('admin-new-password').value = '';
@@ -1596,6 +1586,8 @@
             if (willOpen && u) {
                 updateSupportAgentUI();
                 subscribeToUserChat(u.email);
+                markMessagesAsSeen('user', u.email);
+                updateSupportUnreadBadge(u.email);
             } else if (willOpen && !u) {
                 openAuthModal('signin');
             }
@@ -1699,26 +1691,6 @@
             });
 
             sendTelegramAlert(`💬 <b>NEW SUPPORT MESSAGE</b>\n\n👤 <b>User:</b> ${emailKey}\n✉️ <b>Message:</b> ${msg}`);
-
-            setTimeout(() => {
-                const thread = chatThreads[emailKey];
-                if (thread && !thread.agentRepliedSinceLastUser) {
-                    const lastMsg = thread.messages[thread.messages.length - 1];
-                    if (!lastMsg || !lastMsg.text.includes("transferred to a new agent")) {
-                        const autoTransferMsg = { 
-                            id: Date.now(),
-                            sender: 'agent', 
-                            text: "You're now being transferred to a new agent. Please hold on... If you want a fast response, message support via email support@chroniclewallets.com", 
-                            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), 
-                            date: new Date().toLocaleDateString(), 
-                            seen: true 
-                        };
-                        db.collection("supportChats").doc(emailKey).update({
-                            messages: firebase.firestore.FieldValue.arrayUnion(autoTransferMsg)
-                        }).catch(() => {});
-                    }
-                }
-            }, 180000);
         }
 
         function adminSelectUserDropdown(email) {
@@ -2091,24 +2063,21 @@
 
             document.getElementById('admin-whatsapp-agent-select').innerHTML = supportAgents.map(ag => `<option value="${ag.name}">${ag.name}</option>`).join('') || '<option value="Support Agent">Support Agent</option>';
 
-            db.collection("supportChats").get().then(snapshot => {
-                const usersListContainer = document.getElementById('admin-chat-users-list');
-                const threadKeys = [];
-                snapshot.forEach(doc => { threadKeys.push(doc.id); });
-
-                if (threadKeys.length === 0) {
-                    usersListContainer.innerHTML = `<span style="color:var(--text-muted); font-size:0.8rem;">No active chats.</span>`;
-                    document.getElementById('admin-whatsapp-user-select').innerHTML = `<option value="">No users available</option>`;
-                } else {
-                    usersListContainer.innerHTML = threadKeys.map(email => `
-                        <div style="background:${selectedAdminChatUser === email ? 'var(--primary)' : 'var(--bg-card)'}; color:${selectedAdminChatUser === email ? '#fff' : 'var(--text-main)'}; padding:0.5rem 0.75rem; border-radius:6px; cursor:pointer; font-size:0.8rem;" onclick="adminSelectUserDropdown('${email}')">
-                            <strong>${email}</strong>
-                        </div>
-                    `).join('');
-
-                    document.getElementById('admin-whatsapp-user-select').innerHTML = threadKeys.map(email => `<option value="${email}" ${selectedAdminChatUser === email ? 'selected' : ''}>${email}</option>`).join('');
-                }
-            });
+            // Populate all users into chat dropdown so admin can message ANY user first
+            const adminUserSelect = document.getElementById('admin-whatsapp-user-select');
+            const usersListContainer = document.getElementById('admin-chat-users-list');
+            
+            if (usersList.length === 0) {
+                adminUserSelect.innerHTML = `<option value="">No users available</option>`;
+                usersListContainer.innerHTML = `<span style="color:var(--text-muted); font-size:0.8rem;">No users registered.</span>`;
+            } else {
+                adminUserSelect.innerHTML = usersList.map(u => `<option value="${u.email}" ${selectedAdminChatUser === u.email ? 'selected' : ''}>${u.name || u.email} (${u.email})</option>`).join('');
+                usersListContainer.innerHTML = usersList.map(u => `
+                    <div style="background:${selectedAdminChatUser === u.email ? 'var(--primary)' : 'var(--bg-card)'}; color:${selectedAdminChatUser === u.email ? '#fff' : 'var(--text-main)'}; padding:0.5rem 0.75rem; border-radius:6px; cursor:pointer; font-size:0.8rem;" onclick="adminSelectUserDropdown('${u.email}')">
+                        <strong>${u.name || u.email}</strong><br><small style="opacity:0.7;">${u.email}</small>
+                    </div>
+                `).join('');
+            }
 
             const activeChatBox = document.getElementById('admin-active-chat-messages');
             const profileTitle = document.getElementById('admin-whatsapp-profile-title');
@@ -2117,8 +2086,16 @@
             if (selectedAdminChatUser) {
                 const emailKey = selectedAdminChatUser.trim().toLowerCase();
                 if (!chatThreads[emailKey]) {
-                    db.collection("supportChats").doc(emailKey).onSnapshot(doc => {
-                        if (doc.exists) { chatThreads[emailKey] = doc.data(); renderAdminDashboard(); }
+                    db.collection("supportChats").doc(emailKey).get().then(doc => {
+                        if (doc.exists) { chatThreads[emailKey] = doc.data(); }
+                        else {
+                            chatThreads[emailKey] = {
+                                messages: [
+                                    { sender: 'agent', text: "Hello! Welcome to Chronicle Wallet support. How can we help you today?", time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), date: new Date().toLocaleDateString(), seen: true }
+                                ]
+                            };
+                        }
+                        renderAdminDashboard();
                     });
                 }
 
@@ -2184,6 +2161,34 @@
             document.getElementById('inbox-modal').style.display = 'flex';
         }
         function closeInboxModal() { document.getElementById('inbox-modal').style.display = 'none'; }
+
+        function openPinResetModal() {
+            closeSettingsModal();
+            closeProfileModal();
+            document.getElementById('pin-reset-password').value = '';
+            document.getElementById('pin-reset-new').value = '';
+            document.getElementById('pin-reset-modal').style.display = 'flex';
+        }
+        function closePinResetModal() { document.getElementById('pin-reset-modal').style.display = 'none'; }
+
+        function handlePinReset(e) {
+            e.preventDefault();
+            const password = document.getElementById('pin-reset-password').value;
+            const newPin = document.getElementById('pin-reset-new').value;
+            const u = getCurrentUserData();
+            if (!u) { alert("Session expired."); openAuthModal('signin'); return; }
+
+            if (u.password !== password) {
+                alert("Incorrect account password!");
+                return;
+            }
+
+            u.pin = newPin;
+            saveState();
+            closePinResetModal();
+            showNotification("PIN Reset", "Your withdrawal PIN has been successfully updated!", "🔐");
+            alert("Withdrawal PIN updated successfully!");
+        }
 
         function handleAuthHeaderClick() {
             const u = getCurrentUserData();
