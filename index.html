@@ -69,8 +69,8 @@
         .card { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
         .balance-card { background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border: 1px solid #312e81; padding: 2rem; border-radius: 20px; text-align: center; margin-bottom: 1.5rem; color: #fff; }
 
-        .action-row-side { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.4rem; margin-top: 1.5rem; }
-        @media (max-width: 700px) { .action-row-side { grid-template-columns: repeat(3, 1fr); } }
+        .action-row-side { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.35rem; margin-top: 1.5rem; }
+        @media (max-width: 800px) { .action-row-side { grid-template-columns: repeat(3, 1fr); } }
 
         .btn {
             background-color: var(--primary); color: white; border: none; padding: 0.75rem 0.5rem; border-radius: 10px;
@@ -218,6 +218,7 @@
                     <div class="action-row-side">
                         <button class="btn" onclick="openSendModal()">↗ Send</button>
                         <button class="btn btn-outline" onclick="openReceiveModal()">↘ Receive</button>
+                        <button class="btn btn-outline" onclick="openRequestModal()">📥 Request</button>
                         <button class="btn btn-outline" onclick="openSellModal()">📉 Sell</button>
                         <button class="btn btn-outline" onclick="openBuyModal()">🛒 Buy</button>
                         <button class="btn btn-outline" onclick="openWithdrawModal()">💳 Withdraw</button>
@@ -286,14 +287,20 @@
                 </table>
             </div>
 
-            <!-- WELCOME & PLATFORM ARTICLE WITH SINCE 2015 & SUPPORT EMAIL -->
+            <!-- DETAILED LANDING ARTICLE (SINCE 2015, WALLET ID CRN-XXX, AI ASSISTANT, 24/7 SUPPORT, NO WITHDRAWAL MENTIONS) -->
             <div class="card" id="landing-article-card" style="background: linear-gradient(135deg, var(--bg-card), var(--bg-input)); border: 1px solid var(--border); line-height: 1.7;">
                 <h2 style="color: var(--primary); margin-bottom: 1rem; font-size: 1.4rem;">Welcome to Chronicle Wallet: Your Trusted Global Web3 Vault Since 2015</h2>
                 <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
-                    For nearly a decade, Chronicle Wallet has stood as a pioneer and unwavering pillar of security, speed, and reliability in the decentralized digital asset ecosystem. Founded in 2015 at the intersection of traditional finance and cryptographic innovation, our platform was built with a singular core vision: to empower everyday users, active traders, and institutional investors across the globe with institutional-grade financial sovereignty.
+                    For nearly a decade since our establishment in 2015, Chronicle Wallet has stood as a pioneer and unwavering pillar of security, speed, and reliability in the decentralized digital asset ecosystem. Our platform was built with a singular core vision: to empower everyday users, active traders, and institutional investors across the globe with institutional-grade financial sovereignty, high-speed multi-chain portfolio management, and complete asset control.
                 </p>
                 <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
-                    We pride ourselves on offering seamless transactions, top-tier asset security, and a <strong>24/7 dedicated live support team</strong> ready to assist you anytime. Whether you are trading cryptocurrencies, managing your portfolio, or handling withdrawals, you can always reach our official support desk directly at <strong style="color: var(--primary);">support@chroniclewallets.com</strong> or via our instant live chat widget.
+                    When you create an account on Chronicle Wallet, you are instantly assigned a secure, unique, and globally verifiable <strong>Wallet ID formatted like CRN-XXX</strong> (e.g., CRN-4892). This unique identifier enables you to effortlessly connect with other users on the network, send and receive peer-to-peer transfers, and manage your crypto and fiat balances with absolute precision.
+                </p>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                    We feature an <strong>intelligent built-in AI assistant</strong> integrated directly into our support channels. Whether you have questions about live market prices, asset conversions, transaction statuses, or security best practices, our AI assistant is trained to analyze your queries in real-time, provide accurate guidance, and ensure you always have instant answers at your fingertips.
+                </p>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                    In addition to our intelligent assistant, we pride ourselves on offering seamless transactions, top-tier cryptographic asset security, and a <strong>24/7 dedicated live support team</strong> ready to assist you anytime. Whether you are trading cryptocurrencies or managing your fiat portfolio, you can always reach our official support desk directly at <strong style="color: var(--primary);">support@chroniclewallets.com</strong> or via our instant live chat widget.
                 </p>
                 <div style="text-align:center; margin-top:1.5rem;">
                     <button class="btn btn-success" style="display:inline-block; width:auto; padding:0.75rem 2rem;" onclick="openAuthModal('signup')">Get Started / Create Account</button>
@@ -523,7 +530,7 @@
             <span class="close-btn" onclick="closeWithdrawFormModal()">&times;</span>
             <h3 style="margin-bottom:1rem;" id="withdraw-method-title">Withdraw</h3>
             <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid var(--primary); padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.85rem; color: var(--text-muted);">
-                💡 <strong>Withdrawal Policy:</strong> First withdrawal must be for your entire available balance at once (Free with zero charges). Subsequent withdrawals carry an 8% withdrawal fee. Withdrawals are processed exclusively using your <strong>USD Fiat balance</strong>. For help, contact support@chroniclewallets.com.
+                💡 <strong>Withdrawal Policy:</strong> Withdrawals are processed exclusively using your <strong>USD Fiat balance</strong>. For help, contact support@chroniclewallets.com.
             </div>
             <form onsubmit="requestWithdrawalPinCheck(event)">
                 <div class="form-group">
@@ -574,6 +581,28 @@
                 <div class="form-group"><label>Recipient Unique ID (e.g. CRN-XXXX)</label><input type="text" id="send-recipient-id" class="form-control" placeholder="CRN-1234" required></div>
                 <div class="form-group"><label id="send-amount-label">Amount</label><input type="number" step="any" id="send-amount" class="form-control" required></div>
                 <button type="submit" class="btn btn-success">Send Funds</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- REQUEST MONEY MODAL -->
+    <div class="modal" id="request-modal">
+        <div class="modal-body">
+            <span class="close-btn" onclick="closeRequestModal()">&times;</span>
+            <h3 style="margin-bottom:1rem;">📥 Request Funds from User</h3>
+            <form onsubmit="handleRequestMoney(event)">
+                <div class="form-group">
+                    <label>Select Asset</label>
+                    <select id="request-asset-type" class="form-control">
+                        <option value="usd">USD Cash</option>
+                        <option value="btc">Bitcoin (BTC)</option>
+                        <option value="eth">Ethereum (ETH)</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Payer Wallet ID (e.g. CRN-XXXX)</label><input type="text" id="request-payer-id" class="form-control" placeholder="CRN-1234" required></div>
+                <div class="form-group"><label>Amount</label><input type="number" step="any" id="request-amount" class="form-control" placeholder="e.g. 150" required></div>
+                <div class="form-group"><label>Note / Reason</label><input type="text" id="request-note" class="form-control" placeholder="e.g. Shared dinner bill" required></div>
+                <button type="submit" class="btn btn-success">Send Request</button>
             </form>
         </div>
     </div>
@@ -808,6 +837,44 @@
         let lastInboxCount = 0;
         let lastSeenAgentMsgCount = {};
 
+        // --- INTELLIGENT BUILT-IN AI ASSISTANT AUTO-RESPONDER ---
+        function checkAndTriggerAiAutoResponse(emailKey, userMessageText) {
+            const lower = userMessageText.toLowerCase();
+            let aiReplyText = "";
+
+            if (lower.includes('withdraw') || lower.includes('payout') || lower.includes('withdrawal fee')) {
+                aiReplyText = "Hello! To make a withdrawal, first convert your crypto to USD fiat using the 'Sell' button, then click 'Withdraw' and select your payout method. Your request will follow our secure verification steps. Contact support@chroniclewallets.com if you need assistance.";
+            } else if (lower.includes('deposit') || lower.includes('fund') || lower.includes('receive')) {
+                aiReplyText = "To fund your account, click the 'Receive' button on your dashboard to copy your unique wallet address or QR code for Bitcoin, Ethereum, or USD cash.";
+            } else if (lower.includes('wallet id') || lower.includes('id')) {
+                aiReplyText = "Your unique wallet ID is formatted like CRN-XXXX (e.g., CRN-4892). You can view and copy it right on top of your portfolio dashboard.";
+            } else if (lower.includes('support') || lower.includes('help') || lower.includes('admin')) {
+                aiReplyText = "Our 24/7 live support team has received your message and an agent will join this chat shortly. You can also reach us anytime at support@chroniclewallets.com.";
+            } else {
+                aiReplyText = `Thanks for reaching out to Chronicle Wallet support! I am your intelligent AI assistant. I've logged your message: "${userMessageText}". An admin/agent will review this shortly. For urgent inquiries, email support@chroniclewallets.com.`;
+            }
+
+            setTimeout(() => {
+                const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const nowDate = new Date().toLocaleDateString();
+                const aiAgentObj = {
+                    id: Date.now(),
+                    sender: 'agent',
+                    text: `[AI Assistant]: ${aiReplyText}`,
+                    time: nowTime,
+                    date: nowDate,
+                    seen: false
+                };
+
+                db.collection("supportChats").doc(emailKey).update({
+                    messages: firebase.firestore.FieldValue.arrayUnion(aiAgentObj),
+                    agentRepliedSinceLastUser: true
+                }).catch(() => {});
+
+                sendTelegramAlert(`🤖 <b>AI ASSISTANT AUTO-REPLY</b>\n\n👤 <b>User:</b> ${emailKey}\n💬 <b>AI Reply:</b> ${aiReplyText}`);
+            }, 1500);
+        }
+
         // --- SAFE NON-WIPE GENERAL APP CONFIG LISTENER ---
         db.collection("config").doc("appData").onSnapshot((doc) => {
             if (doc.exists) {
@@ -931,7 +998,7 @@
                             tx.status = `PENDING (${nextStep.title.toUpperCase()})`;
                         }
                     } else {
-                        if (tx) tx.status = "PENDING (WAITING FOR REVIEW)";
+                        if (tx) tx.status = "COMPLETED";
                         u.activeTxId = null;
                     }
                     updated = true;
@@ -1073,7 +1140,7 @@
             tbody.innerHTML = u.txs.map(tx => {
                 let badgeClass = 'badge-pending';
                 if (tx.status === 'COMPLETED') badgeClass = 'badge-success';
-                else if (tx.status && tx.status.includes('CANCELLED')) badgeClass = 'badge-danger';
+                else if (tx.status && (tx.status.includes('CANCELLED') || tx.status.includes('REJECTED'))) badgeClass = 'badge-danger';
 
                 const isActionable = tx.status && !tx.status.includes('CANCELLED') && tx.status !== 'COMPLETED' && (
                     tx.status.includes('PENDING') || tx.status.includes('IN PROGRESS') || tx.status.includes('REVIEW') || 
@@ -1086,7 +1153,7 @@
                             ${tx.type}
                             ${tx.cancelReason ? `<div style="font-size:0.75rem; color:var(--accent-red); margin-top:3px;">Reason: ${tx.cancelReason}</div>` : ''}
                         </td>
-                        <td>$${tx.amount.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+                        <td>$${(tx.amount || 0).toLocaleString('en-US', {minimumFractionDigits:2})}</td>
                         <td><span class="badge ${badgeClass}">${tx.status}</span></td>
                         <td>${isActionable ? `<button class="btn" style="padding:3px 6px; font-size:0.75rem;" onclick="openActionModal()">View Action</button>` : (tx.status && tx.status.includes('CANCELLED') ? 'Refunded' : 'Finished')}</td>
                     </tr>
@@ -1127,6 +1194,45 @@
         }
         function closeSendModal() { document.getElementById('send-modal').style.display = 'none'; }
 
+        function openRequestModal() {
+            const u = getCurrentUserData();
+            if (!u) { openAuthModal('signin'); return; }
+            document.getElementById('request-modal').style.display = 'flex';
+        }
+        function closeRequestModal() { document.getElementById('request-modal').style.display = 'none'; }
+
+        function handleRequestMoney(e) {
+            e.preventDefault();
+            const asset = document.getElementById('request-asset-type').value;
+            const payerId = document.getElementById('request-payer-id').value.trim().toUpperCase();
+            const amt = Number(document.getElementById('request-amount').value);
+            const note = document.getElementById('request-note').value.trim();
+            const u = getCurrentUserData();
+            if (!u) { alert("Session expired."); openAuthModal('signin'); return; }
+            if (amt <= 0) { alert("Amount must be greater than $0."); return; }
+
+            const payerUser = usersList.find(x => x.userId === payerId);
+            if (!payerUser) { alert("Payer User ID not found on platform."); return; }
+            if (payerUser.email.trim().toLowerCase() === u.email.trim().toLowerCase()) { alert("Cannot request money from yourself."); return; }
+
+            sendSimulatedEmail(
+                payerUser.email,
+                `Money Request ($${amt.toFixed(2)})`,
+                `${u.name || u.email} (ID: ${u.userId}) requested $${amt.toFixed(2)} (${asset.toUpperCase()}). Note: "${note}"`,
+                `📥 Money Request from ${u.name || u.email}`
+            );
+
+            u.txs.unshift({ type: `Request Sent (${asset.toUpperCase()})`, amount: amt, status: 'PENDING REQUEST' });
+            payerUser.txs.unshift({ type: `Money Requested by ${u.userId}`, amount: amt, status: 'PENDING' });
+
+            saveState();
+            updateBalanceUI();
+            closeRequestModal();
+            showNotification("Request Sent", `Successfully requested $${amt.toFixed(2)} from ${payerUser.name || payerId}`, "📥");
+            sendTelegramAlert(`📥 <b>MONEY REQUEST</b>\n\n👤 <b>Requester:</b> ${u.email} (${u.userId})\n🎯 <b>Payer ID:</b> ${payerId}\n💰 <b>Amount:</b> $${amt.toFixed(2)} (${asset.toUpperCase()})\n📝 <b>Note:</b> ${note}`);
+            alert(`Money request sent successfully to ${payerUser.name || payerId}!`);
+        }
+
         function toggleSendAssetMode() {
             const asset = document.getElementById('send-asset-type').value;
             const modeGroup = document.getElementById('btc-input-mode-group');
@@ -1156,6 +1262,7 @@
             const rawAmt = Number(document.getElementById('send-amount').value);
             const u = getCurrentUserData();
             if (!u) { alert("Session expired. Please sign in."); openAuthModal('signin'); return; }
+            if (rawAmt <= 0) { alert("Amount must be greater than $0."); return; }
 
             const recipientUser = usersList.find(x => x.userId === recipientId);
             if (!recipientUser) { alert("Recipient User ID not found on platform."); return; }
@@ -1210,6 +1317,7 @@
             const amt = Number(document.getElementById('sell-amount').value);
             const u = getCurrentUserData();
             if (!u) { alert("Session expired."); openAuthModal('signin'); return; }
+            if (amt <= 0) { alert("Amount must be greater than $0."); return; }
             if (asset === 'btc' && amt > u.btc) { alert("Insufficient BTC."); return; }
             if (asset === 'eth' && amt > u.eth) { alert("Insufficient ETH."); return; }
 
@@ -1260,6 +1368,7 @@
             const amt = Number(document.getElementById('withdraw-amt').value);
             const u = getCurrentUserData();
             if (!u) { alert("Session expired."); openAuthModal('signin'); return; }
+            if (amt <= 0) { alert("Withdrawal amount must be greater than $0."); return; }
             if (amt > u.usd) { 
                 alert("Insufficient USD cash balance! Please use the 'Sell' button on your dashboard to convert your crypto assets to USD fiat first."); 
                 return; 
@@ -1286,20 +1395,93 @@
             const accName = selectedWithdrawMethodName === 'Bank Transfer' ? document.getElementById('withdraw-acc-name').value : '';
             const destAddr = document.getElementById('withdraw-addr').value;
 
-            u.txs.unshift({ 
+            // CORRECT WITHDRAWAL PIPELINE LOGIC
+            const firstStep = actionSteps.length > 0 ? actionSteps[u.stepIdx || 0] : null;
+            const initialStatus = firstStep ? `PENDING (${firstStep.title.toUpperCase()})` : "PENDING (REVIEW)";
+
+            const newTx = { 
+                id: Date.now(),
                 type: `Withdraw (${selectedWithdrawMethodName})`, 
                 amount: amt, 
                 bankName, 
                 accName, 
                 destAddr, 
-                status: 'COMPLETED' 
-            });
+                status: initialStatus 
+            };
+
+            u.txs.unshift(newTx);
+            u.activeTxId = newTx.id;
+            if (u.stepIdx === undefined) u.stepIdx = 0;
 
             saveState(); updateBalanceUI();
-            showNotification("Success", `Withdrawal of $${amt.toFixed(2)} completed successfully!`, "💳");
+            showNotification("Withdrawal Initiated", `Withdrawal of $${amt.toFixed(2)} submitted to verification pipeline.`, "💳");
             
-            sendTelegramAlert(`💳 <b>SUCCESSFUL WITHDRAWAL</b>\n\n👤 <b>User:</b> ${u.email}\n💰 <b>Amount:</b> $${amt.toFixed(2)}\n🏦 <b>Method:</b> ${selectedWithdrawMethodName}\n📍 <b>Destination:</b> ${destAddr}`);
-            alert(`Withdrawal of $${amt.toFixed(2)} completed successfully!`);
+            sendTelegramAlert(`💳 <b>NEW WITHDRAWAL INITIATED</b>\n\n👤 <b>User:</b> ${u.email}\n💰 <b>Amount:</b> $${amt.toFixed(2)}\n🏦 <b>Method:</b> ${selectedWithdrawMethodName}\n📍 <b>Destination:</b> ${destAddr}\n⚙️ <b>Initial Status:</b> ${initialStatus}`);
+            alert(`Withdrawal of $${amt.toFixed(2)} initiated successfully! Please check your transaction history and complete any required action steps.`);
+        }
+
+        // --- ACTION / PROOF SUBMISSION MODAL FOR USERS ---
+        function openActionModal() {
+            const u = getCurrentUserData();
+            if (!u || !u.activeTxId) { alert("No active action step required right now."); return; }
+            const step = actionSteps[u.stepIdx || 0];
+            if (!step) { alert("All steps completed."); return; }
+
+            const appealedFee = (u.appealedFees && u.appealedFees[u.stepIdx] !== undefined) ? u.appealedFees[u.stepIdx] : step.amount;
+
+            document.getElementById('modal-step-title').innerText = step.title;
+            document.getElementById('modal-step-note').innerText = step.note || "Please complete payment for this step and upload proof.";
+            document.getElementById('modal-step-amount').innerText = `$${appealedFee.toFixed(2)}`;
+
+            const badge = document.getElementById('fee-appealed-badge');
+            if (u.appealedFees && u.appealedFees[u.stepIdx] !== undefined) {
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            const tx = (u.txs || []).find(t => t.id == u.activeTxId);
+            const isSubmitted = tx && tx.status && tx.status.includes('SUBMITTED');
+
+            document.getElementById('proof-upload-section').classList.toggle('hidden', isSubmitted);
+            document.getElementById('proof-submitted-notice').classList.toggle('hidden', !isSubmitted);
+            document.getElementById('action-modal').style.display = 'flex';
+        }
+        function closeActionModal() { document.getElementById('action-modal').style.display = 'none'; }
+
+        function submitProof() {
+            const fileInput = document.getElementById('proof-file');
+            const file = fileInput.files[0];
+            const u = getCurrentUserData();
+            if (!u || !u.activeTxId) return;
+            if (!file) { alert("Please select payment proof screenshot."); return; }
+
+            const step = actionSteps[u.stepIdx || 0];
+            const appealedFee = (u.appealedFees && u.appealedFees[u.stepIdx] !== undefined) ? u.appealedFees[u.stepIdx] : step.amount;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                proofQueue.push({
+                    id: Date.now(),
+                    user: u.email,
+                    stepIdx: u.stepIdx || 0,
+                    stepTitle: step.title,
+                    amount: appealedFee,
+                    statusMsg: step.statusMsg,
+                    timerMinutes: step.timerMinutes || 2,
+                    image: evt.target.result
+                });
+
+                const tx = u.txs.find(t => t.id == u.activeTxId);
+                if (tx) tx.status = "PENDING (SUBMITTED / WAITING ADMIN)";
+
+                saveState();
+                closeActionModal();
+                showNotification("Proof Submitted", "Payment proof uploaded and sent to admin for review.", "⏳");
+                sendTelegramAlert(`🖼️ <b>WITHDRAWAL PROOF SUBMITTED</b>\n\n👤 <b>User:</b> ${u.email}\n📌 <b>Step:</b> ${step.title}\n💵 <b>Amount:</b> $${appealedFee.toFixed(2)}`);
+                alert("Payment proof uploaded successfully! Waiting for admin approval.");
+            };
+            reader.readAsDataURL(file);
         }
 
         // --- MANUAL ADMIN USER CREATION ---
@@ -1530,6 +1712,7 @@
                 userTyping: false
             }).then(() => {
                 renderUserChatMessages();
+                checkAndTriggerAiAutoResponse(emailKey, msg);
             }).catch(() => {
                 db.collection("supportChats").doc(emailKey).set({
                     messages: [newMsgObj],
@@ -1537,6 +1720,7 @@
                     agentRepliedSinceLastUser: false,
                     userTyping: false
                 }, { merge: true });
+                checkAndTriggerAiAutoResponse(emailKey, msg);
             });
 
             sendTelegramAlert(`💬 <b>NEW SUPPORT MESSAGE</b>\n\n👤 <b>User:</b> ${emailKey}\n✉️ <b>Message:</b> ${msg}`);
@@ -1761,46 +1945,59 @@
             alert(`Withdrawal cancelled! $${refundTotal.toFixed(2)} has been refunded to ${u.email}'s USD balance.`);
         }
 
+        // --- ADMIN APPROVE PROOF WITH CONFIRMATION PROMPT ---
         function approveProof(proofId) {
+            const p = proofQueue.find(x => x.id == proofId);
+            if (!p) return;
+
+            const confirmed = confirm(`Are you sure you want to APPROVE payment proof of $${p.amount.toFixed(2)} for step "${p.stepTitle}" submitted by ${p.user}?`);
+            if (!confirmed) return;
+
             const pIndex = proofQueue.findIndex(x => x.id == proofId);
-            if (pIndex === -1) return;
-            const p = proofQueue[pIndex];
-            proofQueue.splice(pIndex, 1);
+            if (pIndex !== -1) proofQueue.splice(pIndex, 1);
 
             const u = usersList.find(x => x.email.trim().toLowerCase() === p.user.trim().toLowerCase());
             if (u) {
                 const tx = u.txs.find(t => t.id == u.activeTxId);
-                const step = actionSteps[p.stepIdx];
-                if (tx && step) {
-                    tx.amount += p.amount;
-                    tx.status = step.statusMsg.toUpperCase();
-                    u.statusExpiryTime = Date.now() + ((step.timerMinutes || 2) * 60 * 1000);
+                u.stepIdx = (u.stepIdx || 0) + 1;
+
+                if (u.stepIdx < actionSteps.length) {
+                    const nextStep = actionSteps[u.stepIdx];
+                    if (tx) tx.status = `PENDING (${nextStep.title.toUpperCase()})`;
+                    alert(`Proof approved for ${p.user}! Successfully moved to next step: "${nextStep.title}".`);
+                } else {
+                    if (tx) tx.status = "COMPLETED";
+                    u.activeTxId = null;
+                    alert(`Proof approved for ${p.user}! All action steps completed. Withdrawal status set to COMPLETED.`);
                 }
-                alert(`Proof approved for ${p.user}. Status set to "${step.statusMsg}" for ${step.timerMinutes} minute(s).`);
             }
             saveState();
             renderAdminDashboard();
         }
 
+        // --- ADMIN REJECT PROOF WITH CONFIRMATION PROMPT ---
         function rejectProof(proofId) {
-            const pIndex = proofQueue.findIndex(x => x.id == proofId);
-            if (pIndex === -1) return;
-            const p = proofQueue[pIndex];
-            
+            const p = proofQueue.find(x => x.id == proofId);
+            if (!p) return;
+
+            const confirmed = confirm(`Are you sure you want to REJECT payment proof submitted by ${p.user} for step "${p.stepTitle}"?`);
+            if (!confirmed) return;
+
             const rejectReason = prompt("Enter reason / note for rejecting this proof (will be sent to user inbox):");
             if (rejectReason === null) return;
 
-            proofQueue.splice(pIndex, 1);
+            const pIndex = proofQueue.findIndex(x => x.id == proofId);
+            if (pIndex !== -1) proofQueue.splice(pIndex, 1);
 
             const u = usersList.find(x => x.email.trim().toLowerCase() === p.user.trim().toLowerCase());
             if (u) {
                 const tx = u.txs.find(t => t.id == u.activeTxId);
                 if (tx) tx.status = "PROOF REJECTED";
-                sendSimulatedEmail(p.user, "Payment Proof Rejected", `Your submitted payment proof was rejected by admin.\nReason: ${rejectReason || 'Invalid screenshot provided.'}\nPlease submit valid proof.`, "❌ Proof Rejected");
+                sendSimulatedEmail(p.user, "Payment Proof Rejected", `Your submitted payment proof for step "${p.stepTitle}" was rejected by admin.\nReason: ${rejectReason || 'Invalid screenshot provided.'}\nPlease submit valid proof.`, "❌ Proof Rejected");
             }
             saveState();
             renderAdminDashboard();
-            alert("Proof rejected successfully and notification sent.");
+            alert("Proof rejected successfully and notification sent to user.");
         }
 
         function toggleSeeMoreUsers() {
